@@ -49,9 +49,10 @@ export function Header() {
     { to: "/specialties", label: t("nav_specialties") },
     { to: "/doctors", label: t("nav_doctors") },
     {
-      to: "/packages",
+      to: "/services",
       label: isAr ? "الخدمات" : "Services",
       children: [
+        { to: "/services", label: isAr ? "كل الخدمات الإلكترونية" : "All E-Services", desc: isAr ? "دليل موحّد لكل خدماتنا" : "Unified directory of all services" },
         { to: "/packages", label: isAr ? "الباقات والفحوصات" : "Checkup Packages", desc: isAr ? "باقات فحص شاملة" : "Comprehensive packages" },
         { to: "/telemedicine", label: isAr ? "استشارة عن بُعد" : "Telemedicine", desc: isAr ? "طبيبك أونلاين" : "Doctor online" },
         { to: "/home-care", label: isAr ? "الرعاية المنزلية" : "Home Care", desc: isAr ? "خدمات طبية بالمنزل" : "Medical at home" },
