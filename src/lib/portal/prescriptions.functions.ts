@@ -151,7 +151,7 @@ export const getMyPrescriptions = createServerFn({ method: "GET" })
         time: (a.appointment_time as string | null) ?? null,
         doctor_name: (doc?.name_ar as string | null) ?? null,
         specialty: (doc?.specialties?.name_ar as string | null) ?? null,
-        status: (a.status as string) ?? "pending",
+        status: normalizeAppointmentStatus(a.status),
         reason: (a.reason as string | null) ?? null,
       };
     });
