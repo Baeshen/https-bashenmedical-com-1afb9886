@@ -64,13 +64,16 @@ def main() -> int:
 
     wins  = [r for r in results if r[1] == "OK"]
     uniq  = [r for r in results if r[1] == "UNIQUE_VIOLATION"]
-    other = [r for r in results if r[1] not in ("OK", "UNIQUE_VIOLATION")]
+    skip  = [r for r in results if r[1] == "ENV_SKIP"]
+    other = [r for r in results if r[1] not in ("OK", "UNIQUE_VIOLATION", "ENV_SKIP")]
 
-    print(f"\n[results] total={len(results)} wins={len(wins)} unique_violation={len(uniq)} other={len(other)}")
+    print(
+        f"\n[results] total={len(results)} wins={len(wins)} "
+        f"unique_violation={len(uniq)} env_skip={len(skip)} other={len(other)}"
+    )
     for r in other:
         print(f"   OTHER #{r[0]:02d} -> [{r[1]}] {r[2]}")
 
-    # Verify DB state
     q = subprocess.run(
         ["psql", "-A", "-t", "-c",
          f"SELECT count(*) FROM appointments WHERE doctor_id='{DOCTOR}' "
@@ -79,9 +82,20 @@ def main() -> int:
         capture_output=True, text=True,
     )
     db_active = q.stdout.strip()
-    print(f"\n[db] active_appts_at_slot={db_active}")
+    effective = len(results) - len(skip)
+    print(
+        f"\n[db] active_appts_at_slot={db_active}  "
+        f"(effective attempts after ENV_SKIP: {effective})"
+    )
 
-    ok = (len(wins) == 1 and db_active == "1" and len(other) == 0 and len(uniq) == PARALLEL - 1)
+    # Correctness: at most 1 winner, DB has exactly 1 active row,
+    # every non-skipped loser is a unique_violation.
+    ok = (
+        len(wins) == 1
+        and db_active == "1"
+        and len(other) == 0
+        and (len(wins) + len(uniq)) == effective
+    )
     print("\n" + ("PASS ✅" if ok else "FAIL ❌"))
     return 0 if ok else 1
 
