@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { visibilityAwareInterval } from "@/lib/polling";
 import { useServerFn } from "@tanstack/react-start";
 import { Bell, BellOff, BellRing, Check, CheckCheck, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
