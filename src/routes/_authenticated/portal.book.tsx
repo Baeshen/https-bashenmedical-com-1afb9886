@@ -2,11 +2,8 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  getBookingOptions,
-  getDoctorAvailability,
-  createMyAppointment,
-} from "@/lib/portal/booking.functions";
+import { getBookingOptions } from "@/lib/portal/booking.functions";
+import { listAvailableSlots, bookSlot } from "@/lib/slots.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -107,6 +104,7 @@ function BookPage() {
   const [doctorId, setDoctorId] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [slot, setSlot] = useState<string>("");
+  const [slotId, setSlotId] = useState<string>("");
   const [reason, setReason] = useState("");
   const [patientName, setPatientName] = useState(profile?.full_name ?? "");
   const [patientPhone, setPatientPhone] = useState(profile?.phone ?? "");
@@ -130,39 +128,54 @@ function BookPage() {
       setDoctorId("");
       setDate(undefined);
       setSlot("");
+      setSlotId("");
     }
   }, [doctors, doctorId]);
 
   const dateStr = date ? toYMD(date) : "";
 
+  // Slots are driven by availability_slots (single source of truth for M2)
   const slotsQ = useQuery({
-    queryKey: ["portal", "booking", "slots", doctorId, dateStr, branchId],
+    queryKey: ["portal", "booking", "avail-slots", doctorId, dateStr, branchId],
     queryFn: () =>
-      getDoctorAvailability({
-        data: { doctor_id: doctorId, date: dateStr, branch_id: branchId || undefined },
+      listAvailableSlots({
+        data: {
+          doctorId,
+          fromDate: dateStr,
+          branchId: branchId || undefined,
+        },
       }),
     enabled: Boolean(doctorId && dateStr),
     staleTime: 15_000,
   });
 
-  // Realtime — refresh slots when appointments change for this doctor
+  const slotsView = useMemo(() => {
+    const rows = slotsQ.data?.slots ?? [];
+    return rows.map((r) => ({
+      id: r.id,
+      time: (r.start_time as unknown as string).slice(0, 5),
+      available: r.status === "available",
+    }));
+  }, [slotsQ.data]);
+
+  // Realtime — refresh when any slot for this doctor/day flips state
   useEffect(() => {
     if (!doctorId || !dateStr) return;
     const channel = supabase
-      .channel(`appts-${doctorId}-${dateStr}`)
+      .channel(`avail-${doctorId}-${dateStr}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "appointments",
+          table: "availability_slots",
           filter: `doctor_id=eq.${doctorId}`,
         },
         (payload) => {
           const row: any = payload.new ?? payload.old;
-          if (row?.appointment_date === dateStr) {
+          if (row?.slot_date === dateStr) {
             qc.invalidateQueries({
-              queryKey: ["portal", "booking", "slots", doctorId, dateStr, branchId],
+              queryKey: ["portal", "booking", "avail-slots", doctorId, dateStr, branchId],
             });
           }
         },
@@ -173,27 +186,28 @@ function BookPage() {
     };
   }, [doctorId, dateStr, branchId, qc]);
 
-  const createMut = useMutation({
+  const bookMut = useMutation({
     mutationFn: (payload: {
-      doctor_id: string;
-      branch_id?: string;
-      specialty_id?: string;
-      appointment_date: string;
-      appointment_time: string;
+      slotId: string;
+      patientName: string;
+      patientPhone: string;
       reason?: string;
-      patient_name: string;
-      patient_phone: string;
-    }) => createMyAppointment({ data: payload }),
+    }) =>
+      bookSlot({
+        data: {
+          slotId: payload.slotId,
+          patientName: payload.patientName,
+          patientPhone: payload.patientPhone,
+          reason: payload.reason,
+          patientId: profile?.id ?? undefined,
+        },
+      }),
     onSuccess: (res) => {
       toast.success("تم تأكيد الحجز بنجاح");
-      setConfirmed({
-        id: res.id,
-        date: res.appointment_date as unknown as string,
-        time: (res.appointment_time as unknown as string).slice(0, 5),
-      });
+      setConfirmed({ id: res.appointmentId, date: dateStr, time: slot });
       qc.invalidateQueries({ queryKey: ["portal", "dashboard-summary"] });
       qc.invalidateQueries({
-        queryKey: ["portal", "booking", "slots", doctorId, dateStr, branchId],
+        queryKey: ["portal", "booking", "avail-slots", doctorId, dateStr, branchId],
       });
     },
     onError: (err: any) => toast.error(err?.message ?? "تعذّر حفظ الحجز"),
@@ -204,20 +218,16 @@ function BookPage() {
   const selectedSpecialty = options.specialties.find((s) => s.id === specialtyId);
 
   function handleConfirm() {
-    if (!doctorId || !dateStr || !slot) return;
+    if (!doctorId || !dateStr || !slot || !slotId) return;
     if (!patientName.trim() || !patientPhone.trim()) {
       toast.error("الرجاء إدخال الاسم ورقم الهاتف");
       return;
     }
-    createMut.mutate({
-      doctor_id: doctorId,
-      branch_id: branchId || undefined,
-      specialty_id: selectedDoctor?.specialty_id ?? specialtyId ?? undefined,
-      appointment_date: dateStr,
-      appointment_time: `${slot}:00`,
+    bookMut.mutate({
+      slotId,
+      patientName: patientName.trim(),
+      patientPhone: patientPhone.trim(),
       reason: reason.trim() || undefined,
-      patient_name: patientName.trim(),
-      patient_phone: patientPhone.trim(),
     });
   }
 
@@ -247,6 +257,7 @@ function BookPage() {
               onClick={() => {
                 setConfirmed(null);
                 setSlot("");
+                setSlotId("");
                 setDate(undefined);
               }}
               className="inline-flex items-center gap-2 rounded-full px-5 h-10 text-sm font-semibold text-white"
@@ -397,6 +408,7 @@ function BookPage() {
                   onSelect={(d) => {
                     setDate(d);
                     setSlot("");
+                    setSlotId("");
                   }}
                   locale={arLocale}
                   dir="rtl"
@@ -430,16 +442,19 @@ function BookPage() {
                     <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
                   ))}
                 </div>
-              ) : slotsQ.data && slotsQ.data.slots.length > 0 ? (
+              ) : slotsView.length > 0 ? (
                 <>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {slotsQ.data.slots.map((s) => {
-                      const active = slot === s.time;
+                    {slotsView.map((s) => {
+                      const active = slotId === s.id;
                       return (
                         <button
-                          key={s.time}
+                          key={s.id}
                           disabled={!s.available}
-                          onClick={() => setSlot(s.time)}
+                          onClick={() => {
+                            setSlotId(s.id);
+                            setSlot(s.time);
+                          }}
                           className={`h-10 rounded-xl text-sm font-semibold border transition-all ${
                             active
                               ? "text-white border-transparent shadow-md"
@@ -522,11 +537,11 @@ function BookPage() {
             <Button
               size="lg"
               onClick={handleConfirm}
-              disabled={createMut.isPending}
+              disabled={bookMut.isPending}
               className="rounded-full text-white font-semibold px-6"
               style={{ background: "var(--portal-gradient)" }}
             >
-              {createMut.isPending ? (
+              {bookMut.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" /> جارٍ الحفظ...
                 </>
