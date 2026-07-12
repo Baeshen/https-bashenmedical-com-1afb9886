@@ -52,6 +52,9 @@ export function HeroComplex() {
       <div className={`absolute inset-0 ${isAr ? "bg-gradient-to-l" : "bg-gradient-to-r"} from-[#0a2540]/85 via-[#0a2540]/40 to-transparent`} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(6,12,25,0.55)_100%)]" />
 
+      {/* Floating medical motifs (DNA / ECG / cross) */}
+      <MedicalMotifs />
+
       {/* Content */}
       <div className="container-app relative z-10 py-20 md:py-28">
         <div className={`max-w-2xl ${isAr ? "text-right" : "text-left"} text-white`}>
