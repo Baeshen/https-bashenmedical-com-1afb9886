@@ -177,6 +177,7 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
+          <ThemeToggle />
           <Link
             to="/book"
             className="inline-flex items-center rounded-md bg-gradient-to-r from-primary to-accent px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95"
