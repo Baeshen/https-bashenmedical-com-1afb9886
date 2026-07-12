@@ -210,7 +210,6 @@ function ServicesPortal() {
                 ({results.length})
               </span>
             </h2>
-            </h2>
           </div>
 
           {results.length === 0 ? (
