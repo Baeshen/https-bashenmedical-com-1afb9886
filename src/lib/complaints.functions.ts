@@ -93,6 +93,43 @@ export const submitMyComplaint = createServerFn({ method: "POST" })
     return { id: row.id, reference: row.reference };
   });
 
+// ---------------------------------------------------------------------------
+// Patient: edit own complaint message — only while still "submitted"
+// ---------------------------------------------------------------------------
+const editMySchema = z.object({
+  id: z.string().uuid(),
+  message: z.string().trim().min(10, "الرسالة قصيرة جداً — 10 أحرف على الأقل").max(4000),
+  department: z.string().trim().max(120).optional().or(z.literal("")),
+});
+
+export const editMyComplaint = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => editMySchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: existing, error: readErr } = await context.supabase
+      .from("complaints")
+      .select("id, status, patient_user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!existing || existing.patient_user_id !== context.userId) {
+      throw new Error("لم نعثر على البلاغ.");
+    }
+    if (existing.status !== "submitted") {
+      throw new Error("لا يمكن تعديل البلاغ بعد بدء المراجعة.");
+    }
+    const { error } = await context.supabase
+      .from("complaints")
+      .update({
+        message: data.message,
+        department: data.department || null,
+      })
+      .eq("id", data.id)
+      .eq("status", "submitted");
+    if (error) throw new Error("تعذّر تعديل البلاغ، حاول مرة أخرى.");
+    return { ok: true };
+  });
+
 
 
 // ---------------------------------------------------------------------------
