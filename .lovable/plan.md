@@ -1,50 +1,62 @@
-# وحدة Nurses (التمريض) داخل لوحة الإدارة
+# وحدة Pharmacy (الصيدلية) داخل لوحة الإدارة
 
-إضافة وحدة كاملة للتمريض تشمل:
-- سجل الممرضين/الممرضات (ربطًا بالفروع).
-- **جداول الورديات** (Shifts) لعرض ومن يعمل متى.
-- **استدعاءات المرضى** (Nurse Call Queue) لإدارة الطلبات القادمة من غرف المرضى.
+إضافة وحدة صيدلية مستقلة في `/_authenticated/pharmacy` بثلاثة تبويبات:
 
-## الصفحات
+## التبويبات
 
-المسار الرئيسي: `/_authenticated/nurses` مع 3 تبويبات RTL:
+1. **المخزون + تنبيه انتهاء الصلاحية (Inventory)**
+   - جدول الأدوية مع: الاسم، الرمز/الباركود، الشكل الصيدلاني، الوحدة، الكمية الحالية، الحد الأدنى، الفرع.
+   - شارات تحذير: **منتهي**، **قريب الانتهاء** (≤ 30 يوم — قابل للتخصيص لكل فرع لاحقًا)، **مخزون منخفض** (كمية ≤ min_stock).
+   - فلترة: فرع، حالة (الكل / قريب الانتهاء / منتهي / منخفض / نافد).
+   - CRUD كامل عبر Dialog.
 
-1. **الطاقم (Nurses):** جدول بأسماء الممرضين، الفرع، القسم، الحالة (متاح/إجازة)، مع نموذج إضافة/تعديل/حذف (Admin فقط).
-2. **الورديات (Shifts):** عرض أسبوعي (Grid: 7 أيام × Nurses) مع لون لكل نوع وردية (صباحية/مسائية/ليلية). فلترة بالفرع والتاريخ. إضافة/حذف وردية عبر Dialog.
-3. **استدعاءات المرضى (Calls):** قائمة الاستدعاءات النشطة بأولوية (عادي/عاجل/حرج)، مع أزرار: قبول → قيد المعالجة → مكتمل / ملغى. تحديث تلقائي كل 15 ثانية.
+2. **حركة المخزون (Stock Movements)**
+   - سجل يعرض كل حركة: نوع (استلام/صرف/تعديل/إتلاف/تحويل)، الكمية (+/-)، السبب، المرجع، المستخدم، التاريخ.
+   - فلترة بالفرع والصنف والفترة.
+   - زر "حركة جديدة" يفتح Dialog يختار الصنف + النوع + الكمية + الملاحظات، ويطبّق التغيير تلقائيًا على `inventory_items.quantity` عبر Trigger.
 
-كما تُضاف بطاقة "Nurses" في `command-center` سايدبار كرابط نشط.
+3. **موافقات الوصفات (Prescription Approvals)**
+   - قائمة وصفات بحالة `pending_pharmacy` تحتاج مراجعة الصيدلي.
+   - بطاقات تعرض: المريض، الطبيب، الأدوية، تاريخ الإصدار.
+   - أزرار: **موافقة** (يتحول إلى `approved` + خصم من المخزون تلقائيًا لكل دواء)، **رفض** (مع سبب)، **طلب توضيح**.
+   - تحديث كل 20 ثانية.
+
+في سايدبار الـ Command Center: تفعيل رابط "الصيدلية" (بدل Coming Soon).
 
 ## الجداول الجديدة
 
-- `nurses`: `id, full_name, phone, email, branch_id → branches, department, employee_no, status ('active'|'on_leave'|'inactive'), notes, created_at, updated_at`.
-- `nurse_shifts`: `id, nurse_id → nurses, branch_id, shift_date (date), shift_type ('morning'|'evening'|'night'), start_time, end_time, notes, created_by, created_at, updated_at`. فهارس على `(branch_id, shift_date)` و `(nurse_id, shift_date)`.
-- `nurse_calls`: `id, branch_id, patient_id → patients (nullable), room_no, reason, priority ('normal'|'urgent'|'critical'), status ('pending'|'in_progress'|'completed'|'cancelled'), assigned_nurse_id → nurses (nullable), called_at, accepted_at, completed_at, notes, created_at, updated_at`. فهرس على `(status, priority, called_at)`.
+- `inventory_items`: `id, branch_id → branches, name_ar, name_en, sku, barcode, form (tab/syrup/inj/…), unit, quantity int, min_stock int, expiry_date date NULL, price numeric NULL, notes, is_active, created_at, updated_at`. فهرس على `(branch_id, expiry_date)` و `(branch_id, name_ar)`.
+- `stock_movements`: `id, item_id → inventory_items, branch_id, movement_type ('in'|'out'|'adjust'|'waste'|'transfer'), quantity_delta int (يقبل السالب), reason, reference (nullable — رقم وصفة/توريد)، created_by, created_at`. فهرس على `(item_id, created_at)`.
+- تعديل `prescriptions` (موجود): إضافة أعمدة `pharmacy_status ('pending'|'approved'|'rejected'|'needs_info')`, `reviewed_by`, `reviewed_at`, `review_notes` (فقط إذا لم تكن موجودة).
 
-RLS + GRANTs (Admin/Staff قراءة+كتابة عبر `has_role`؛ لا وصول لـ anon):
-- Admin: كل شيء.
-- staff/nurse role: قراءة الطاقم/الورديات؛ كتابة `nurse_calls` (تحديث الحالة والإسناد).
+Trigger على `stock_movements` (AFTER INSERT): يعدل `inventory_items.quantity` بمقدار `quantity_delta`.
+
+### RLS + GRANTs
+- Admin/super_admin: كامل.
+- pharmacy: قراءة + كتابة على كل الجداول الثلاثة (إضافة أدوية، تسجيل حركات، الموافقة على الوصفات).
+- reception: قراءة فقط للمخزون والحركات.
 
 ## Server functions
 
-ملف `src/lib/nurses.functions.ts` مع `requireSupabaseAuth` + فحص الدور:
-- `listNurses({ branchId? })`, `upsertNurse(data)`, `deleteNurse(id)`.
-- `listShifts({ branchId, fromDate, toDate })`, `upsertShift(data)`, `deleteShift(id)`.
-- `listCalls({ branchId?, status? })`, `createCall(data)`, `updateCallStatus({ id, status, assigned_nurse_id? })`.
+ملف `src/lib/pharmacy.functions.ts`:
+- **Inventory:** `listInventoryItems({ branchId?, filter? })`, `upsertInventoryItem(data)`, `deleteInventoryItem(id)`.
+- **Movements:** `listStockMovements({ branchId?, itemId?, from?, to? })`, `createStockMovement(data)`.
+- **Prescriptions:** `listPendingPrescriptions({ branchId? })`, `reviewPrescription({ id, decision, notes? })` — عند الموافقة يُنشئ حركات صرف تلقائيًا لكل عنصر مربوط بمخزون.
+
+كل الدوال محمية بـ `requireSupabaseAuth` وتعتمد على RLS للتحقق من الدور.
 
 ## الواجهة
 
-- استخدام `Tabs`, `Dialog`, `Select`, `Badge` من shadcn.
-- عرض الوردية: Grid CSS مع بطاقة صغيرة لكل وردية (لون حسب النوع).
-- الاستدعاءات: بطاقات تحمل شارة أولوية ملوّنة + مؤقت "منذ كم دقيقة" + أزرار حالة.
-- التحديث التلقائي عبر `useQuery` + `refetchInterval: 15000` على الاستدعاءات النشطة.
+- **Tabs** من shadcn + جداول RTL مع بحث فوري.
+- شارات ملوّنة للحالة (منتهي = أحمر، قريب = كهرماني، منخفض = برتقالي).
+- Dialog موحّد للإضافة/التعديل مع validations.
+- عرض متجاوب: بطاقات على الجوال، جداول على الشاشة الكبيرة.
 
-## تفاصيل تقنية
+## ملاحظات تقنية
 
-- المسارات: `src/routes/_authenticated/nurses.tsx` (تبويبات في مكوّن واحد لتبسيط الحالة والفلاتر).
-- نمط التحميل: `context.queryClient.ensureQueryData` في loader + `useSuspenseQuery` للطاقم؛ `useQuery` مع polling للاستدعاءات.
-- ربط في `command-center` كعنصر Sidebar نشط بدل "Coming Soon".
-- لا Realtime حاليًا (Polling كافٍ)؛ يمكن ترقيته لاحقًا.
-- لا يُدمج مع `doctor_leaves`؛ الإجازات مستقبلًا.
+- نستخدم `useServerFn` + `useQuery` (`refetchInterval: 20000` في تبويب الوصفات فقط).
+- الحسابات (منتهي/قريب/منخفض) تتم على الخادم لضمان الاتساق، مع كشفها كأعمدة محسوبة في الرد.
+- لا حاجة لتغيير `medicine_orders` (طلبات المرضى) — هذه وحدة مخزون داخلية منفصلة.
+- الأسعار والتكاليف اختيارية الآن؛ لا تكامل فوترة في هذه المرحلة.
 
-هل أبدأ التنفيذ بهذا النطاق أو تفضّل تعديل أي جزء (مثلاً إخفاء المرضى/الغرف، أو تبسيط الورديات لقائمة بدل شبكة أسبوعية)؟
+هل أبدأ؟ إذا رغبت بتضييق نطاق التبويب الثالث (مثلاً قراءة الوصفات فقط دون خصم تلقائي من المخزون) أخبرني قبل التنفيذ.
