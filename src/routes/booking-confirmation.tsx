@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { RefreshCw, Radio } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -101,27 +103,31 @@ function BookingConfirmationPage() {
   const [loading, setLoading] = useState(true);
   const [appt, setAppt] = useState<AppointmentSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveConnected, setLiveConnected] = useState(false);
+  const prevStatusRef = useRef<string | null>(null);
 
   // API returns refs like "BAA-XXXXXXXX" but lookup_appointment matches
   // raw hex from the appointment id. Strip prefix so both formats work.
   const normalizedRef = (ref ?? "").replace(/[^0-9a-fA-F]/g, "");
 
-  useEffect(() => {
-    if (!normalizedRef || !phone) {
-      setLoading(false);
-      setError("يرجى إدخال رقم الحجز ورقم الجوال لعرض التفاصيل.");
-      return;
-    }
-    let cancelled = false;
-    const fetchAppt = async () => {
-      setLoading(true);
+  const fetchAppt = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!normalizedRef || !phone) {
+        setLoading(false);
+        setError("يرجى إدخال رقم الحجز ورقم الجوال لعرض التفاصيل.");
+        return;
+      }
+      if (opts.silent) setRefreshing(true);
+      else setLoading(true);
       setError(null);
       const { data, error: rpcError } = await supabase.rpc("lookup_appointment", {
         _ref: normalizedRef,
         _phone: phone,
       });
-      if (cancelled) return;
       setLoading(false);
+      setRefreshing(false);
       if (rpcError) {
         setError(rpcError.message);
         return;
@@ -131,13 +137,44 @@ function BookingConfirmationPage() {
         setError(t("lookup_not_found"));
         return;
       }
-      setAppt(row as AppointmentSummary);
-    };
-    fetchAppt();
+      const next = row as AppointmentSummary;
+      setAppt((prev) => {
+        if (prev && prevStatusRef.current && prev.status !== next.status) {
+          toast.success(`تم تحديث حالة الحجز: ${statusLabel(next.status)}`);
+        }
+        prevStatusRef.current = next.status;
+        return next;
+      });
+      setLastUpdated(new Date());
+    },
+    [normalizedRef, phone, t],
+  );
+
+  useEffect(() => {
+    void fetchAppt();
+  }, [fetchAppt]);
+
+  // Realtime: subscribe to changes on this appointment's row and refetch.
+  useEffect(() => {
+    if (!appt?.id) return;
+    const channel = supabase
+      .channel(`appt-${appt.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "appointments", filter: `id=eq.${appt.id}` },
+        () => {
+          void fetchAppt({ silent: true });
+        },
+      )
+      .subscribe((status) => {
+        setLiveConnected(status === "SUBSCRIBED");
+      });
     return () => {
-      cancelled = true;
+      supabase.removeChannel(channel);
+      setLiveConnected(false);
     };
-  }, [normalizedRef, phone, t]);
+  }, [appt?.id, fetchAppt]);
+
 
 
   const share: ShareBooking | null = appt
@@ -235,6 +272,34 @@ function BookingConfirmationPage() {
                 </div>
               </div>
             </div>
+
+            {/* Live status + manual refresh */}
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2 text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span
+                  className={`inline-flex items-center gap-1 ${liveConnected ? "text-green-600" : "text-muted-foreground"}`}
+                  title={liveConnected ? "متصل بالتحديث المباشر" : "غير متصل"}
+                >
+                  <Radio className={`h-3.5 w-3.5 ${liveConnected ? "animate-pulse" : ""}`} />
+                  {liveConnected ? "تحديث مباشر" : "غير متصل"}
+                </span>
+                {lastUpdated && (
+                  <span className="opacity-70">
+                    · آخر تحديث {lastUpdated.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => void fetchAppt({ silent: true })}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                تحديث الحالة
+              </button>
+            </div>
+
 
             {/* Timeline of booking stages */}
             <OrderTimeline
