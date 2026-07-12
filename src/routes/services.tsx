@@ -135,7 +135,7 @@ function ServicesPortal() {
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
               {lang === "ar" ? "بوابة الخدمات الإلكترونية" : "E-Services Portal"}
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl leading-tight">
+            <h1 className="text-4xl md:text-5xl leading-tight">
               {lang === "ar"
                 ? "جميع خدماتك الطبية في مكان واحد"
                 : "All your medical services, in one place"}
@@ -204,9 +204,9 @@ function ServicesPortal() {
       <section className="py-10 md:py-14">
         <div className="container-app">
           <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-serif text-2xl md:text-3xl">
+            <h2 className="text-2xl md:text-3xl">
               {lang === "ar" ? "الخدمات المتاحة" : "Available services"}
-              <span className="ms-2 text-sm text-muted-foreground font-sans">
+              <span className="ms-2 text-sm text-muted-foreground font-normal">
                 ({results.length})
               </span>
             </h2>

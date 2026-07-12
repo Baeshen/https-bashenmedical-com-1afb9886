@@ -99,7 +99,7 @@ function MyOrdersHub() {
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
               {isAr ? "تتبع الطلبات" : "Track Orders"}
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl leading-tight">
+            <h1 className="text-4xl md:text-5xl leading-tight">
               {isAr ? "طلباتي في مكان واحد" : "My orders in one place"}
             </h1>
             <p className="mt-3 text-white/85 max-w-2xl">
