@@ -767,7 +767,7 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
       "BEGIN:VALARM",
       "ACTION:DISPLAY",
       `DESCRIPTION:${icsEscape(`تذكير: ${s.medication}`)}`,
-      "TRIGGER:-PT10M",
+      `TRIGGER:-PT${prefs.medication_lead_minutes}M`,
       "END:VALARM",
       "END:VEVENT",
     );
