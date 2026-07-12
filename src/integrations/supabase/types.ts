@@ -2434,6 +2434,110 @@ export type Database = {
           },
         ]
       }
+      purchase_request_items: {
+        Row: {
+          created_at: string
+          estimated_price: number | null
+          id: string
+          item_id: string | null
+          name_ar: string
+          notes: string | null
+          quantity: number
+          request_id: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          item_id?: string | null
+          name_ar: string
+          notes?: string | null
+          quantity?: number
+          request_id: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          item_id?: string | null
+          name_ar?: string
+          notes?: string | null
+          quantity?: number
+          request_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_request_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_requests: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          priority: string
+          request_no: string | null
+          requested_by: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          request_no?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          request_no?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requests_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string
