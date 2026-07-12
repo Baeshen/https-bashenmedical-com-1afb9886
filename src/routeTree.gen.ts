@@ -64,6 +64,7 @@ import { Route as AuthenticatedRbacRouteImport } from './routes/_authenticated/r
 import { Route as AuthenticatedRatingsRouteImport } from './routes/_authenticated/ratings'
 import { Route as AuthenticatedQuickAddRouteImport } from './routes/_authenticated/quick-add'
 import { Route as AuthenticatedQrCardsRouteImport } from './routes/_authenticated/qr-cards'
+import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as AuthenticatedPatientsManagementRouteImport } from './routes/_authenticated/patients-management'
 import { Route as AuthenticatedPatientsAnalyticsRouteImport } from './routes/_authenticated/patients-analytics'
 import { Route as AuthenticatedPatientStoriesAdminRouteImport } from './routes/_authenticated/patient-stories-admin'
@@ -82,8 +83,21 @@ import { Route as AuthenticatedAppointmentsQueueRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal.index'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as MediaStoriesSlugRouteImport } from './routes/media.stories.$slug'
+import { Route as AuthenticatedPortalSettingsRouteImport } from './routes/_authenticated/portal.settings'
+import { Route as AuthenticatedPortalRecordsRouteImport } from './routes/_authenticated/portal.records'
+import { Route as AuthenticatedPortalRadiologyRouteImport } from './routes/_authenticated/portal.radiology'
+import { Route as AuthenticatedPortalProfileRouteImport } from './routes/_authenticated/portal.profile'
+import { Route as AuthenticatedPortalPrescriptionsRouteImport } from './routes/_authenticated/portal.prescriptions'
+import { Route as AuthenticatedPortalPaymentsRouteImport } from './routes/_authenticated/portal.payments'
+import { Route as AuthenticatedPortalNotificationsRouteImport } from './routes/_authenticated/portal.notifications'
+import { Route as AuthenticatedPortalLaboratoryRouteImport } from './routes/_authenticated/portal.laboratory'
+import { Route as AuthenticatedPortalInvoicesRouteImport } from './routes/_authenticated/portal.invoices'
+import { Route as AuthenticatedPortalInsuranceRouteImport } from './routes/_authenticated/portal.insurance'
+import { Route as AuthenticatedPortalDoctorsRouteImport } from './routes/_authenticated/portal.doctors'
+import { Route as AuthenticatedPortalBookRouteImport } from './routes/_authenticated/portal.book'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -370,6 +384,11 @@ const AuthenticatedQrCardsRoute = AuthenticatedQrCardsRouteImport.update({
   path: '/qr-cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPatientsManagementRoute =
   AuthenticatedPatientsManagementRouteImport.update({
     id: '/patients-management',
@@ -472,6 +491,12 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedPortalIndexRoute =
+  AuthenticatedPortalIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
 const AuthenticatedPatientsIndexRoute =
   AuthenticatedPatientsIndexRouteImport.update({
     id: '/patients/',
@@ -482,6 +507,77 @@ const MediaStoriesSlugRoute = MediaStoriesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => MediaStoriesRoute,
+} as any)
+const AuthenticatedPortalSettingsRoute =
+  AuthenticatedPortalSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalRecordsRoute =
+  AuthenticatedPortalRecordsRouteImport.update({
+    id: '/records',
+    path: '/records',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalRadiologyRoute =
+  AuthenticatedPortalRadiologyRouteImport.update({
+    id: '/radiology',
+    path: '/radiology',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalProfileRoute =
+  AuthenticatedPortalProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalPrescriptionsRoute =
+  AuthenticatedPortalPrescriptionsRouteImport.update({
+    id: '/prescriptions',
+    path: '/prescriptions',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalPaymentsRoute =
+  AuthenticatedPortalPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalNotificationsRoute =
+  AuthenticatedPortalNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalLaboratoryRoute =
+  AuthenticatedPortalLaboratoryRouteImport.update({
+    id: '/laboratory',
+    path: '/laboratory',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalInvoicesRoute =
+  AuthenticatedPortalInvoicesRouteImport.update({
+    id: '/invoices',
+    path: '/invoices',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalInsuranceRoute =
+  AuthenticatedPortalInsuranceRouteImport.update({
+    id: '/insurance',
+    path: '/insurance',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalDoctorsRoute =
+  AuthenticatedPortalDoctorsRouteImport.update({
+    id: '/doctors',
+    path: '/doctors',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
+const AuthenticatedPortalBookRoute = AuthenticatedPortalBookRouteImport.update({
+  id: '/book',
+  path: '/book',
+  getParentRoute: () => AuthenticatedPortalRoute,
 } as any)
 const AuthenticatedPatientsPatientIdRoute =
   AuthenticatedPatientsPatientIdRouteImport.update({
@@ -579,6 +675,7 @@ export interface FileRoutesByFullPath {
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/portal': typeof AuthenticatedPortalRouteWithChildren
   '/qr-cards': typeof AuthenticatedQrCardsRoute
   '/quick-add': typeof AuthenticatedQuickAddRoute
   '/ratings': typeof AuthenticatedRatingsRoute
@@ -605,8 +702,21 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
+  '/portal/book': typeof AuthenticatedPortalBookRoute
+  '/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
+  '/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
+  '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
+  '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
+  '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
+  '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
+  '/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/portal/radiology': typeof AuthenticatedPortalRadiologyRoute
+  '/portal/records': typeof AuthenticatedPortalRecordsRoute
+  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -689,8 +799,21 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
+  '/portal/book': typeof AuthenticatedPortalBookRoute
+  '/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
+  '/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
+  '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
+  '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
+  '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
+  '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
+  '/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/portal/radiology': typeof AuthenticatedPortalRadiologyRoute
+  '/portal/records': typeof AuthenticatedPortalRecordsRoute
+  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
+  '/portal': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -749,6 +872,7 @@ export interface FileRoutesById {
   '/_authenticated/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/_authenticated/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/_authenticated/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/_authenticated/portal': typeof AuthenticatedPortalRouteWithChildren
   '/_authenticated/qr-cards': typeof AuthenticatedQrCardsRoute
   '/_authenticated/quick-add': typeof AuthenticatedQuickAddRoute
   '/_authenticated/ratings': typeof AuthenticatedRatingsRoute
@@ -775,8 +899,21 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
+  '/_authenticated/portal/book': typeof AuthenticatedPortalBookRoute
+  '/_authenticated/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
+  '/_authenticated/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
+  '/_authenticated/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
+  '/_authenticated/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
+  '/_authenticated/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/_authenticated/portal/payments': typeof AuthenticatedPortalPaymentsRoute
+  '/_authenticated/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
+  '/_authenticated/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/_authenticated/portal/radiology': typeof AuthenticatedPortalRadiologyRoute
+  '/_authenticated/portal/records': typeof AuthenticatedPortalRecordsRoute
+  '/_authenticated/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -835,6 +972,7 @@ export interface FileRouteTypes {
     | '/patient-stories-admin'
     | '/patients-analytics'
     | '/patients-management'
+    | '/portal'
     | '/qr-cards'
     | '/quick-add'
     | '/ratings'
@@ -861,8 +999,21 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
+    | '/portal/book'
+    | '/portal/doctors'
+    | '/portal/insurance'
+    | '/portal/invoices'
+    | '/portal/laboratory'
+    | '/portal/notifications'
+    | '/portal/payments'
+    | '/portal/prescriptions'
+    | '/portal/profile'
+    | '/portal/radiology'
+    | '/portal/records'
+    | '/portal/settings'
     | '/media/stories/$slug'
     | '/patients/'
+    | '/portal/'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -945,8 +1096,21 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
+    | '/portal/book'
+    | '/portal/doctors'
+    | '/portal/insurance'
+    | '/portal/invoices'
+    | '/portal/laboratory'
+    | '/portal/notifications'
+    | '/portal/payments'
+    | '/portal/prescriptions'
+    | '/portal/profile'
+    | '/portal/radiology'
+    | '/portal/records'
+    | '/portal/settings'
     | '/media/stories/$slug'
     | '/patients'
+    | '/portal'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -1004,6 +1168,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patient-stories-admin'
     | '/_authenticated/patients-analytics'
     | '/_authenticated/patients-management'
+    | '/_authenticated/portal'
     | '/_authenticated/qr-cards'
     | '/_authenticated/quick-add'
     | '/_authenticated/ratings'
@@ -1030,8 +1195,21 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/patients/$patientId'
+    | '/_authenticated/portal/book'
+    | '/_authenticated/portal/doctors'
+    | '/_authenticated/portal/insurance'
+    | '/_authenticated/portal/invoices'
+    | '/_authenticated/portal/laboratory'
+    | '/_authenticated/portal/notifications'
+    | '/_authenticated/portal/payments'
+    | '/_authenticated/portal/prescriptions'
+    | '/_authenticated/portal/profile'
+    | '/_authenticated/portal/radiology'
+    | '/_authenticated/portal/records'
+    | '/_authenticated/portal/settings'
     | '/media/stories/$slug'
     | '/_authenticated/patients/'
+    | '/_authenticated/portal/'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -1481,6 +1659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal': {
+      id: '/_authenticated/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof AuthenticatedPortalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patients-management': {
       id: '/_authenticated/patients-management'
       path: '/patients-management'
@@ -1607,6 +1792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/portal/': {
+      id: '/_authenticated/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof AuthenticatedPortalIndexRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
     '/_authenticated/patients/': {
       id: '/_authenticated/patients/'
       path: '/patients'
@@ -1620,6 +1812,90 @@ declare module '@tanstack/react-router' {
       fullPath: '/media/stories/$slug'
       preLoaderRoute: typeof MediaStoriesSlugRouteImport
       parentRoute: typeof MediaStoriesRoute
+    }
+    '/_authenticated/portal/settings': {
+      id: '/_authenticated/portal/settings'
+      path: '/settings'
+      fullPath: '/portal/settings'
+      preLoaderRoute: typeof AuthenticatedPortalSettingsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/records': {
+      id: '/_authenticated/portal/records'
+      path: '/records'
+      fullPath: '/portal/records'
+      preLoaderRoute: typeof AuthenticatedPortalRecordsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/radiology': {
+      id: '/_authenticated/portal/radiology'
+      path: '/radiology'
+      fullPath: '/portal/radiology'
+      preLoaderRoute: typeof AuthenticatedPortalRadiologyRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/profile': {
+      id: '/_authenticated/portal/profile'
+      path: '/profile'
+      fullPath: '/portal/profile'
+      preLoaderRoute: typeof AuthenticatedPortalProfileRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/prescriptions': {
+      id: '/_authenticated/portal/prescriptions'
+      path: '/prescriptions'
+      fullPath: '/portal/prescriptions'
+      preLoaderRoute: typeof AuthenticatedPortalPrescriptionsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/payments': {
+      id: '/_authenticated/portal/payments'
+      path: '/payments'
+      fullPath: '/portal/payments'
+      preLoaderRoute: typeof AuthenticatedPortalPaymentsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/notifications': {
+      id: '/_authenticated/portal/notifications'
+      path: '/notifications'
+      fullPath: '/portal/notifications'
+      preLoaderRoute: typeof AuthenticatedPortalNotificationsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/laboratory': {
+      id: '/_authenticated/portal/laboratory'
+      path: '/laboratory'
+      fullPath: '/portal/laboratory'
+      preLoaderRoute: typeof AuthenticatedPortalLaboratoryRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/invoices': {
+      id: '/_authenticated/portal/invoices'
+      path: '/invoices'
+      fullPath: '/portal/invoices'
+      preLoaderRoute: typeof AuthenticatedPortalInvoicesRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/insurance': {
+      id: '/_authenticated/portal/insurance'
+      path: '/insurance'
+      fullPath: '/portal/insurance'
+      preLoaderRoute: typeof AuthenticatedPortalInsuranceRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/doctors': {
+      id: '/_authenticated/portal/doctors'
+      path: '/doctors'
+      fullPath: '/portal/doctors'
+      preLoaderRoute: typeof AuthenticatedPortalDoctorsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
+    '/_authenticated/portal/book': {
+      id: '/_authenticated/portal/book'
+      path: '/book'
+      fullPath: '/portal/book'
+      preLoaderRoute: typeof AuthenticatedPortalBookRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
     }
     '/_authenticated/patients/$patientId': {
       id: '/_authenticated/patients/$patientId'
@@ -1680,6 +1956,41 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPortalRouteChildren {
+  AuthenticatedPortalBookRoute: typeof AuthenticatedPortalBookRoute
+  AuthenticatedPortalDoctorsRoute: typeof AuthenticatedPortalDoctorsRoute
+  AuthenticatedPortalInsuranceRoute: typeof AuthenticatedPortalInsuranceRoute
+  AuthenticatedPortalInvoicesRoute: typeof AuthenticatedPortalInvoicesRoute
+  AuthenticatedPortalLaboratoryRoute: typeof AuthenticatedPortalLaboratoryRoute
+  AuthenticatedPortalNotificationsRoute: typeof AuthenticatedPortalNotificationsRoute
+  AuthenticatedPortalPaymentsRoute: typeof AuthenticatedPortalPaymentsRoute
+  AuthenticatedPortalPrescriptionsRoute: typeof AuthenticatedPortalPrescriptionsRoute
+  AuthenticatedPortalProfileRoute: typeof AuthenticatedPortalProfileRoute
+  AuthenticatedPortalRadiologyRoute: typeof AuthenticatedPortalRadiologyRoute
+  AuthenticatedPortalRecordsRoute: typeof AuthenticatedPortalRecordsRoute
+  AuthenticatedPortalSettingsRoute: typeof AuthenticatedPortalSettingsRoute
+  AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
+}
+
+const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
+  AuthenticatedPortalBookRoute: AuthenticatedPortalBookRoute,
+  AuthenticatedPortalDoctorsRoute: AuthenticatedPortalDoctorsRoute,
+  AuthenticatedPortalInsuranceRoute: AuthenticatedPortalInsuranceRoute,
+  AuthenticatedPortalInvoicesRoute: AuthenticatedPortalInvoicesRoute,
+  AuthenticatedPortalLaboratoryRoute: AuthenticatedPortalLaboratoryRoute,
+  AuthenticatedPortalNotificationsRoute: AuthenticatedPortalNotificationsRoute,
+  AuthenticatedPortalPaymentsRoute: AuthenticatedPortalPaymentsRoute,
+  AuthenticatedPortalPrescriptionsRoute: AuthenticatedPortalPrescriptionsRoute,
+  AuthenticatedPortalProfileRoute: AuthenticatedPortalProfileRoute,
+  AuthenticatedPortalRadiologyRoute: AuthenticatedPortalRadiologyRoute,
+  AuthenticatedPortalRecordsRoute: AuthenticatedPortalRecordsRoute,
+  AuthenticatedPortalSettingsRoute: AuthenticatedPortalSettingsRoute,
+  AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
+}
+
+const AuthenticatedPortalRouteWithChildren =
+  AuthenticatedPortalRoute._addFileChildren(AuthenticatedPortalRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppointmentsQueueRoute: typeof AuthenticatedAppointmentsQueueRoute
@@ -1697,6 +2008,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientStoriesAdminRoute: typeof AuthenticatedPatientStoriesAdminRoute
   AuthenticatedPatientsAnalyticsRoute: typeof AuthenticatedPatientsAnalyticsRoute
   AuthenticatedPatientsManagementRoute: typeof AuthenticatedPatientsManagementRoute
+  AuthenticatedPortalRoute: typeof AuthenticatedPortalRouteWithChildren
   AuthenticatedQrCardsRoute: typeof AuthenticatedQrCardsRoute
   AuthenticatedQuickAddRoute: typeof AuthenticatedQuickAddRoute
   AuthenticatedRatingsRoute: typeof AuthenticatedRatingsRoute
@@ -1727,6 +2039,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientStoriesAdminRoute: AuthenticatedPatientStoriesAdminRoute,
   AuthenticatedPatientsAnalyticsRoute: AuthenticatedPatientsAnalyticsRoute,
   AuthenticatedPatientsManagementRoute: AuthenticatedPatientsManagementRoute,
+  AuthenticatedPortalRoute: AuthenticatedPortalRouteWithChildren,
   AuthenticatedQrCardsRoute: AuthenticatedQrCardsRoute,
   AuthenticatedQuickAddRoute: AuthenticatedQuickAddRoute,
   AuthenticatedRatingsRoute: AuthenticatedRatingsRoute,
