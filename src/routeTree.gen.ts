@@ -105,6 +105,7 @@ import { Route as AuthenticatedPortalLaboratoryRouteImport } from './routes/_aut
 import { Route as AuthenticatedPortalInvoicesRouteImport } from './routes/_authenticated/portal.invoices'
 import { Route as AuthenticatedPortalInsuranceRouteImport } from './routes/_authenticated/portal.insurance'
 import { Route as AuthenticatedPortalDoctorsRouteImport } from './routes/_authenticated/portal.doctors'
+import { Route as AuthenticatedPortalComplaintsRouteImport } from './routes/_authenticated/portal.complaints'
 import { Route as AuthenticatedPortalBookRouteImport } from './routes/_authenticated/portal.book'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -629,6 +630,12 @@ const AuthenticatedPortalDoctorsRoute =
     path: '/doctors',
     getParentRoute: () => AuthenticatedPortalRoute,
   } as any)
+const AuthenticatedPortalComplaintsRoute =
+  AuthenticatedPortalComplaintsRouteImport.update({
+    id: '/complaints',
+    path: '/complaints',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
 const AuthenticatedPortalBookRoute = AuthenticatedPortalBookRouteImport.update({
   id: '/book',
   path: '/book',
@@ -771,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/portal/book': typeof AuthenticatedPortalBookRoute
+  '/portal/complaints': typeof AuthenticatedPortalComplaintsRoute
   '/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
   '/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
@@ -877,6 +885,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/portal/book': typeof AuthenticatedPortalBookRoute
+  '/portal/complaints': typeof AuthenticatedPortalComplaintsRoute
   '/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
   '/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
@@ -986,6 +995,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/_authenticated/portal/book': typeof AuthenticatedPortalBookRoute
+  '/_authenticated/portal/complaints': typeof AuthenticatedPortalComplaintsRoute
   '/_authenticated/portal/doctors': typeof AuthenticatedPortalDoctorsRoute
   '/_authenticated/portal/insurance': typeof AuthenticatedPortalInsuranceRoute
   '/_authenticated/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
@@ -1095,6 +1105,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
     | '/portal/book'
+    | '/portal/complaints'
     | '/portal/doctors'
     | '/portal/insurance'
     | '/portal/invoices'
@@ -1201,6 +1212,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
     | '/portal/book'
+    | '/portal/complaints'
     | '/portal/doctors'
     | '/portal/insurance'
     | '/portal/invoices'
@@ -1309,6 +1321,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/portal/book'
+    | '/_authenticated/portal/complaints'
     | '/_authenticated/portal/doctors'
     | '/_authenticated/portal/insurance'
     | '/_authenticated/portal/invoices'
@@ -2061,6 +2074,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalDoctorsRouteImport
       parentRoute: typeof AuthenticatedPortalRoute
     }
+    '/_authenticated/portal/complaints': {
+      id: '/_authenticated/portal/complaints'
+      path: '/complaints'
+      fullPath: '/portal/complaints'
+      preLoaderRoute: typeof AuthenticatedPortalComplaintsRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
     '/_authenticated/portal/book': {
       id: '/_authenticated/portal/book'
       path: '/book'
@@ -2136,6 +2156,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalBookRoute: typeof AuthenticatedPortalBookRoute
+  AuthenticatedPortalComplaintsRoute: typeof AuthenticatedPortalComplaintsRoute
   AuthenticatedPortalDoctorsRoute: typeof AuthenticatedPortalDoctorsRoute
   AuthenticatedPortalInsuranceRoute: typeof AuthenticatedPortalInsuranceRoute
   AuthenticatedPortalInvoicesRoute: typeof AuthenticatedPortalInvoicesRoute
@@ -2152,6 +2173,7 @@ interface AuthenticatedPortalRouteChildren {
 
 const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
   AuthenticatedPortalBookRoute: AuthenticatedPortalBookRoute,
+  AuthenticatedPortalComplaintsRoute: AuthenticatedPortalComplaintsRoute,
   AuthenticatedPortalDoctorsRoute: AuthenticatedPortalDoctorsRoute,
   AuthenticatedPortalInsuranceRoute: AuthenticatedPortalInsuranceRoute,
   AuthenticatedPortalInvoicesRoute: AuthenticatedPortalInvoicesRoute,
