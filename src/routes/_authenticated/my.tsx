@@ -108,6 +108,7 @@ type LabReport = {
   file_path: string | null;
   summary: string | null;
   status: string;
+  released_at: string | null;
 };
 
 type RadReport = {
@@ -118,6 +119,7 @@ type RadReport = {
   findings: string | null;
   file_path: string | null;
   status: string;
+  released_at: string | null;
 };
 
 type Invoice = {
@@ -506,8 +508,9 @@ function LabsTab({ patientId }: { patientId: string | null }) {
     (async () => {
       const { data, error } = await supabase
         .from("lab_reports")
-        .select("id, title, test_type, report_date, file_path, summary, status")
+        .select("id, title, test_type, report_date, file_path, summary, status, released_at")
         .eq("patient_id", patientId)
+        .not("released_at", "is", null)
         .order("report_date", { ascending: false });
       if (error) return toast.error(error.message);
       setRows((data as LabReport[]) ?? []);
@@ -550,8 +553,9 @@ function RadiologyTab({ patientId }: { patientId: string | null }) {
     (async () => {
       const { data, error } = await supabase
         .from("radiology_reports")
-        .select("id, modality, body_part, report_date, findings, file_path, status")
+        .select("id, modality, body_part, report_date, findings, file_path, status, released_at")
         .eq("patient_id", patientId)
+        .not("released_at", "is", null)
         .order("report_date", { ascending: false });
       if (error) return toast.error(error.message);
       setRows((data as RadReport[]) ?? []);

@@ -15,6 +15,7 @@ export type RadiologyReport = {
   status: string | null;
   ordered_by: string | null;
   doctor_name: string | null;
+  released_at: string | null;
 };
 
 export const getMyRadiologyReports = createServerFn({ method: "GET" })
@@ -28,8 +29,9 @@ export const getMyRadiologyReports = createServerFn({ method: "GET" })
 
     const res = await supabase
       .from("radiology_reports")
-      .select("id, modality, body_part, findings, report_date, file_path, status, ordered_by, doctors:ordered_by(name_ar)")
+      .select("id, modality, body_part, findings, report_date, file_path, status, ordered_by, released_at, doctors:ordered_by(name_ar)")
       .eq("patient_id", patient.id)
+      .not("released_at", "is", null)
       .order("report_date", { ascending: false })
       .limit(200);
 
@@ -43,6 +45,7 @@ export const getMyRadiologyReports = createServerFn({ method: "GET" })
         file_path: (r.file_path as string | null) ?? null,
         status: (r.status as string | null) ?? null,
         ordered_by: (r.ordered_by as string | null) ?? null,
+        released_at: (r.released_at as string | null) ?? null,
         doctor_name:
           ((r as { doctors?: { name_ar?: string | null } | null }).doctors?.name_ar as string | null) ?? null,
       })),
@@ -62,7 +65,8 @@ export const getRadiologyFileUrl = createServerFn({ method: "POST" })
 
     const owns = await supabase
       .from("radiology_reports").select("id")
-      .eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+      .eq("patient_id", patientId).eq("file_path", data.path)
+      .not("released_at", "is", null).limit(1);
     if (!(owns.data ?? []).length) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -94,6 +98,7 @@ export const getRadiologyAiSummary = createServerFn({ method: "POST" })
       .from("radiology_reports")
       .select("modality, body_part, findings, report_date, status")
       .eq("patient_id", p.data.id)
+      .not("released_at", "is", null)
       .order("report_date", { ascending: false })
       .limit(15);
 

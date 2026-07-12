@@ -15,6 +15,7 @@ export type LabReport = {
   file_path: string | null;
   ordered_by: string | null;
   doctor_name: string | null;
+  released_at: string | null;
 };
 
 export const getMyLabReports = createServerFn({ method: "GET" })
@@ -32,8 +33,9 @@ export const getMyLabReports = createServerFn({ method: "GET" })
 
     const labs = await supabase
       .from("lab_reports")
-      .select("id, title, test_type, summary, status, report_date, file_path, ordered_by, doctors:ordered_by(name_ar)")
+      .select("id, title, test_type, summary, status, report_date, file_path, ordered_by, released_at, doctors:ordered_by(name_ar)")
       .eq("patient_id", patient.id)
+      .not("released_at", "is", null)
       .order("report_date", { ascending: false })
       .limit(200);
 
@@ -46,6 +48,7 @@ export const getMyLabReports = createServerFn({ method: "GET" })
       report_date: (r.report_date as string | null) ?? null,
       file_path: (r.file_path as string | null) ?? null,
       ordered_by: (r.ordered_by as string | null) ?? null,
+      released_at: (r.released_at as string | null) ?? null,
       doctor_name: ((r as { doctors?: { name_ar?: string | null } | null }).doctors?.name_ar as string | null) ?? null,
     }));
 
@@ -72,6 +75,7 @@ export const getLabFileUrl = createServerFn({ method: "POST" })
       .select("id")
       .eq("patient_id", patientId)
       .eq("file_path", data.path)
+      .not("released_at", "is", null)
       .limit(1);
     if (!(owns.data ?? []).length) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
 
@@ -108,6 +112,7 @@ export const shareLabWithDoctor = createServerFn({ method: "POST" })
       .select("id, title, test_type, report_date")
       .eq("patient_id", patient.id)
       .eq("id", data.report_id)
+      .not("released_at", "is", null)
       .maybeSingle();
     if (!labRes.data) throw new Error("تقرير المختبر غير موجود.");
 

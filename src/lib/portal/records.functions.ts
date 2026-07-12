@@ -98,14 +98,16 @@ export const getMyMedicalRecords = createServerFn({ method: "GET" })
         .limit(50),
       supabase
         .from("lab_reports")
-        .select("id, title, test_type, summary, status, report_date, file_path")
+        .select("id, title, test_type, summary, status, report_date, file_path, released_at")
         .eq("patient_id", patient.id)
+        .not("released_at", "is", null)
         .order("report_date", { ascending: false })
         .limit(50),
       supabase
         .from("radiology_reports")
-        .select("id, modality, body_part, findings, report_date, file_path, status")
+        .select("id, modality, body_part, findings, report_date, file_path, status, released_at")
         .eq("patient_id", patient.id)
+        .not("released_at", "is", null)
         .order("report_date", { ascending: false })
         .limit(50),
       supabase
@@ -273,11 +275,13 @@ export const getRecordFileUrl = createServerFn({ method: "POST" })
     let owns = false;
     if (data.bucket === "lab-reports") {
       const q = await supabase
-        .from("lab_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+        .from("lab_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path)
+        .not("released_at", "is", null).limit(1);
       owns = (q.data ?? []).length > 0;
     } else if (data.bucket === "radiology-reports") {
       const q = await supabase
-        .from("radiology_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+        .from("radiology_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path)
+        .not("released_at", "is", null).limit(1);
       owns = (q.data ?? []).length > 0;
     } else {
       const q = await supabase
@@ -324,7 +328,7 @@ export const getRecordsAiSummary = createServerFn({ method: "POST" })
       supabase.from("patient_allergies").select("allergen, reaction, severity").eq("patient_id", pid).limit(20),
       supabase.from("patient_medications").select("medication_name, dosage, frequency, status").eq("patient_id", pid).eq("status", "active").limit(50),
       supabase.from("patient_immunizations").select("vaccine_name, administered_on, next_due_on").eq("patient_id", pid).order("administered_on", { ascending: false }).limit(20),
-      supabase.from("lab_reports").select("title, test_type, summary, report_date").eq("patient_id", pid).order("report_date", { ascending: false }).limit(10),
+      supabase.from("lab_reports").select("title, test_type, summary, report_date").eq("patient_id", pid).not("released_at", "is", null).order("report_date", { ascending: false }).limit(10),
     ]);
 
     const facts = {
