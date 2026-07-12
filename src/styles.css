@@ -429,3 +429,195 @@ html.reduce-motion *::after {
 }
 .cc-rise { animation: cc-rise 0.5s ease-out both; }
 
+
+/* ============================================================
+   FUTURISTIC — «طب المستقبل» design layer (opt-in scope)
+   Activate by wrapping a section/page in <div className="futuristic">.
+   Never applied globally so existing Navy Trust brand stays intact.
+   Palette: Neon Teal #00D9C0, Electric Cyan, Neon Purple #7B61FF
+   ============================================================ */
+:root {
+  --neon-teal: #00d9c0;
+  --neon-teal-soft: color-mix(in oklab, #00d9c0 55%, transparent);
+  --neon-purple: #7b61ff;
+  --electric-cyan: #22e8ff;
+  --fut-bg-1: #05060a;
+  --fut-bg-2: #0a1a2f;
+  --fut-ink: #eaf6ff;
+  --fut-ink-muted: rgba(234, 246, 255, 0.7);
+  --fut-ink-dim: rgba(234, 246, 255, 0.45);
+  --fut-border: rgba(255, 255, 255, 0.08);
+  --fut-border-strong: rgba(0, 217, 192, 0.35);
+  --fut-glow-teal: 0 0 24px -4px rgba(0, 217, 192, 0.55), 0 0 60px -18px rgba(0, 217, 192, 0.35);
+  --fut-glow-purple: 0 0 24px -4px rgba(123, 97, 255, 0.55), 0 0 60px -18px rgba(123, 97, 255, 0.35);
+  --fut-shadow-glass: 0 12px 44px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --fut-gradient-hero: linear-gradient(135deg, #05060a 0%, #08122a 55%, #0a1a2f 100%);
+  --fut-gradient-neon: linear-gradient(135deg, #00d9c0 0%, #22e8ff 50%, #7b61ff 100%);
+  --fut-gradient-aurora:
+    radial-gradient(1200px 700px at 15% -10%, rgba(0, 217, 192, 0.18), transparent 55%),
+    radial-gradient(900px 600px at 110% 5%, rgba(123, 97, 255, 0.22), transparent 55%),
+    radial-gradient(700px 500px at 60% 110%, rgba(34, 232, 255, 0.14), transparent 55%);
+  --font-fut-display: "Tajawal", "IBM Plex Sans Arabic", "Cairo", sans-serif;
+  --font-fut-body: "IBM Plex Sans Arabic", "Tajawal", "Cairo", sans-serif;
+}
+
+.futuristic {
+  background:
+    var(--fut-gradient-aurora),
+    var(--fut-gradient-hero);
+  color: var(--fut-ink);
+  font-family: var(--font-fut-body);
+  min-height: 100%;
+}
+.futuristic h1, .futuristic h2, .futuristic h3, .futuristic h4 {
+  font-family: var(--font-fut-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.futuristic ::selection { background: rgba(0, 217, 192, 0.35); color: #fff; }
+
+/* Slow-moving aurora mesh background — for hero sections. */
+@keyframes fut-aurora-drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(-3%, 2%, 0) scale(1.05); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+@utility aurora-bg {
+  position: relative;
+  isolation: isolate;
+  background: var(--fut-gradient-hero);
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    z-index: -1;
+    background: var(--fut-gradient-aurora);
+    filter: blur(40px);
+    animation: fut-aurora-drift 18s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+
+/* Glassmorphism panel — dark, neon-edged. */
+@utility glass-fut {
+  background: color-mix(in oklab, #0a1a2f 55%, transparent);
+  border: 1px solid var(--fut-border);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-radius: 1.25rem;
+  box-shadow: var(--fut-shadow-glass);
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.glass-fut:hover {
+  border-color: var(--fut-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--fut-shadow-glass), var(--fut-glow-teal);
+}
+
+/* Neon-glow border on hover — for buttons/cards. */
+@utility neon-glow-hover {
+  transition: box-shadow .3s ease, transform .2s ease, border-color .3s ease;
+  &:hover {
+    box-shadow: var(--fut-glow-teal);
+    border-color: var(--neon-teal);
+  }
+}
+@utility neon-glow-purple {
+  transition: box-shadow .3s ease, transform .2s ease, border-color .3s ease;
+  &:hover {
+    box-shadow: var(--fut-glow-purple);
+    border-color: var(--neon-purple);
+  }
+}
+
+/* Magnetic button — solid neon with soft glow, elevates on hover. */
+@utility btn-magnetic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  color: #04121a;
+  background: var(--fut-gradient-neon);
+  box-shadow: 0 8px 24px -12px rgba(0, 217, 192, 0.5);
+  transition: transform .2s ease, box-shadow .3s ease, filter .2s ease;
+  cursor: pointer;
+  border: 0;
+}
+.btn-magnetic:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fut-glow-teal);
+  filter: brightness(1.08);
+}
+.btn-magnetic:active { transform: translateY(0); }
+.btn-magnetic:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(.4); }
+
+/* Input with luminous focus ring. */
+@utility input-glow {
+  background: color-mix(in oklab, #0a1a2f 70%, transparent);
+  border: 1px solid var(--fut-border);
+  color: var(--fut-ink);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+  outline: none;
+}
+.input-glow::placeholder { color: var(--fut-ink-dim); }
+.input-glow:focus {
+  border-color: var(--neon-teal);
+  box-shadow: 0 0 0 3px rgba(0, 217, 192, 0.22), var(--fut-glow-teal);
+  background: color-mix(in oklab, #0a1a2f 85%, transparent);
+}
+
+/* Gradient neon text — for hero headings. */
+@utility text-neon {
+  background: var(--fut-gradient-neon);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Skeleton with neon shine — replaces spinners. */
+@keyframes fut-shine {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(120%); }
+}
+@utility skeleton-neon {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, #0a1a2f 60%, transparent);
+  border: 1px solid var(--fut-border);
+  border-radius: 0.75rem;
+}
+.skeleton-neon::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(0, 217, 192, 0.15) 50%, transparent 70%);
+  animation: fut-shine 1.8s ease-in-out infinite;
+}
+
+/* Pulse dot — availability / live indicator. */
+@keyframes fut-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 192, 0.55); }
+  50%      { box-shadow: 0 0 0 10px rgba(0, 217, 192, 0); }
+}
+@utility pulse-neon {
+  animation: fut-pulse 1.8s ease-out infinite;
+}
+
+/* Subtle grid overlay — for hero "tech" feel. */
+@utility grid-overlay {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 217, 192, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 217, 192, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 75%);
+    pointer-events: none;
+  }
+}
