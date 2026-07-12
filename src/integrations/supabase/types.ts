@@ -2294,6 +2294,42 @@ export type Database = {
           },
         ]
       }
+      reminder_preferences: {
+        Row: {
+          appointment_lead_minutes: number
+          created_at: string
+          daily_repeat_days: number
+          id: string
+          medication_lead_minutes: number
+          sleep_hour: number
+          updated_at: string
+          user_id: string
+          wake_hour: number
+        }
+        Insert: {
+          appointment_lead_minutes?: number
+          created_at?: string
+          daily_repeat_days?: number
+          id?: string
+          medication_lead_minutes?: number
+          sleep_hour?: number
+          updated_at?: string
+          user_id: string
+          wake_hour?: number
+        }
+        Update: {
+          appointment_lead_minutes?: number
+          created_at?: string
+          daily_repeat_days?: number
+          id?: string
+          medication_lead_minutes?: number
+          sleep_hour?: number
+          updated_at?: string
+          user_id?: string
+          wake_hour?: number
+        }
+        Relationships: []
+      }
       second_opinion_requests: {
         Row: {
           admin_notes: string | null
