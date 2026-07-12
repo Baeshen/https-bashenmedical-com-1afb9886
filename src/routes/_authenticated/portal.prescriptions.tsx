@@ -324,10 +324,14 @@ function Field({ label, value }: { label: string; value: string }) {
 /* --------------------------- AI assistant --------------------------- */
 
 function AiReminderCard({ upcoming, activeCount }: { upcoming: unknown[]; activeCount: number }) {
+  const qc = useQueryClient();
   const mut = useMutation({
     mutationFn: () => generateMedicationReminders({ data: {} }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر توليد الخطة"),
-    onSuccess: () => toast.success("تم توليد جدول التذكيرات."),
+    onSuccess: () => {
+      toast.success("تم توليد جدول التذكيرات.");
+      qc.invalidateQueries({ queryKey: ["portal", "reminder-log"] });
+    },
   });
   const plan = mut.data as ReminderPlan | undefined;
 
