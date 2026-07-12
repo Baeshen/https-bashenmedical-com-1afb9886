@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -8,15 +8,18 @@ import {
   assignRole,
   revokeRole,
   listBranchesForRbac,
+  listPermissionsCatalog,
+  listRolePermissionsMatrix,
+  setRolePermission,
   type AppRole,
 } from "@/lib/rbac.functions";
 import { getMyRoles } from "@/lib/admin.functions";
-import { ShieldCheck, UserPlus, X, ArrowRight } from "lucide-react";
+import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/rbac")({
   head: () => ({
     meta: [
-      { title: "إدارة الصلاحيات | مجمع باعشن الطبي" },
+      { title: "إدارة الأدوار والصلاحيات | مجمع باعشن الطبي" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -32,21 +35,132 @@ const ROLE_LABELS: Record<AppRole, string> = {
 };
 const ROLES: AppRole[] = ["super_admin", "admin", "doctor", "reception", "pharmacy"];
 
+const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+  super_admin: "أعلى صلاحية، يتحكم بكل الإعدادات ولا يمكن حذفه بالكامل.",
+  admin: "مسؤول تشغيل المجمع؛ يدير المستخدمين والصلاحيات والتقارير.",
+  doctor: "الطبيب المعالج؛ يطّلع على المرضى ويكتب البيانات السريرية.",
+  reception: "موظف الاستقبال؛ يدير المواعيد وملفات المرضى.",
+  pharmacy: "الصيدلي؛ يدير المخزون والوصفات الطبية.",
+};
+
+type Tab = "users" | "roles" | "permissions";
+
 function RbacPage() {
-  const router = useRouter();
   const qc = useQueryClient();
   const myRolesFn = useServerFn(getMyRoles);
   const listFn = useServerFn(listUsersWithRoles);
   const branchesFn = useServerFn(listBranchesForRbac);
   const assignFn = useServerFn(assignRole);
   const revokeFn = useServerFn(revokeRole);
+  const catalogFn = useServerFn(listPermissionsCatalog);
+  const matrixFn = useServerFn(listRolePermissionsMatrix);
+  const toggleFn = useServerFn(setRolePermission);
 
   const myRoles = useQuery({ queryKey: ["my-roles"], queryFn: () => myRolesFn() });
-  const users = useQuery({ queryKey: ["rbac-users"], queryFn: () => listFn() });
-  const branches = useQuery({ queryKey: ["rbac-branches"], queryFn: () => branchesFn() });
-
   const isSuper = (myRoles.data?.roles ?? []).includes("super_admin" as any);
   const isAdmin = (myRoles.data?.roles ?? []).includes("admin" as any) || isSuper;
+
+  const [tab, setTab] = useState<Tab>("users");
+
+  if (myRoles.isLoading) {
+    return <div className="container-app py-16 text-center text-muted-foreground">جارٍ التحميل…</div>;
+  }
+  if (!isAdmin) {
+    return (
+      <div className="container-app py-16 text-center">
+        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
+        <p className="mt-4 text-muted-foreground">هذه الصفحة للمسؤولين فقط.</p>
+      </div>
+    );
+  }
+
+  const tabs: Array<{ id: Tab; label: string; icon: any }> = [
+    { id: "users", label: "المستخدمون", icon: Users },
+    { id: "roles", label: "الأدوار", icon: Layers },
+    { id: "permissions", label: "الصلاحيات", icon: KeyRound },
+  ];
+
+  return (
+    <div className="container-app py-8">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">إعدادات الأدوار والصلاحيات</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            تعريف الأدوار، تحديد صلاحيات كل دور، وربطها بالمستخدمين والفروع.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/audit-log"
+            className="rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            سجل التدقيق
+          </Link>
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            <ArrowRight className="h-4 w-4" /> لوحة التحكم
+          </Link>
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "users" && (
+        <UsersTab
+          listFn={listFn}
+          branchesFn={branchesFn}
+          assignFn={assignFn}
+          revokeFn={revokeFn}
+          isSuper={isSuper}
+          qc={qc}
+        />
+      )}
+      {tab === "roles" && <RolesTab />}
+      {tab === "permissions" && (
+        <PermissionsTab
+          catalogFn={catalogFn}
+          matrixFn={matrixFn}
+          toggleFn={toggleFn}
+          isSuper={isSuper}
+          qc={qc}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------- Users tab ------------------------------ */
+
+function UsersTab(props: {
+  listFn: any;
+  branchesFn: any;
+  assignFn: any;
+  revokeFn: any;
+  isSuper: boolean;
+  qc: ReturnType<typeof useQueryClient>;
+}) {
+  const { listFn, branchesFn, assignFn, revokeFn, isSuper, qc } = props;
+  const users = useQuery({ queryKey: ["rbac-users"], queryFn: () => listFn() });
+  const branches = useQuery({ queryKey: ["rbac-branches"], queryFn: () => branchesFn() });
 
   const [q, setQ] = useState("");
   const [openFor, setOpenFor] = useState<string | null>(null);
@@ -78,42 +192,15 @@ function RbacPage() {
     if (!q.trim()) return list;
     const s = q.trim().toLowerCase();
     return list.filter(
-      (u) =>
+      (u: any) =>
         (u.full_name ?? "").toLowerCase().includes(s) ||
         (u.email ?? "").toLowerCase().includes(s) ||
         (u.phone ?? "").toLowerCase().includes(s),
     );
   }, [users.data, q]);
 
-  if (myRoles.isLoading) {
-    return <div className="container-app py-16 text-center text-muted-foreground">جارٍ التحميل…</div>;
-  }
-  if (!isAdmin) {
-    return (
-      <div className="container-app py-16 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 text-muted-foreground">هذه الصفحة للمسؤولين فقط.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="container-app py-8">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">إدارة الصلاحيات</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            تعيين وإلغاء الأدوار لكل مستخدم مع تحديد الفرع.
-          </p>
-        </div>
-        <Link
-          to="/admin"
-          className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
-        >
-          <ArrowRight className="h-4 w-4" /> لوحة التحكم
-        </Link>
-      </div>
-
+    <div>
       <div className="mb-4 flex items-center gap-3">
         <input
           value={q}
@@ -121,12 +208,6 @@ function RbacPage() {
           placeholder="بحث بالاسم أو البريد أو الجوال"
           className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
-        <Link
-          to="/audit-log"
-          className="rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
-        >
-          سجل التدقيق
-        </Link>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -154,9 +235,9 @@ function RbacPage() {
                 </td>
               </tr>
             )}
-            {filtered.map((u) => {
-              const branchMap = new Map(
-                (branches.data ?? []).map((b: any) => [b.id, b.name_ar as string]),
+            {filtered.map((u: any) => {
+              const branchMap = new Map<string, string>(
+                (branches.data ?? []).map((b: any) => [b.id as string, b.name_ar as string]),
               );
               return (
                 <tr key={u.user_id} className="border-t border-border align-top">
@@ -170,12 +251,12 @@ function RbacPage() {
                       {u.roles.length === 0 && (
                         <span className="text-xs text-muted-foreground">بدون أدوار</span>
                       )}
-                      {u.roles.map((r) => (
+                      {u.roles.map((r: any) => (
                         <span
                           key={`${r.role}-${r.branch_id ?? "all"}`}
                           className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                         >
-                          {ROLE_LABELS[r.role] ?? r.role}
+                          {ROLE_LABELS[r.role as AppRole] ?? r.role}
                           {r.branch_id && (
                             <span className="text-primary/70">
                               · {branchMap.get(r.branch_id) ?? "فرع"}
@@ -184,7 +265,8 @@ function RbacPage() {
                           {(isSuper || (r.role !== "admin" && r.role !== "super_admin")) && (
                             <button
                               onClick={() => {
-                                if (!confirm(`إلغاء دور ${ROLE_LABELS[r.role]}؟`)) return;
+                                if (!confirm(`إلغاء دور ${ROLE_LABELS[r.role as AppRole]}؟`))
+                                  return;
                                 revokeMut.mutate({ user_id: u.user_id, role: r.role });
                               }}
                               className="rounded-full p-0.5 hover:bg-destructive/20"
@@ -261,6 +343,168 @@ function RbacPage() {
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- Roles tab ------------------------------ */
+
+function RolesTab() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {ROLES.map((r) => (
+        <div key={r} className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-lg font-semibold">{ROLE_LABELS[r]}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{ROLE_DESCRIPTIONS[r]}</p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+              {r}
+            </span>
+          </div>
+        </div>
+      ))}
+      <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground md:col-span-2">
+        الأدوار محددة على مستوى النظام. لإضافة أدوار جديدة يلزم تعديل مخطط قاعدة البيانات.
+        استخدم تبويب <strong>الصلاحيات</strong> لتخصيص ما يستطيع كل دور فعله.
+      </div>
+    </div>
+  );
+}
+
+/* --------------------------- Permissions tab ---------------------------- */
+
+function PermissionsTab(props: {
+  catalogFn: any;
+  matrixFn: any;
+  toggleFn: any;
+  isSuper: boolean;
+  qc: ReturnType<typeof useQueryClient>;
+}) {
+  const { catalogFn, matrixFn, toggleFn, isSuper, qc } = props;
+  const catalog = useQuery({ queryKey: ["rbac-perm-catalog"], queryFn: () => catalogFn() });
+  const matrix = useQuery({ queryKey: ["rbac-perm-matrix"], queryFn: () => matrixFn() });
+
+  const set = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of matrix.data ?? []) s.add(`${r.role}::${r.permission_key}`);
+    return s;
+  }, [matrix.data]);
+
+  const toggleMut = useMutation({
+    mutationFn: (v: { role: AppRole; permission_key: string; enabled: boolean }) =>
+      toggleFn({ data: v }),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: ["rbac-perm-matrix"] });
+      const prev = qc.getQueryData<any[]>(["rbac-perm-matrix"]) ?? [];
+      const next = v.enabled
+        ? [...prev, { role: v.role, permission_key: v.permission_key }]
+        : prev.filter(
+            (r) => !(r.role === v.role && r.permission_key === v.permission_key),
+          );
+      qc.setQueryData(["rbac-perm-matrix"], next);
+      return { prev };
+    },
+    onError: (e: any, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["rbac-perm-matrix"], ctx.prev);
+      toast.error(e?.message ?? "تعذّر تحديث الصلاحية");
+    },
+    onSuccess: () => toast.success("تم التحديث"),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["rbac-perm-matrix"] }),
+  });
+
+  if (catalog.isLoading || matrix.isLoading) {
+    return <div className="py-8 text-center text-muted-foreground">جارٍ التحميل…</div>;
+  }
+  if (catalog.isError) {
+    return (
+      <div className="py-8 text-center text-destructive">
+        {(catalog.error as any)?.message ?? "تعذّر تحميل الصلاحيات"}
+      </div>
+    );
+  }
+
+  // group by category
+  const byCat = new Map<string, typeof catalog.data>();
+  for (const p of catalog.data ?? []) {
+    const arr = byCat.get(p.category) ?? ([] as any);
+    arr.push(p);
+    byCat.set(p.category, arr);
+  }
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">
+        فعّل أو عطّل كل صلاحية لكل دور. صلاحيات <strong>المسؤول الأعلى</strong> و
+        <strong> المسؤول</strong> لا يمكن تعديلها إلا بواسطة المسؤول الأعلى.
+      </p>
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted/50 text-xs text-muted-foreground">
+            <tr>
+              <th className="sticky right-0 z-10 bg-muted/50 px-3 py-2 text-right">الصلاحية</th>
+              {ROLES.map((r) => (
+                <th key={r} className="px-3 py-2 text-center">
+                  {ROLE_LABELS[r]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(byCat.entries()).flatMap(([cat, perms]) => [
+              <tr key={`cat-${cat}`} className="bg-muted/30">
+                <td
+                  colSpan={ROLES.length + 1}
+                  className="px-3 py-1.5 text-right text-xs font-semibold text-muted-foreground"
+                >
+                  {cat}
+                </td>
+              </tr>,
+              ...(perms ?? []).map((p: any) => (
+                <tr key={p.key} className="border-t border-border">
+                  <td className="sticky right-0 z-10 bg-card px-3 py-2 text-right">
+                    <div className="font-medium">{p.description_ar}</div>
+                    <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                      {p.key}
+                    </div>
+                  </td>
+                  {ROLES.map((r) => {
+                    const on = r === "super_admin" ? true : set.has(`${r}::${p.key}`);
+                    const locked =
+                      r === "super_admin" || (!isSuper && r === "admin");
+                    return (
+                      <td key={r} className="px-3 py-2 text-center">
+                        <button
+                          disabled={locked || toggleMut.isPending}
+                          onClick={() =>
+                            toggleMut.mutate({
+                              role: r,
+                              permission_key: p.key,
+                              enabled: !on,
+                            })
+                          }
+                          title={locked ? "غير قابل للتعديل" : on ? "تعطيل" : "تفعيل"}
+                          className={`inline-flex h-5 w-9 items-center rounded-full transition ${
+                            on ? "bg-primary" : "bg-muted"
+                          } ${locked ? "opacity-60" : "hover:opacity-80"}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-background transition ${
+                              on ? "-translate-x-0.5" : "-translate-x-4"
+                            }`}
+                          />
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              )),
+            ])}
+
           </tbody>
         </table>
       </div>
