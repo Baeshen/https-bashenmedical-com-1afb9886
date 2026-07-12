@@ -271,13 +271,13 @@ function PortalDashboard() {
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wide text-[color:var(--portal-ink-3)] text-start">
                     <th className={`py-2 ${isAr ? "text-right" : "text-left"}`}>
-                      {isAr ? "الفحص" : "Test"}
+                      {isAr ? "التقرير" : "Report"}
                     </th>
                     <th className={`py-2 ${isAr ? "text-right" : "text-left"}`}>
-                      {isAr ? "القيمة" : "Value"}
+                      {isAr ? "النوع" : "Type"}
                     </th>
                     <th className={`py-2 ${isAr ? "text-right" : "text-left"}`}>
-                      {isAr ? "المعدل الطبيعي" : "Range"}
+                      {isAr ? "التاريخ" : "Date"}
                     </th>
                     <th className={`py-2 ${isAr ? "text-right" : "text-left"}`}>
                       {isAr ? "الحالة" : "Status"}
@@ -291,16 +291,18 @@ function PortalDashboard() {
                       className="border-t border-[color:var(--portal-border)] hover:bg-[color:var(--portal-gradient-soft)]"
                     >
                       <td className="py-3 font-medium text-[color:var(--portal-ink)]">
-                        {l.test_name}
+                        {l.title}
                       </td>
-                      <td className="py-3">
-                        {l.value ?? "—"}{" "}
-                        <span className="text-[color:var(--portal-ink-3)] text-xs">
-                          {l.unit ?? ""}
-                        </span>
+                      <td className="py-3 text-[color:var(--portal-ink-2)]">
+                        {l.test_type ?? "—"}
                       </td>
                       <td className="py-3 text-[color:var(--portal-ink-3)] text-xs">
-                        {l.reference_range ?? "—"}
+                        {l.report_date
+                          ? new Date(l.report_date).toLocaleDateString(
+                              isAr ? "ar-SA-u-nu-latn" : "en-US",
+                              { day: "2-digit", month: "short", year: "numeric" },
+                            )
+                          : "—"}
                       </td>
                       <td className="py-3">
                         <LabStatusPill status={l.status} isAr={isAr} />
@@ -312,6 +314,7 @@ function PortalDashboard() {
             </div>
           )}
         </div>
+
 
         <div className="portal-card p-5 md:p-6 min-w-0">
           <SectionHeader
