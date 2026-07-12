@@ -35,7 +35,7 @@
       {
         "name": "list_doctors",
         "title": "List doctors",
-        "description": "List active doctors at Baeshen Medical Complex. Optionally filter by branch slug or specialty slug. Returns up to 50 doctors per call.",
+        "description": "List active doctors at Baeshen Medical Complex with rich filters (specialty, branch, language, gender, name search, booking-enabled). When no branch is supplied, falls back to the signed-in user's default branch, or to `default_branch_slug` if provided.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -46,17 +46,58 @@
           "properties": {
             "branch_slug": {
               "type": "string",
-              "description": "Optional branch slug filter."
+              "description": "Branch slug filter (exact)."
             },
             "specialty_slug": {
               "type": "string",
-              "description": "Optional specialty slug filter."
+              "description": "Specialty slug filter (exact)."
+            },
+            "default_branch_slug": {
+              "type": "string",
+              "description": "Fallback branch slug used only when `branch_slug` is not given and the user has no stored default branch."
+            },
+            "language": {
+              "type": "string",
+              "description": "Filter by a language the doctor speaks (e.g. `ar`, `en`)."
+            },
+            "gender": {
+              "type": "string",
+              "enum": [
+                "male",
+                "female"
+              ],
+              "description": "Filter by doctor gender."
+            },
+            "search": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "Case-insensitive name search across Arabic/English names."
+            },
+            "booking_enabled": {
+              "type": "boolean",
+              "description": "If true, return only doctors with online booking enabled."
+            },
+            "sort": {
+              "type": "string",
+              "enum": [
+                "sort_order",
+                "rating",
+                "experience",
+                "name"
+              ],
+              "description": "Sort key (default: sort_order)."
             },
             "limit": {
               "type": "integer",
               "minimum": 1,
               "maximum": 50,
               "description": "Max rows (default 20)."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Row offset for pagination."
             }
           },
           "additionalProperties": false,
