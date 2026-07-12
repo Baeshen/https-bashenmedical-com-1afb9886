@@ -1389,6 +1389,7 @@ export type Database = {
           id: string
           ordered_by: string | null
           patient_id: string
+          released_at: string | null
           report_date: string
           status: string
           summary: string | null
@@ -1402,6 +1403,7 @@ export type Database = {
           id?: string
           ordered_by?: string | null
           patient_id: string
+          released_at?: string | null
           report_date?: string
           status?: string
           summary?: string | null
@@ -1415,6 +1417,7 @@ export type Database = {
           id?: string
           ordered_by?: string | null
           patient_id?: string
+          released_at?: string | null
           report_date?: string
           status?: string
           summary?: string | null
@@ -2981,6 +2984,7 @@ export type Database = {
           modality: string
           ordered_by: string | null
           patient_id: string
+          released_at: string | null
           report_date: string
           status: string
           updated_at: string
@@ -2994,6 +2998,7 @@ export type Database = {
           modality: string
           ordered_by?: string | null
           patient_id: string
+          released_at?: string | null
           report_date?: string
           status?: string
           updated_at?: string
@@ -3007,6 +3012,7 @@ export type Database = {
           modality?: string
           ordered_by?: string | null
           patient_id?: string
+          released_at?: string | null
           report_date?: string
           status?: string
           updated_at?: string
