@@ -40,5 +40,5 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  plugins: [disableTanstackDevtoolsInjectSource(), mcpPlugin()],
+  plugins: [disableTanstackDevtoolsInjectSource(), imagetools(), mcpPlugin()],
 });
