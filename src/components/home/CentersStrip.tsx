@@ -9,8 +9,8 @@ type Center = {
   slug: string;
   name_ar: string;
   name_en: string;
-  short_desc_ar: string | null;
-  short_desc_en: string | null;
+  short_ar: string | null;
+  short_en: string | null;
   hero_image_url: string | null;
 };
 
@@ -22,7 +22,7 @@ export function CentersStrip() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excellence_centers")
-        .select("id,slug,name_ar,name_en,short_desc_ar,short_desc_en,hero_image_url")
+        .select("id,slug,name_ar,name_en,short_ar,short_en,hero_image_url")
         .eq("is_active", true)
         .order("sort_order")
         .limit(8);
