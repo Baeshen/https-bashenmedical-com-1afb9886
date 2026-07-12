@@ -7,7 +7,7 @@ import {
   ShieldCheck, Package, Truck, UserCog, Clock, Wallet, LineChart as LineIcon,
   BarChart3, Bot, Bell, Settings, ChevronsLeft, ChevronsRight, Search,
   Sparkles, TrendingUp, TrendingDown, Video, Zap, Command, X, Send,
-  ArrowUpRight, ActivitySquare, CheckCircle2, AlertTriangle,
+  ArrowUpRight, ActivitySquare, CheckCircle2, AlertTriangle, ShieldAlert,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, Area, AreaChart, Tooltip, XAxis, BarChart, Bar } from "recharts";
 import { getCommandCenterKpis, type CommandCenterKpis } from "@/lib/command-center/kpis.functions";
