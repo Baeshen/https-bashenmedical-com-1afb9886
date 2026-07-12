@@ -33,6 +33,13 @@ const complaintStatuses = [
 // ---------------------------------------------------------------------------
 // Submit (public — attaches user_id if signed in via optional bearer)
 // ---------------------------------------------------------------------------
+const attachmentSchema = z.object({
+  path: z.string().min(1).max(500),
+  name: z.string().min(1).max(255),
+  type: z.string().max(120).optional().or(z.literal("")),
+  size: z.number().int().nonnegative().max(20 * 1024 * 1024),
+});
+
 const submitSchema = z.object({
   name: z.string().trim().min(2, "الاسم قصير جداً").max(120),
   phone: z
@@ -43,6 +50,7 @@ const submitSchema = z.object({
   type: z.enum(complaintTypes),
   department: z.string().trim().max(120).optional().or(z.literal("")),
   message: z.string().trim().min(10, "الرسالة قصيرة جداً — 10 أحرف على الأقل").max(4000),
+  attachments: z.array(attachmentSchema).max(10).optional(),
 });
 
 export const submitComplaint = createServerFn({ method: "POST" })
@@ -76,6 +84,11 @@ export const submitMyComplaint = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => submitSchema.parse(raw))
   .handler(async ({ data, context }) => {
+    // Enforce path ownership on attachments — every stored path must live
+    // under the caller's uid folder. Prevents cross-user path forgery.
+    const atts = (data.attachments ?? []).filter(
+      (a) => a.path.startsWith(`${context.userId}/`),
+    );
     const { data: row, error } = await context.supabase
       .from("complaints")
       .insert({
@@ -86,6 +99,7 @@ export const submitMyComplaint = createServerFn({ method: "POST" })
         type: data.type,
         department: data.department || null,
         message: data.message,
+        attachments: atts,
       })
       .select("id, reference")
       .single();
@@ -162,12 +176,45 @@ export const listMyComplaints = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("complaints")
-      .select("id, reference, type, department, message, status, created_at, updated_at")
+      .select(
+        "id, reference, type, department, message, status, attachments, created_at, updated_at",
+      )
       .eq("patient_user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+// ---------------------------------------------------------------------------
+// Patient: signed URLs for the attachments of one of my complaints
+// ---------------------------------------------------------------------------
+const signUrlsSchema = z.object({ id: z.string().uuid() });
+
+export const getMyComplaintAttachmentUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => signUrlsSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("complaints")
+      .select("attachments, patient_user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error || !row || row.patient_user_id !== context.userId) {
+      throw new Error("لم نعثر على البلاغ.");
+    }
+    const items = Array.isArray(row.attachments)
+      ? (row.attachments as Array<{ path: string; name: string; type?: string; size?: number }>)
+      : [];
+    const signed = await Promise.all(
+      items.map(async (a) => {
+        const { data: s } = await context.supabase.storage
+          .from("complaint-attachments")
+          .createSignedUrl(a.path, 60 * 10);
+        return { ...a, url: s?.signedUrl ?? null };
+      }),
+    );
+    return signed;
   });
 
 // ---------------------------------------------------------------------------
