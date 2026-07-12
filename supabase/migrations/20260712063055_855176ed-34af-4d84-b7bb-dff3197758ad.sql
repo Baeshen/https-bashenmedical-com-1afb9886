@@ -1,0 +1,1 @@
+DELETE FROM public.appointments WHERE patient_phone = '0500000920' AND appointment_date = '2026-07-19' AND appointment_time = '15:30:00';
