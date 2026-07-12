@@ -431,34 +431,39 @@ function HomePage() {
             </Link>
           </div>
 
-          <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {doctors?.map((d) => (
-              <RevealItem
-                key={d.id}
-                className="glass-fut neon-glow-hover flex flex-col items-center p-6 text-center"
-              >
-                <div className="grid h-24 w-24 place-items-center rounded-full text-2xl font-bold text-[#04121a] shadow-[var(--fut-glow-teal)]"
-                     style={{ background: "var(--fut-gradient-neon)" }}>
-                  {(isAr ? d.name_ar : d.name_en).charAt(0)}
-                </div>
-                <div className="mt-4">
-                  <div className="font-bold text-[color:var(--fut-ink)]">
-                    {isAr ? d.name_ar : d.name_en}
-                  </div>
-                  <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)]">
-                    {isAr ? d.title_ar : d.title_en}
-                  </div>
-                </div>
-                <Link
-                  to="/book"
-                  search={{ doctor: d.id }}
-                  className="btn-magnetic mt-4 w-full !py-2 text-xs"
+          <SkeletonSwap
+            loading={doctorsLoading}
+            skeleton={<DoctorsSkeleton count={4} />}
+          >
+            <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {doctors?.map((d) => (
+                <RevealItem
+                  key={d.id}
+                  className="glass-fut neon-glow-hover flex flex-col items-center p-6 text-center"
                 >
-                  {t("book_with_doctor")}
-                </Link>
-              </RevealItem>
-            ))}
-          </StaggerReveal>
+                  <div className="grid h-24 w-24 place-items-center rounded-full text-2xl font-bold text-[#04121a] shadow-[var(--fut-glow-teal)]"
+                       style={{ background: "var(--fut-gradient-neon)" }}>
+                    {(isAr ? d.name_ar : d.name_en).charAt(0)}
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-bold text-[color:var(--fut-ink)]">
+                      {isAr ? d.name_ar : d.name_en}
+                    </div>
+                    <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)]">
+                      {isAr ? d.title_ar : d.title_en}
+                    </div>
+                  </div>
+                  <Link
+                    to="/book"
+                    search={{ doctor: d.id }}
+                    className="btn-magnetic mt-4 w-full !py-2 text-xs"
+                  >
+                    {t("book_with_doctor")}
+                  </Link>
+                </RevealItem>
+              ))}
+            </StaggerReveal>
+          </SkeletonSwap>
         </div>
       </section>
 
