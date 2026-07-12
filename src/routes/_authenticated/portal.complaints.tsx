@@ -467,6 +467,106 @@ function NewComplaintForm({
   );
 }
 
+function EditableMessage({
+  id,
+  status,
+  message,
+  department,
+  onSaved,
+}: {
+  id: string;
+  status: string;
+  message: string;
+  department: string | null;
+  onSaved: () => void;
+}) {
+  const editFn = useServerFn(editMyComplaint);
+  const [editing, setEditing] = useState(false);
+  const [msg, setMsg] = useState(message);
+  const [dept, setDept] = useState(department ?? "");
+  const canEdit = status === "submitted";
+
+  // Reset local state when the selected complaint changes.
+  useEffect(() => {
+    setMsg(message);
+    setDept(department ?? "");
+    setEditing(false);
+  }, [id, message, department]);
+
+  const mut = useMutation({
+    mutationFn: () => editFn({ data: { id, message: msg, department: dept } }),
+    onSuccess: () => {
+      toast.success("تم تعديل البلاغ");
+      setEditing(false);
+      onSaved();
+    },
+    onError: (e: Error) => toast.error(e.message || "تعذّر التعديل."),
+  });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-muted-foreground">الرسالة</p>
+        {canEdit && !editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <Pencil className="h-3.5 w-3.5" /> تعديل
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <div className="space-y-2">
+          <input
+            value={dept}
+            onChange={(e) => setDept(e.target.value)}
+            placeholder="القسم (اختياري)"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <textarea
+            rows={5}
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              disabled={mut.isPending || msg.trim().length < 10}
+              onClick={() => mut.mutate()}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {mut.isPending ? "جارٍ الحفظ…" : "حفظ التعديل"}
+            </button>
+            <button
+              onClick={() => {
+                setMsg(message);
+                setDept(department ?? "");
+                setEditing(false);
+              }}
+              className="rounded-md border border-border px-3 py-1.5 text-xs"
+            >
+              إلغاء
+            </button>
+            <span className="text-[11px] text-muted-foreground ms-auto">
+              متاح حتى تبدأ المراجعة
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-md border border-border bg-muted/30 p-3 whitespace-pre-wrap">
+          {message}
+        </div>
+      )}
+      {!canEdit && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          لا يمكن التعديل بعد بدء المراجعة.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   children,
   title,
