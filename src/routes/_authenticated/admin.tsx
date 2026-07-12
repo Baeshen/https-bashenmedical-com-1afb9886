@@ -3,6 +3,7 @@ import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { visibilityAwareInterval } from "@/lib/polling";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -1979,7 +1980,7 @@ function RemindersDeliveryTab({
           limit: 300,
         },
       }),
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
     placeholderData: (prev) => prev,
   });
 
@@ -2521,7 +2522,7 @@ function RemindersDeliveryStatsTab() {
   const { data, isLoading, error, refetch, isFetching } = useQuery<DeliveryStats>({
     queryKey: ["reminders-delivery-stats", applied],
     queryFn: () => fn({ data: applied }),
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
     placeholderData: (prev) => prev,
   });
 

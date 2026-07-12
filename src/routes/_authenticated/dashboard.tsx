@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { visibilityAwareInterval } from "@/lib/polling";
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -89,7 +90,7 @@ function DashboardPage() {
   const kpisQ = useQuery({
     queryKey: ["dashboard", "kpis", branchId],
     queryFn: () => kpisFn({ data: { branchId } }),
-    refetchInterval: 30_000,
+    refetchInterval: visibilityAwareInterval(60_000, 5 * 60_000),
   });
   const dailyQ = useQuery({
     queryKey: ["dashboard", "daily", branchId],
@@ -110,13 +111,15 @@ function DashboardPage() {
   const upcomingQ = useQuery({
     queryKey: ["dashboard", "upcoming", branchId],
     queryFn: () => upcomingFn({ data: { branchId } }),
-    refetchInterval: 30_000,
+    refetchInterval: visibilityAwareInterval(60_000, 5 * 60_000),
   });
   const recentQ = useQuery({
     queryKey: ["dashboard", "recent", branchId],
     queryFn: () => recentFn({ data: { branchId } }),
-    refetchInterval: 30_000,
+    refetchInterval: visibilityAwareInterval(60_000, 5 * 60_000),
   });
+
+
 
   // Realtime: invalidate live cards when appointments/notifications change
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { visibilityAwareInterval } from "@/lib/polling";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -59,14 +60,15 @@ function NotificationsQueuePage() {
   const statsQ = useQuery({
     queryKey: ["notif-queue", "stats"],
     queryFn: () => statsFn({ data: {} }),
-    refetchInterval: 30_000,
+    refetchInterval: visibilityAwareInterval(60_000, 5 * 60_000),
   });
 
   const listQ = useQuery({
     queryKey: ["notif-queue", "list", channel, status],
     queryFn: () => listFn({ data: { channel, status, limit: 200 } }),
-    refetchInterval: 30_000,
+    refetchInterval: visibilityAwareInterval(60_000, 5 * 60_000),
   });
+
 
   const update = useMutation({
     mutationFn: (v: {

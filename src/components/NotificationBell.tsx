@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { visibilityAwareInterval } from "@/lib/polling";
 import { useServerFn } from "@tanstack/react-start";
 import { Bell, BellOff, BellRing, Check, CheckCheck, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -61,7 +62,7 @@ export function NotificationBell() {
     queryKey: ["notifications", "unread-count"],
     queryFn: () => countFn({ data: undefined as never }),
     enabled: signedIn,
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
   });
 
   const listQuery = useQuery({
