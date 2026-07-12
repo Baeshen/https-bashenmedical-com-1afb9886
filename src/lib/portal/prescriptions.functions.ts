@@ -3,7 +3,22 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
+
+export type AppointmentStatus = Database["public"]["Enums"]["appointment_status"];
+const APPOINTMENT_STATUSES: readonly AppointmentStatus[] = [
+  "new",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "no_show",
+] as const;
+function normalizeAppointmentStatus(value: unknown): AppointmentStatus {
+  return APPOINTMENT_STATUSES.includes(value as AppointmentStatus)
+    ? (value as AppointmentStatus)
+    : "new";
+}
 
 export type PrescriptionItem = {
   id: string;
