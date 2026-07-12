@@ -778,6 +778,7 @@ function ReportRow({
   title,
   subtitle,
   date,
+  released_at,
   status,
   file_path,
   note,
@@ -787,17 +788,28 @@ function ReportRow({
   title: string;
   subtitle?: string;
   date: string;
+  released_at?: string | null;
   status: string;
   file_path: string | null;
   note?: string;
 }) {
+  const releasedLabel = released_at
+    ? new Date(released_at).toLocaleDateString("ar-SA-u-ca-gregory", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <StatusChip status={status} label={reportStatusLabel(status)} />
-            <span className="text-xs text-muted-foreground">{date}</span>
+            <span className="text-xs text-muted-foreground">تقرير: {date}</span>
+            {releasedLabel && (
+              <span className="text-xs text-muted-foreground">• أُفرِج: {releasedLabel}</span>
+            )}
           </div>
           <h3 className="mt-2 text-base font-bold inline-flex items-center gap-2">
             <span className="text-primary">{icon}</span>
