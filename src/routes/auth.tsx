@@ -72,11 +72,14 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        // Preserve the original destination (e.g. /.lovable/oauth/consent?authorization_id=...)
+        // through the email confirmation round-trip.
+        const target = safeRedirectTarget();
         const { data: signup, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/admin",
+            emailRedirectTo: window.location.origin + target,
             data: { full_name: fullName },
           },
         });
