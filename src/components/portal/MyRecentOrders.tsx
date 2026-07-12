@@ -81,6 +81,13 @@ export function MyRecentOrders({ limit = 8 }: { limit?: number }) {
             </p>
           </div>
         </div>
+        <Link
+          to="/portal/orders"
+          className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+        >
+          عرض الكل
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </Link>
       </div>
 
       {q.isLoading ? (
@@ -99,35 +106,25 @@ export function MyRecentOrders({ limit = 8 }: { limit?: number }) {
         <ul className="divide-y divide-border">
           {q.data.slice(0, limit).map((o) => {
             const Icon = ICONS[o.kind];
-            const content = (
-              <div className="flex items-center gap-3 py-3">
-                <div className="h-9 w-9 shrink-0 rounded-lg grid place-items-center bg-muted text-foreground/70">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{o.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(o.created_at)}
-                  </p>
-                </div>
-                <OrderStatusBadge kind={KIND_TO_UNIFIED[o.kind]} status={o.status} />
-                {o.href && (
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground shrink-0" />
-                )}
-              </div>
-            );
             return (
               <li key={`${o.kind}-${o.id}`}>
-                {o.href ? (
-                  <Link
-                    to={o.href}
-                    className="block hover:bg-muted/40 rounded-lg px-2 -mx-2 transition-colors"
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <div className="px-2 -mx-2">{content}</div>
-                )}
+                <Link
+                  to="/portal/orders/$kind/$id"
+                  params={{ kind: o.kind, id: o.id }}
+                  className="flex items-center gap-3 py-3 hover:bg-muted/40 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <div className="h-9 w-9 shrink-0 rounded-lg grid place-items-center bg-muted text-foreground/70">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{o.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(o.created_at)}
+                    </p>
+                  </div>
+                  <OrderStatusBadge kind={KIND_TO_UNIFIED[o.kind]} status={o.status} />
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
               </li>
             );
           })}

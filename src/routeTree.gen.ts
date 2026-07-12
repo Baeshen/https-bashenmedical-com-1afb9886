@@ -101,6 +101,7 @@ import { Route as AuthenticatedPortalRadiologyRouteImport } from './routes/_auth
 import { Route as AuthenticatedPortalProfileRouteImport } from './routes/_authenticated/portal.profile'
 import { Route as AuthenticatedPortalPrescriptionsRouteImport } from './routes/_authenticated/portal.prescriptions'
 import { Route as AuthenticatedPortalPaymentsRouteImport } from './routes/_authenticated/portal.payments'
+import { Route as AuthenticatedPortalOrdersRouteImport } from './routes/_authenticated/portal.orders'
 import { Route as AuthenticatedPortalNotificationsRouteImport } from './routes/_authenticated/portal.notifications'
 import { Route as AuthenticatedPortalLaboratoryRouteImport } from './routes/_authenticated/portal.laboratory'
 import { Route as AuthenticatedPortalInvoicesRouteImport } from './routes/_authenticated/portal.invoices'
@@ -118,6 +119,7 @@ import { Route as ApiPublicBookCreateRouteImport } from './routes/api/public/boo
 import { Route as ApiPublicBookCancelRouteImport } from './routes/api/public/book/cancel'
 import { Route as ApiPublicBookAvailabilityRouteImport } from './routes/api/public/book/availability'
 import { Route as AuthenticatedOrdersUnifiedKindIdRouteImport } from './routes/_authenticated/orders-unified.$kind.$id'
+import { Route as AuthenticatedPortalOrdersKindIdRouteImport } from './routes/_authenticated/portal.orders.$kind.$id'
 
 const TrackRoute = TrackRouteImport.update({
   id: '/track',
@@ -608,6 +610,12 @@ const AuthenticatedPortalPaymentsRoute =
     path: '/payments',
     getParentRoute: () => AuthenticatedPortalRoute,
   } as any)
+const AuthenticatedPortalOrdersRoute =
+  AuthenticatedPortalOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
 const AuthenticatedPortalNotificationsRoute =
   AuthenticatedPortalNotificationsRouteImport.update({
     id: '/notifications',
@@ -705,6 +713,12 @@ const AuthenticatedOrdersUnifiedKindIdRoute =
     path: '/$kind/$id',
     getParentRoute: () => AuthenticatedOrdersUnifiedRoute,
   } as any)
+const AuthenticatedPortalOrdersKindIdRoute =
+  AuthenticatedPortalOrdersKindIdRouteImport.update({
+    id: '/$kind/$id',
+    path: '/$kind/$id',
+    getParentRoute: () => AuthenticatedPortalOrdersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -799,6 +813,7 @@ export interface FileRoutesByFullPath {
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -815,6 +830,7 @@ export interface FileRoutesByFullPath {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -908,6 +924,7 @@ export interface FileRoutesByTo {
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -924,6 +941,7 @@ export interface FileRoutesByTo {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1020,6 +1038,7 @@ export interface FileRoutesById {
   '/_authenticated/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/_authenticated/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/_authenticated/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/_authenticated/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/_authenticated/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/_authenticated/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/_authenticated/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -1036,6 +1055,7 @@ export interface FileRoutesById {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/_authenticated/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1132,6 +1152,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/laboratory'
     | '/portal/notifications'
+    | '/portal/orders'
     | '/portal/payments'
     | '/portal/prescriptions'
     | '/portal/profile'
@@ -1148,6 +1169,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/portal/orders/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1241,6 +1263,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/laboratory'
     | '/portal/notifications'
+    | '/portal/orders'
     | '/portal/payments'
     | '/portal/prescriptions'
     | '/portal/profile'
@@ -1257,6 +1280,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/portal/orders/$kind/$id'
   id:
     | '__root__'
     | '/'
@@ -1352,6 +1376,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/invoices'
     | '/_authenticated/portal/laboratory'
     | '/_authenticated/portal/notifications'
+    | '/_authenticated/portal/orders'
     | '/_authenticated/portal/payments'
     | '/_authenticated/portal/prescriptions'
     | '/_authenticated/portal/profile'
@@ -1368,6 +1393,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/_authenticated/portal/orders/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2072,6 +2098,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalPaymentsRouteImport
       parentRoute: typeof AuthenticatedPortalRoute
     }
+    '/_authenticated/portal/orders': {
+      id: '/_authenticated/portal/orders'
+      path: '/orders'
+      fullPath: '/portal/orders'
+      preLoaderRoute: typeof AuthenticatedPortalOrdersRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
     '/_authenticated/portal/notifications': {
       id: '/_authenticated/portal/notifications'
       path: '/notifications'
@@ -2191,6 +2224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersUnifiedKindIdRouteImport
       parentRoute: typeof AuthenticatedOrdersUnifiedRoute
     }
+    '/_authenticated/portal/orders/$kind/$id': {
+      id: '/_authenticated/portal/orders/$kind/$id'
+      path: '/$kind/$id'
+      fullPath: '/portal/orders/$kind/$id'
+      preLoaderRoute: typeof AuthenticatedPortalOrdersKindIdRouteImport
+      parentRoute: typeof AuthenticatedPortalOrdersRoute
+    }
   }
 }
 
@@ -2209,6 +2249,20 @@ const AuthenticatedOrdersUnifiedRouteWithChildren =
     AuthenticatedOrdersUnifiedRouteChildren,
   )
 
+interface AuthenticatedPortalOrdersRouteChildren {
+  AuthenticatedPortalOrdersKindIdRoute: typeof AuthenticatedPortalOrdersKindIdRoute
+}
+
+const AuthenticatedPortalOrdersRouteChildren: AuthenticatedPortalOrdersRouteChildren =
+  {
+    AuthenticatedPortalOrdersKindIdRoute: AuthenticatedPortalOrdersKindIdRoute,
+  }
+
+const AuthenticatedPortalOrdersRouteWithChildren =
+  AuthenticatedPortalOrdersRoute._addFileChildren(
+    AuthenticatedPortalOrdersRouteChildren,
+  )
+
 interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalBookRoute: typeof AuthenticatedPortalBookRoute
   AuthenticatedPortalComplaintsRoute: typeof AuthenticatedPortalComplaintsRoute
@@ -2217,6 +2271,7 @@ interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalInvoicesRoute: typeof AuthenticatedPortalInvoicesRoute
   AuthenticatedPortalLaboratoryRoute: typeof AuthenticatedPortalLaboratoryRoute
   AuthenticatedPortalNotificationsRoute: typeof AuthenticatedPortalNotificationsRoute
+  AuthenticatedPortalOrdersRoute: typeof AuthenticatedPortalOrdersRouteWithChildren
   AuthenticatedPortalPaymentsRoute: typeof AuthenticatedPortalPaymentsRoute
   AuthenticatedPortalPrescriptionsRoute: typeof AuthenticatedPortalPrescriptionsRoute
   AuthenticatedPortalProfileRoute: typeof AuthenticatedPortalProfileRoute
@@ -2234,6 +2289,7 @@ const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
   AuthenticatedPortalInvoicesRoute: AuthenticatedPortalInvoicesRoute,
   AuthenticatedPortalLaboratoryRoute: AuthenticatedPortalLaboratoryRoute,
   AuthenticatedPortalNotificationsRoute: AuthenticatedPortalNotificationsRoute,
+  AuthenticatedPortalOrdersRoute: AuthenticatedPortalOrdersRouteWithChildren,
   AuthenticatedPortalPaymentsRoute: AuthenticatedPortalPaymentsRoute,
   AuthenticatedPortalPrescriptionsRoute: AuthenticatedPortalPrescriptionsRoute,
   AuthenticatedPortalProfileRoute: AuthenticatedPortalProfileRoute,
