@@ -391,8 +391,42 @@ function NewComplaintForm({
     department: "",
     message: "",
   });
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const MAX_FILES = 5;
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB per file
+
+  async function uploadAll(): Promise<
+    Array<{ path: string; name: string; type: string; size: number }>
+  > {
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+    if (!uid || files.length === 0) return [];
+    const uploaded: Array<{ path: string; name: string; type: string; size: number }> = [];
+    for (const f of files) {
+      if (f.size > MAX_SIZE) throw new Error(`الملف "${f.name}" يتجاوز 10 ميجابايت.`);
+      const safeName = f.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const path = `${uid}/${crypto.randomUUID()}-${safeName}`;
+      const { error } = await supabase.storage
+        .from("complaint-attachments")
+        .upload(path, f, { contentType: f.type || "application/octet-stream" });
+      if (error) throw new Error(`تعذّر رفع "${f.name}".`);
+      uploaded.push({ path, name: f.name, type: f.type || "", size: f.size });
+    }
+    return uploaded;
+  }
+
   const mut = useMutation({
-    mutationFn: (input: typeof form) => submitFn({ data: input }),
+    mutationFn: async (input: typeof form) => {
+      setUploading(true);
+      try {
+        const attachments = await uploadAll();
+        return await submitFn({ data: { ...input, attachments } });
+      } finally {
+        setUploading(false);
+      }
+    },
     onSuccess: (res) => {
       toast.success(`تم إرسال البلاغ — رقم ${res.reference}`);
       onDone();
@@ -462,11 +496,46 @@ function NewComplaintForm({
           className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
       </label>
+      <div className="text-sm">
+        <span className="font-medium">مرفقات (اختياري)</span>
+        <input
+          type="file"
+          multiple
+          accept="image/*,application/pdf"
+          onChange={(e) => {
+            const list = Array.from(e.target.files ?? []).slice(0, MAX_FILES);
+            setFiles(list);
+          }}
+          className="mt-1 w-full text-xs file:me-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-primary"
+        />
+        <p className="text-[11px] text-muted-foreground mt-1">
+          حتى {MAX_FILES} ملفات، الحد الأقصى 10 ميجابايت لكل ملف (صور أو PDF).
+        </p>
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {files.map((f, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between text-xs rounded border border-border px-2 py-1"
+              >
+                <span className="truncate">{f.name}</span>
+                <span className="text-muted-foreground shrink-0 ms-2">
+                  {(f.size / 1024).toFixed(0)} KB
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <button
-        disabled={mut.isPending}
+        disabled={mut.isPending || uploading}
         className="rounded-md bg-primary text-primary-foreground font-semibold py-2.5 disabled:opacity-60"
       >
-        {mut.isPending ? "جارٍ الإرسال…" : "إرسال البلاغ"}
+        {uploading
+          ? "جارٍ رفع المرفقات…"
+          : mut.isPending
+            ? "جارٍ الإرسال…"
+            : "إرسال البلاغ"}
       </button>
     </form>
   );
