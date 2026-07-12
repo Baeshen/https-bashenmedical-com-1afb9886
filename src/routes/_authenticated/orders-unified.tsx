@@ -392,7 +392,7 @@ function OrdersUnifiedInner() {
                       <OrderStatusBadge kind={r.kind} status={r.status} raw />
                     </td>
                     <td className="p-3 whitespace-nowrap text-xs text-muted-foreground">
-                      {fmtDate(r.created_at)}
+                      {fmtDate(sortBy === "updated_at" ? r.updated_at : r.created_at)}
                     </td>
                     <td className="p-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
