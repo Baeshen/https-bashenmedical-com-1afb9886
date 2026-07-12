@@ -8,6 +8,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getDashboardSummary } from "@/lib/portal/portal.functions";
+import { MyRecentOrders } from "@/components/portal/MyRecentOrders";
 import { cancelMyAppointment } from "@/lib/slots.functions";
 import {
   CalendarCheck,
