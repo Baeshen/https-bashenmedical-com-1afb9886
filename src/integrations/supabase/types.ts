@@ -977,6 +977,62 @@ export type Database = {
         }
         Relationships: []
       }
+      home_care_requests: {
+        Row: {
+          address: string | null
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_date: string | null
+          preferred_time: string | null
+          service: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          service?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          patient_phone?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          service?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_care_requests_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           appointment_id: string | null
@@ -2505,6 +2561,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_appointment_audit_by_ref: {
+        Args: { _phone: string; _ref: string }
+        Returns: {
+          actor_kind: string
+          changed_at: string
+          new_notes: string
+          new_status: string
+          old_notes: string
+          old_status: string
+          reason: string
+        }[]
+      }
       list_doctor_leaves: {
         Args: {
           _branch_id?: string
@@ -2844,6 +2912,19 @@ export type Database = {
           reference: string
           specialty_name_ar: string
           status: string
+        }[]
+      }
+      track_orders_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          reference: string
+          scheduled_at: string
+          status: string
+          title: string
         }[]
       }
       update_appointment_notes: {

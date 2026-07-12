@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HomeIcon, Syringe, Stethoscope, Activity, Baby, Pill, MapPin, Clock, Check } from "lucide-react";
 import { PageHero, SectionCard } from "@/components/PageShell";
-import { ServiceRequestForm } from "@/components/ServiceRequestForm";
+import { HomeCareRequestForm } from "@/components/HomeCareRequestForm";
 
 export const Route = createFileRoute("/home-care")({
   head: () => ({
@@ -157,17 +157,8 @@ function HomeCarePage() {
           </div>
         </div>
 
-        <ServiceRequestForm
-          tag="رعاية منزلية"
-          refPrefix="HC"
-          title="اطلب زيارة منزلية"
-          subtitle="سنتواصل معك خلال ساعة عمل لتأكيد التفاصيل."
-          services={services}
-          extraLabel="العنوان + وصف الحالة"
-          extraPlaceholder="مثال: صبيا — حي الروضة، بجوار مسجد… — والدي عمره 72 عام يحتاج تغيير قسطرة."
-          extraRequired
-          submitLabel="أرسل طلب الزيارة"
-        />
+        <HomeCareRequestForm services={services} />
+
       </section>
     </>
   );
