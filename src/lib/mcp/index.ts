@@ -14,10 +14,10 @@ export default defineMcp({
   title: "Baeshen Medical MCP",
   version: "0.1.0",
   instructions:
-    "Tools for Baeshen Medical Complex. Use `list_branches` and `list_doctors` for public directory data. Use `list_my_appointments` to view the signed-in user's appointments (row-level security applies).",
+    "Tools for Baeshen Medical Complex. Use `list_branches` and `list_doctors` for public directory data. Use `list_my_appointments` to view the signed-in user's appointments, and `create_appointment` to book a new one (row-level security applies).",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [listBranches, listDoctors, listMyAppointments],
+  tools: [listBranches, listDoctors, listMyAppointments, createAppointment],
 });
