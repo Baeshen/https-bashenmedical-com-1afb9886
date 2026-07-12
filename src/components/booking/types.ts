@@ -112,17 +112,22 @@ export function formatArDate(iso: string | null, lang: "ar" | "en"): string {
 }
 
 /* ---------------- Patient validation ---------------- */
-export const NAME_MIN = 2, NAME_MAX = 120;
-export const PHONE_MIN = 6, PHONE_MAX = 32;
-export const NID_MAX = 20;
-export const REASON_MAX = 500;
-export const PHONE_RE = /^[+0-9\s\-()]+$/;
-// Saudi mobile: local 05XXXXXXXX (10 digits) OR international +9665XXXXXXXX / 009665XXXXXXXX.
-export const SA_PHONE_RE = /^(?:(?:\+?966)|0)?5\d{8}$/;
-// 10-digit Saudi National ID / Iqama (starts with 1 or 2).
-export const SA_NID_RE = /^[12]\d{9}$/;
-// Full name should have at least two words (given + family), letters/spaces only.
-export const NAME_RE = /^[\p{L}][\p{L}\s'.-]{1,}$/u;
+// Limits/regex are the single source of truth in src/lib/booking-limits.ts
+// so the client and the /api/public/book/create endpoint stay in sync.
+export {
+  NAME_MIN, NAME_MAX,
+  PHONE_MIN, PHONE_MAX,
+  NID_MAX,
+  REASON_MAX,
+  PHONE_RE,
+  SA_PHONE_RE,
+  SA_NID_RE,
+  NAME_RE,
+} from "@/lib/booking-limits";
+import {
+  NAME_MIN, NAME_MAX, PHONE_MIN, PHONE_MAX,
+  REASON_MAX, SA_PHONE_RE, SA_NID_RE, NAME_RE,
+} from "@/lib/booking-limits";
 
 export const patientSchema = z.object({
   name: z
