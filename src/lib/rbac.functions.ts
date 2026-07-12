@@ -108,6 +108,50 @@ export const listBranchesForRbac = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/* ---------------- Permissions catalog & role matrix ---------------- */
+
+export const listPermissionsCatalog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_permissions_catalog" as any);
+    if (error) throw new Error(humanize(error));
+    return (data ?? []) as Array<{
+      key: string;
+      category: string;
+      description_ar: string;
+      description_en: string | null;
+    }>;
+  });
+
+export const listRolePermissionsMatrix = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_role_permissions_matrix" as any);
+    if (error) throw new Error(humanize(error));
+    return (data ?? []) as Array<{ role: AppRole; permission_key: string }>;
+  });
+
+export const setRolePermission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        role: z.enum(ROLES),
+        permission_key: z.string().min(1).max(120),
+        enabled: z.boolean(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("set_role_permission" as any, {
+      _role: data.role,
+      _permission_key: data.permission_key,
+      _enabled: data.enabled,
+    } as any);
+    if (error) throw new Error(humanize(error));
+    return { ok: true };
+  });
+
 /* ---------------- Audit log (extended with IP/UA) ---------------- */
 
 const auditFilterSchema = z.object({
