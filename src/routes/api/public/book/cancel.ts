@@ -39,9 +39,6 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-function normalizePhone(s: string): string {
-  return s.replace(/\D+/g, "");
-}
 
 export const Route = createFileRoute("/api/public/book/cancel")({
   server: {
