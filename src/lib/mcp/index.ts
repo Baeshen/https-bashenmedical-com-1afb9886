@@ -2,6 +2,7 @@ import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import listBranches from "./tools/list-branches";
 import listDoctors from "./tools/list-doctors";
 import listMyAppointments from "./tools/list-my-appointments";
+import createAppointment from "./tools/create-appointment";
 
 // The OAuth issuer MUST be the direct Supabase host — the .lovable.cloud proxy
 // URL is rejected by mcp-js as an issuer mismatch. Read the project ref from
