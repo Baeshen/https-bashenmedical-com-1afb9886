@@ -1352,6 +1352,186 @@ export type Database = {
           },
         ]
       }
+      nurse_calls: {
+        Row: {
+          accepted_at: string | null
+          assigned_nurse_id: string | null
+          branch_id: string | null
+          called_at: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string | null
+          priority: string
+          reason: string | null
+          room_no: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          assigned_nurse_id?: string | null
+          branch_id?: string | null
+          called_at?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          priority?: string
+          reason?: string | null
+          room_no?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          assigned_nurse_id?: string | null
+          branch_id?: string | null
+          called_at?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          priority?: string
+          reason?: string | null
+          room_no?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_calls_assigned_nurse_id_fkey"
+            columns: ["assigned_nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_calls_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_calls_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurse_shifts: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          nurse_id: string
+          shift_date: string
+          shift_type: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          nurse_id: string
+          shift_date: string
+          shift_type: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          nurse_id?: string
+          shift_date?: string
+          shift_type?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurse_shifts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurse_shifts_nurse_id_fkey"
+            columns: ["nurse_id"]
+            isOneToOne: false
+            referencedRelation: "nurses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurses: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          employee_no: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          employee_no?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          employee_no?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurses_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_allergies: {
         Row: {
           allergen: string
