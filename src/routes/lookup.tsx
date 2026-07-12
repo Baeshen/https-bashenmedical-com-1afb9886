@@ -8,6 +8,7 @@ import { Search, Calendar, Clock, User, Phone, Stethoscope, X, CheckCircle2, Ale
 import { WEEKDAYS_AR } from "@/lib/site";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
 import { ReminderHistoryByRefModal } from "@/components/ReminderPreferenceHistory";
+import { AppointmentAuditHistory } from "@/components/booking/AppointmentAuditHistory";
 
 const lookupSearch = z.object({
   ref: z.string().optional(),
