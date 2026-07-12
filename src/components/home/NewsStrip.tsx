@@ -8,7 +8,7 @@ type Article = {
   id: string;
   slug: string;
   title_ar: string;
-  title_en: string;
+  title_en: string | null;
   excerpt_ar: string | null;
   excerpt_en: string | null;
   cover_image_url: string | null;
