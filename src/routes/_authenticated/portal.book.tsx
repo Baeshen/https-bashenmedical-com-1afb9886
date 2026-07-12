@@ -2,10 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  getBookingOptions,
-  createMyAppointment,
-} from "@/lib/portal/booking.functions";
+import { getBookingOptions } from "@/lib/portal/booking.functions";
 import { listAvailableSlots, bookSlot } from "@/lib/slots.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
