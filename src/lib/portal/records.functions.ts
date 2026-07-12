@@ -279,10 +279,6 @@ export const getRecordFileUrl = createServerFn({ method: "POST" })
       const q = await supabase
         .from("radiology_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
       owns = (q.data ?? []).length > 0;
-    } else if (data.bucket === "prescriptions") {
-      const q = await supabase
-        .from("prescriptions").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
-      owns = (q.data ?? []).length > 0;
     } else {
       const q = await supabase
         .from("patient_attachments").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
