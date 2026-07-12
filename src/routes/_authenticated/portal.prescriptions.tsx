@@ -911,3 +911,220 @@ function AdherenceCard() {
     </div>
   );
 }
+
+/* --------------------------- Reminder preferences card --------------------------- */
+
+const MED_LEAD_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: "في الوقت المحدد" },
+  { value: 5, label: "قبل 5 دقائق" },
+  { value: 10, label: "قبل 10 دقائق" },
+  { value: 15, label: "قبل 15 دقيقة" },
+  { value: 30, label: "قبل 30 دقيقة" },
+  { value: 60, label: "قبل ساعة" },
+];
+
+const APT_LEAD_OPTIONS: { value: number; label: string }[] = [
+  { value: 15, label: "قبل 15 دقيقة" },
+  { value: 30, label: "قبل 30 دقيقة" },
+  { value: 60, label: "قبل ساعة" },
+  { value: 120, label: "قبل ساعتين" },
+  { value: 240, label: "قبل 4 ساعات" },
+  { value: 1440, label: "قبل يوم كامل" },
+];
+
+const REPEAT_OPTIONS: { value: number; label: string }[] = [
+  { value: 7, label: "أسبوع" },
+  { value: 14, label: "أسبوعان" },
+  { value: 30, label: "شهر" },
+  { value: 60, label: "شهران" },
+  { value: 90, label: "3 أشهر" },
+];
+
+function PreferencesCard() {
+  const qc = useQueryClient();
+  const { data: saved = DEFAULT_REMINDER_PREFS, isLoading } = useQuery(prefsQuery);
+  const [form, setForm] = useState<ReminderPreferences>(saved);
+  const [dirty, setDirty] = useState(false);
+
+  // sync when server data loads/changes
+  const savedKey = `${saved.medication_lead_minutes}|${saved.appointment_lead_minutes}|${saved.wake_hour}|${saved.sleep_hour}|${saved.daily_repeat_days}`;
+  useMemo(() => {
+    if (!dirty) setForm(saved);
+  }, [savedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const mut = useMutation({
+    mutationFn: (v: ReminderPreferences) => saveReminderPreferences({ data: v }),
+    onSuccess: (v) => {
+      qc.setQueryData(prefsQuery.queryKey, v);
+      setDirty(false);
+      toast.success("تم حفظ إعدادات التذكيرات.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر الحفظ"),
+  });
+
+  function update<K extends keyof ReminderPreferences>(k: K, v: ReminderPreferences[K]) {
+    setForm((prev) => ({ ...prev, [k]: v }));
+    setDirty(true);
+  }
+
+  function reset() {
+    setForm(DEFAULT_REMINDER_PREFS);
+    setDirty(true);
+  }
+
+  return (
+    <div className="glass-card p-5 md:p-6">
+      <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
+        <div className="flex items-start gap-3">
+          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-100 to-sky-100 grid place-items-center text-violet-600">
+            <Settings2 className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-[color:var(--portal-ink-2)] tracking-wider">REMINDER SETTINGS</div>
+            <h3 className="text-lg md:text-xl font-bold mt-0.5">إعدادات التذكيرات</h3>
+            <p className="text-sm text-[color:var(--portal-ink-2)] mt-1">
+              خصّص وقت التنبيه قبل الجرعة وقبل الموعد ومدة تكرار التذكيرات في التقويم.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={reset}
+            disabled={mut.isPending || isLoading}
+            className="inline-flex items-center gap-1.5 rounded-full h-9 px-3 text-xs font-semibold bg-white/70 ring-1 ring-white/60 hover:bg-white text-[color:var(--portal-ink-2)] disabled:opacity-50"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> استعادة الافتراضي
+          </button>
+          <button
+            onClick={() => mut.mutate(form)}
+            disabled={!dirty || mut.isPending || isLoading}
+            className="inline-flex items-center gap-1.5 rounded-full h-9 px-4 text-xs font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--portal-gradient)" }}
+          >
+            {mut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            حفظ
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PrefField label="تنبيه قبل جرعة الدواء" icon={<Pill className="h-4 w-4" />}>
+          <PrefSelect
+            value={form.medication_lead_minutes}
+            options={MED_LEAD_OPTIONS}
+            onChange={(v) => update("medication_lead_minutes", v)}
+          />
+        </PrefField>
+
+        <PrefField label="تنبيه قبل الموعد الطبي" icon={<CalendarClock className="h-4 w-4" />}>
+          <PrefSelect
+            value={form.appointment_lead_minutes}
+            options={APT_LEAD_OPTIONS}
+            onChange={(v) => update("appointment_lead_minutes", v)}
+          />
+        </PrefField>
+
+        <PrefField label="مدة تكرار التذكيرات في التقويم" icon={<CalendarPlus className="h-4 w-4" />}>
+          <PrefSelect
+            value={form.daily_repeat_days}
+            options={REPEAT_OPTIONS}
+            onChange={(v) => update("daily_repeat_days", v)}
+          />
+        </PrefField>
+
+        <div className="grid grid-cols-2 gap-3">
+          <PrefField label="ساعة الاستيقاظ" icon={<Sunrise className="h-4 w-4" />}>
+            <PrefNumber
+              min={4}
+              max={11}
+              value={form.wake_hour}
+              onChange={(v) => update("wake_hour", v)}
+              suffix="ص"
+            />
+          </PrefField>
+          <PrefField label="ساعة النوم" icon={<Moon className="h-4 w-4" />}>
+            <PrefNumber
+              min={20}
+              max={26}
+              value={form.sleep_hour}
+              onChange={(v) => update("sleep_hour", v)}
+              suffix={form.sleep_hour >= 24 ? "بعد منتصف الليل" : "م"}
+            />
+          </PrefField>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-[color:var(--portal-ink-2)] mt-4">
+        تُستخدم هذه الإعدادات عند توليد خطة المساعد الذكي وعند تصدير ملف التقويم (.ics).
+      </p>
+    </div>
+  );
+}
+
+function PrefField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="text-xs font-semibold text-[color:var(--portal-ink-2)] mb-1.5 inline-flex items-center gap-1.5">
+        {icon}
+        {label}
+      </div>
+      {children}
+    </label>
+  );
+}
+
+function PrefSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: number;
+  options: { value: number; label: string }[];
+  onChange: (v: number) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(parseInt(e.target.value, 10))}
+      className="w-full h-11 rounded-2xl bg-white/70 px-3 text-sm border border-white/60 outline-none focus:ring-2 focus:ring-[color:var(--portal-accent)]"
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function PrefNumber({
+  value,
+  min,
+  max,
+  onChange,
+  suffix,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  suffix?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => {
+          const n = parseInt(e.target.value, 10);
+          if (!Number.isNaN(n) && n >= min && n <= max) onChange(n);
+        }}
+        className="w-full h-11 rounded-2xl bg-white/70 px-3 text-sm border border-white/60 outline-none focus:ring-2 focus:ring-[color:var(--portal-accent)] tabular-nums"
+      />
+      {suffix && <span className="text-xs text-[color:var(--portal-ink-2)] whitespace-nowrap">{suffix}</span>}
+    </div>
+  );
+}
+
