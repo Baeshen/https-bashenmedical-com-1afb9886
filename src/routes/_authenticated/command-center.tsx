@@ -210,39 +210,60 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           {collapsed ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-4 w-4" />}
         </button>
       </div>
-      <nav className="p-2 space-y-0.5 overflow-y-auto h-[calc(100vh-72px)]">
-        {NAV.map((item, i) => {
-          const Icon = item.icon;
-          const active = i === 0;
-          const content = (
-            <span
-              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                active
-                  ? "text-white cc-ring-glow"
-                  : "text-[color:var(--cc-fg-muted)] hover:text-white hover:bg-white/5"
-              }`}
-              style={active ? { background: "linear-gradient(135deg, rgba(15,108,189,0.35), rgba(28,200,238,0.15))" } : undefined}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-[color:var(--cc-cyan)]" : ""}`} />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {item.comingSoon && (
-                    <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] text-[color:var(--cc-fg-dim)]">قريباً</span>
-                  )}
-                </>
-              )}
-            </span>
-          );
-          return item.to && !item.comingSoon ? (
-            <Link key={item.label} to={item.to} className="block">{content}</Link>
-          ) : (
-            <div key={item.label} className={item.comingSoon ? "cursor-not-allowed opacity-70" : ""}>{content}</div>
-          );
-        })}
-      </nav>
+      <NavList collapsed={collapsed} />
     </aside>
+  );
+}
+
+function NavList({ collapsed }: { collapsed: boolean }) {
+  const { items, loading } = useVisibleNav();
+  if (loading) {
+    return (
+      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-72px)]">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-9 rounded-xl bg-white/[0.03] animate-pulse" />
+        ))}
+      </nav>
+    );
+  }
+  return (
+    <nav className="p-2 space-y-0.5 overflow-y-auto h-[calc(100vh-72px)]">
+      {items.map((item, i) => {
+        const Icon = item.icon;
+        const active = i === 0;
+        const content = (
+          <span
+            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+              active
+                ? "text-white cc-ring-glow"
+                : "text-[color:var(--cc-fg-muted)] hover:text-white hover:bg-white/5"
+            }`}
+            style={active ? { background: "linear-gradient(135deg, rgba(15,108,189,0.35), rgba(28,200,238,0.15))" } : undefined}
+            title={collapsed ? item.label : undefined}
+          >
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-[color:var(--cc-cyan)]" : ""}`} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.comingSoon && (
+                  <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] text-[color:var(--cc-fg-dim)]">قريباً</span>
+                )}
+              </>
+            )}
+          </span>
+        );
+        return item.to && !item.comingSoon ? (
+          <Link key={item.label} to={item.to} className="block">{content}</Link>
+        ) : (
+          <div key={item.label} className={item.comingSoon ? "cursor-not-allowed opacity-70" : ""}>{content}</div>
+        );
+      })}
+      {items.length === 0 && (
+        <div className="mt-6 rounded-xl border border-dashed border-[color:var(--cc-border)] bg-white/[0.02] p-4 text-center text-[11px] text-[color:var(--cc-fg-dim)]">
+          لا صلاحيات كافية لعرض أي وحدة.
+        </div>
+      )}
+    </nav>
   );
 }
 
