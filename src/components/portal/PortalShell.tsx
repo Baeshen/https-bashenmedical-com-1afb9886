@@ -20,6 +20,7 @@ import {
   Search,
   Sparkles,
   Menu,
+  MessageSquareWarning,
 } from "lucide-react";
 import { useState } from "react";
 
