@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 import type { Plugin } from "vite";
+import { imagetools } from "vite-imagetools";
 
 /**
  * Neutralise `@tanstack/devtools:inject-source` (dev-only plugin bundled by
@@ -39,5 +40,5 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  plugins: [disableTanstackDevtoolsInjectSource(), mcpPlugin()],
+  plugins: [disableTanstackDevtoolsInjectSource(), imagetools(), mcpPlugin()],
 });

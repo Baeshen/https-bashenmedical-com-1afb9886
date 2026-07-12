@@ -1,7 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
-import heroImage from "@/assets/baeshen-hero-complex.jpg";
+import heroAvif from "@/assets/baeshen-hero-complex.jpg?w=640;960;1280;1600;1920&format=avif&as=srcset";
+import heroWebp from "@/assets/baeshen-hero-complex.jpg?w=640;960;1280;1600;1920&format=webp&as=srcset";
+import heroJpg from "@/assets/baeshen-hero-complex.jpg?w=1600&format=jpg";
 import { CalendarCheck, Phone } from "lucide-react";
+
+const HERO_SIZES = "100vw";
 
 export function HeroComplex() {
   const { lang } = useI18n();
@@ -13,15 +17,21 @@ export function HeroComplex() {
       className="relative isolate overflow-hidden min-h-[78vh] md:min-h-[86vh] flex items-center"
       aria-label={isAr ? "مجمع باعشن الطبي" : "Baeshen Medical Complex"}
     >
-      {/* Background image */}
-      <img
-        src={heroImage}
-        alt={isAr ? "مجمع باعشن الطبي" : "Baeshen Medical Complex"}
-        width={1920}
-        height={1088}
-        fetchPriority="high"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      {/* Background image — responsive with AVIF/WebP fallback */}
+      <picture>
+        <source type="image/avif" srcSet={heroAvif} sizes={HERO_SIZES} />
+        <source type="image/webp" srcSet={heroWebp} sizes={HERO_SIZES} />
+        <img
+          src={heroJpg}
+          alt={isAr ? "مجمع باعشن الطبي" : "Baeshen Medical Complex"}
+          width={1920}
+          height={1088}
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </picture>
+
 
       {/* Medical color overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a2540]/70 via-[#0f766e]/35 to-[#06b6d4]/25" />
