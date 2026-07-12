@@ -65,7 +65,8 @@ export const getRadiologyFileUrl = createServerFn({ method: "POST" })
 
     const owns = await supabase
       .from("radiology_reports").select("id")
-      .eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+      .eq("patient_id", patientId).eq("file_path", data.path)
+      .not("released_at", "is", null).limit(1);
     if (!(owns.data ?? []).length) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
