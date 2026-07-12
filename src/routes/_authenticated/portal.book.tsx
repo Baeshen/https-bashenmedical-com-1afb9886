@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   getBookingOptions,
-  getDoctorAvailability,
   createMyAppointment,
 } from "@/lib/portal/booking.functions";
+import { listAvailableSlots, bookSlot } from "@/lib/slots.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
