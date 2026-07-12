@@ -70,6 +70,31 @@ export const submitComplaint = createServerFn({ method: "POST" })
     return { id: row.id, reference: row.reference };
   });
 
+// Authenticated variant — attaches patient_user_id so the row shows up under
+// listMyComplaints and RLS lets the patient read it back.
+export const submitMyComplaint = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => submitSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("complaints")
+      .insert({
+        patient_user_id: context.userId,
+        patient_name: data.name,
+        patient_phone: data.phone.replace(/\s+/g, ""),
+        patient_email: data.email || null,
+        type: data.type,
+        department: data.department || null,
+        message: data.message,
+      })
+      .select("id, reference")
+      .single();
+    if (error) throw new Error("تعذّر إرسال الرسالة، حاول مرة أخرى.");
+    return { id: row.id, reference: row.reference };
+  });
+
+
+
 // ---------------------------------------------------------------------------
 // Track (public by reference + phone)
 // ---------------------------------------------------------------------------
