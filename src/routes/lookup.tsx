@@ -287,31 +287,16 @@ function LookupPage() {
       return null;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    if (!row) return null;
-    const m = (row.metadata ?? {}) as Record<string, unknown>;
-    const get = <T,>(k: string) => (m[k] as T | undefined) ?? null;
+    const detail = parseOrderDetail(row);
+    if (!detail || detail.kind !== "appointment") return null;
     return {
-      id: row.id,
-      status: row.status,
-      created_at: row.created_at,
-      patient_name: (get<string>("patient_name") ?? "") as string,
-      patient_phone: (get<string>("patient_phone") ?? "") as string,
-      appointment_date: (get<string>("appointment_date") ?? "") as string,
-      appointment_time: (get<string>("appointment_time") ?? "") as string,
-      reason: get<string>("reason"),
-      notes: get<string>("notes"),
-      specialty_id: get<string>("specialty_id"),
-      doctor_id: get<string>("doctor_id"),
-      specialty_name_ar: get<string>("specialty_name_ar"),
-      specialty_name_en: get<string>("specialty_name_en"),
-      doctor_name_ar: get<string>("doctor_name_ar"),
-      doctor_name_en: get<string>("doctor_name_en"),
-      reminder_24h: get<boolean>("reminder_24h"),
-      reminder_2h: get<boolean>("reminder_2h"),
-      cancel_reason: get<string>("cancel_reason"),
-      cancelled_at: get<string>("cancelled_at"),
+      id: detail.id,
+      status: detail.status,
+      created_at: detail.created_at,
+      ...detail.metadata,
     };
   };
+
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
