@@ -218,7 +218,20 @@ type DetailRow = {
 /** يحوّل صف تفاصيل الطلب إلى `OrderDetail` مكتوب — يُرجع null عند نوع/حالة غير معروفة. */
 export function parseOrderDetail(row: DetailRow | null | undefined): OrderDetail | null {
   if (!row) return null;
-  if (!isKind(row.kind) || !isStatus(row.status)) return null;
+  if (!isKind(row.kind)) {
+    throw new OrderParseError(`نوع طلب غير معروف: ${row.kind}`, {
+      kind: row.kind,
+      reference: row.reference ?? null,
+    });
+  }
+  if (!isStatus(row.status)) {
+    throw new OrderParseError(`حالة طلب غير معروفة: ${row.status}`, {
+      kind: row.kind,
+      status: row.status,
+      reference: row.reference ?? null,
+    });
+  }
+
   const m = (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<string, unknown>;
   const base: BaseDetail = {
     id: row.id,
