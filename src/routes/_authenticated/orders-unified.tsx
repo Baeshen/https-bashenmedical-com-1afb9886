@@ -322,23 +322,31 @@ function OrdersUnifiedInner() {
                       {fmtDate(r.created_at)}
                     </td>
                     <td className="p-3 whitespace-nowrap">
-                      {r.kind === "appointment" ? (
-                        <button
-                          onClick={() =>
-                            setAuditFor({
-                              id: r.id,
-                              label: `${r.patient_name ?? "موعد"} — ${r.meta ?? ""}`,
-                            })
-                          }
-                          className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg border border-border bg-card hover:bg-muted text-xs"
-                          title="سجل التغييرات"
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          to="/orders-unified/$kind/$id"
+                          params={{ kind: r.kind, id: r.id }}
+                          className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 text-xs"
+                          title="تفاصيل الطلب"
                         >
-                          <History className="h-3.5 w-3.5" />
-                          السجل
-                        </button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                          تفاصيل
+                        </Link>
+                        {r.kind === "appointment" && (
+                          <button
+                            onClick={() =>
+                              setAuditFor({
+                                id: r.id,
+                                label: `${r.patient_name ?? "موعد"} — ${r.meta ?? ""}`,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg border border-border bg-card hover:bg-muted text-xs"
+                            title="سجل التغييرات"
+                          >
+                            <History className="h-3.5 w-3.5" />
+                            السجل
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
