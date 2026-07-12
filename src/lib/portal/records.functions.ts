@@ -212,7 +212,7 @@ export const getMyMedicalRecords = createServerFn({ method: "GET" })
         id: `rad-${r.id}`,
         kind: "radiology",
         date: (r.report_date as string) ?? new Date().toISOString().slice(0, 10),
-        title: r.title || "تقرير أشعة",
+        title: [r.modality, r.body_part].filter(Boolean).join(" — ") || "تقرير أشعة",
         subtitle: r.modality,
         body: r.findings,
         status: r.status,
@@ -223,12 +223,10 @@ export const getMyMedicalRecords = createServerFn({ method: "GET" })
       items.push({
         id: `rx-${p.id}`,
         kind: "prescription",
-        date: ((p.issued_at as string) ?? "").slice(0, 10) ||
-          new Date().toISOString().slice(0, 10),
+        date: (p.start_date as string) ?? new Date().toISOString().slice(0, 10),
         title: p.medication,
-        subtitle: [p.dosage, p.frequency, p.duration].filter(Boolean).join(" • ") || null,
+        subtitle: [p.dosage, p.instructions].filter(Boolean).join(" • ") || null,
         body: p.notes,
-        file: p.file_path ? { bucket: "prescriptions", path: p.file_path } : null,
       });
     }
     for (const t of attRes.data ?? []) {
