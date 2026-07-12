@@ -13,6 +13,7 @@ import { LineChart, Line, ResponsiveContainer, Area, AreaChart, Tooltip, XAxis, 
 import { getCommandCenterKpis, type CommandCenterKpis } from "@/lib/command-center/kpis.functions";
 import { getDashboardUpcoming } from "@/lib/dashboard.functions";
 import { SITE } from "@/lib/site";
+import { useMyPermissions } from "@/components/rbac/RequirePermission";
 
 /* ============================================================
    Route
@@ -70,33 +71,60 @@ function CenterError({ error, reset }: { error: Error; reset: () => void }) {
    Sidebar navigation config
    ============================================================ */
 
-type NavItem = { label: string; icon: React.ComponentType<{ className?: string }>; to?: string; comingSoon?: boolean };
+type NavItem = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  to?: string;
+  comingSoon?: boolean;
+  /** If set, hide the item when the current user lacks this permission. */
+  permission?: string;
+};
 
 const NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/_authenticated/command-center" as string },
-  { label: "الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string },
-  { label: "الممرضون", icon: HeartPulse, to: "/_authenticated/nurses" as string },
-  { label: "المرضى", icon: Users, to: "/_authenticated/patients-management" as string },
-  { label: "المواعيد", icon: CalendarDays, to: "/_authenticated/appointments-queue" as string },
-  { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string },
+  { label: "الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string, permission: "doctors.manage" },
+  { label: "الممرضون", icon: HeartPulse, to: "/_authenticated/nurses" as string, permission: "nurses.manage" },
+  { label: "المرضى", icon: Users, to: "/_authenticated/patients-management" as string, permission: "patients.view" },
+  { label: "المواعيد", icon: CalendarDays, to: "/_authenticated/appointments-queue" as string, permission: "appointments.view" },
+  { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
   { label: "المختبر", icon: FlaskConical, comingSoon: true },
   { label: "الأشعة", icon: Radiation, comingSoon: true },
-  { label: "الصيدلية", icon: Pill, to: "/_authenticated/pharmacy-management" as string },
-  { label: "السجلات الطبية", icon: ClipboardList, to: "/_authenticated/patients-analytics" as string },
+  { label: "الصيدلية", icon: Pill, to: "/_authenticated/pharmacy-management" as string, permission: "pharmacy.view" },
+  { label: "السجلات الطبية", icon: ClipboardList, to: "/_authenticated/patients-analytics" as string, permission: "patients.view" },
   { label: "الطوارئ", icon: Ambulance, comingSoon: true },
   { label: "الفوترة", icon: CreditCard, comingSoon: true },
   { label: "التأمين", icon: ShieldCheck, comingSoon: true },
-  { label: "المخزون", icon: Package, to: "/_authenticated/inventory-management" as string },
+  { label: "المخزون", icon: Package, to: "/_authenticated/inventory-management" as string, permission: "inventory.manage" },
   { label: "المستلزمات", icon: Truck, comingSoon: true },
-  { label: "الموظفون", icon: UserCog, to: "/_authenticated/hr-management" as string },
-  { label: "الحضور", icon: Clock, to: "/_authenticated/hr-management" as string },
-  { label: "الرواتب", icon: Wallet, to: "/_authenticated/hr-management" as string },
-  { label: "التقارير", icon: LineIcon, comingSoon: true },
-  { label: "التحليلات", icon: BarChart3, to: "/_authenticated/patients-analytics" as string },
+  { label: "الموظفون", icon: UserCog, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "الحضور", icon: Clock, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "الرواتب", icon: Wallet, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "التقارير", icon: LineIcon, to: "/_authenticated/reports" as string, permission: "reports.view" },
+  { label: "التحليلات", icon: BarChart3, to: "/_authenticated/patients-analytics" as string, permission: "reports.view" },
   { label: "مساعد AI", icon: Bot, comingSoon: true },
-  { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string },
-  { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string },
+  { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string, permission: "notifications.manage" },
+  { label: "الصلاحيات", icon: ShieldCheck, to: "/_authenticated/rbac" as string, permission: "rbac.manage" },
+  { label: "سجل التدقيق", icon: ClipboardList, to: "/_authenticated/audit-log" as string, permission: "audit.view" },
+  { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
 ];
+
+/**
+ * Filters NAV entries the current user is allowed to see.
+ * - Items without a `permission` are always visible.
+ * - super_admin sees everything.
+ */
+function useVisibleNav() {
+  const perms = useMyPermissions();
+  const allowed = new Set(perms.data?.permissions ?? []);
+  const isSuper = !!perms.data?.isSuper;
+  const loading = perms.isLoading;
+  const items = NAV.filter((item) => {
+    if (!item.permission) return true;
+    if (isSuper) return true;
+    return allowed.has(item.permission);
+  });
+  return { items, loading };
+}
 
 /* ============================================================
    Page
@@ -182,39 +210,60 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           {collapsed ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-4 w-4" />}
         </button>
       </div>
-      <nav className="p-2 space-y-0.5 overflow-y-auto h-[calc(100vh-72px)]">
-        {NAV.map((item, i) => {
-          const Icon = item.icon;
-          const active = i === 0;
-          const content = (
-            <span
-              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                active
-                  ? "text-white cc-ring-glow"
-                  : "text-[color:var(--cc-fg-muted)] hover:text-white hover:bg-white/5"
-              }`}
-              style={active ? { background: "linear-gradient(135deg, rgba(15,108,189,0.35), rgba(28,200,238,0.15))" } : undefined}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-[color:var(--cc-cyan)]" : ""}`} />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {item.comingSoon && (
-                    <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] text-[color:var(--cc-fg-dim)]">قريباً</span>
-                  )}
-                </>
-              )}
-            </span>
-          );
-          return item.to && !item.comingSoon ? (
-            <Link key={item.label} to={item.to} className="block">{content}</Link>
-          ) : (
-            <div key={item.label} className={item.comingSoon ? "cursor-not-allowed opacity-70" : ""}>{content}</div>
-          );
-        })}
-      </nav>
+      <NavList collapsed={collapsed} />
     </aside>
+  );
+}
+
+function NavList({ collapsed }: { collapsed: boolean }) {
+  const { items, loading } = useVisibleNav();
+  if (loading) {
+    return (
+      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-72px)]">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-9 rounded-xl bg-white/[0.03] animate-pulse" />
+        ))}
+      </nav>
+    );
+  }
+  return (
+    <nav className="p-2 space-y-0.5 overflow-y-auto h-[calc(100vh-72px)]">
+      {items.map((item, i) => {
+        const Icon = item.icon;
+        const active = i === 0;
+        const content = (
+          <span
+            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+              active
+                ? "text-white cc-ring-glow"
+                : "text-[color:var(--cc-fg-muted)] hover:text-white hover:bg-white/5"
+            }`}
+            style={active ? { background: "linear-gradient(135deg, rgba(15,108,189,0.35), rgba(28,200,238,0.15))" } : undefined}
+            title={collapsed ? item.label : undefined}
+          >
+            <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-[color:var(--cc-cyan)]" : ""}`} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.comingSoon && (
+                  <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] text-[color:var(--cc-fg-dim)]">قريباً</span>
+                )}
+              </>
+            )}
+          </span>
+        );
+        return item.to && !item.comingSoon ? (
+          <Link key={item.label} to={item.to} className="block">{content}</Link>
+        ) : (
+          <div key={item.label} className={item.comingSoon ? "cursor-not-allowed opacity-70" : ""}>{content}</div>
+        );
+      })}
+      {items.length === 0 && (
+        <div className="mt-6 rounded-xl border border-dashed border-[color:var(--cc-border)] bg-white/[0.02] p-4 text-center text-[11px] text-[color:var(--cc-fg-dim)]">
+          لا صلاحيات كافية لعرض أي وحدة.
+        </div>
+      )}
+    </nav>
   );
 }
 
@@ -508,28 +557,39 @@ function AppointmentBoard() {
    ============================================================ */
 
 function QuickActions() {
-  const actions = [
-    { label: "حجز موعد جديد", icon: CalendarDays, to: "/_authenticated/quick-add" as string },
-    { label: "بحث عن مريض", icon: Search, to: "/_authenticated/patients-management" as string },
-    { label: "إدارة الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string },
-    { label: "قائمة الانتظار", icon: Clock, to: "/_authenticated/appointments-queue" as string },
+  const perms = useMyPermissions();
+  const allowed = new Set(perms.data?.permissions ?? []);
+  const isSuper = !!perms.data?.isSuper;
+  const has = (p?: string) => !p || isSuper || allowed.has(p);
+  const all = [
+    { label: "حجز موعد جديد", icon: CalendarDays, to: "/_authenticated/quick-add" as string, permission: "appointments.manage" },
+    { label: "بحث عن مريض", icon: Search, to: "/_authenticated/patients-management" as string, permission: "patients.view" },
+    { label: "إدارة الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string, permission: "doctors.manage" },
+    { label: "قائمة الانتظار", icon: Clock, to: "/_authenticated/appointments-queue" as string, permission: "appointments.view" },
   ];
+  const actions = all.filter((a) => has(a.permission));
   return (
     <section className="cc-glass p-5">
       <h3 className="text-sm font-bold mb-3">إجراءات سريعة</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {actions.map((a) => {
-          const Icon = a.icon;
-          return (
-            <Link key={a.label} to={a.to} className="group flex flex-col items-start gap-2 rounded-2xl border border-[color:var(--cc-border)] bg-white/[0.02] p-3 hover:border-[color:var(--cc-cyan)]/40 hover:bg-white/[0.05] transition">
-              <div className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--cc-cyan)]" style={{ background: "color-mix(in oklab, var(--cc-cyan) 18%, transparent)" }}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="text-xs font-semibold">{a.label}</div>
-            </Link>
-          );
-        })}
-      </div>
+      {actions.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[color:var(--cc-border)] bg-white/[0.02] p-4 text-center text-[11px] text-[color:var(--cc-fg-dim)]">
+          لا توجد إجراءات متاحة لصلاحياتك.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {actions.map((a) => {
+            const Icon = a.icon;
+            return (
+              <Link key={a.label} to={a.to} className="group flex flex-col items-start gap-2 rounded-2xl border border-[color:var(--cc-border)] bg-white/[0.02] p-3 hover:border-[color:var(--cc-cyan)]/40 hover:bg-white/[0.05] transition">
+                <div className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--cc-cyan)]" style={{ background: "color-mix(in oklab, var(--cc-cyan) 18%, transparent)" }}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-xs font-semibold">{a.label}</div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
@@ -708,11 +768,12 @@ function FloatingAiAssistant({ open, onOpenChange }: { open: boolean; onOpenChan
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState("");
+  const { items: visibleNav } = useVisibleNav();
   const filtered = useMemo(() => {
     const t = q.trim();
-    if (!t) return NAV.slice(0, 8);
-    return NAV.filter((n) => n.label.toLowerCase().includes(t.toLowerCase())).slice(0, 8);
-  }, [q]);
+    if (!t) return visibleNav.slice(0, 8);
+    return visibleNav.filter((n) => n.label.toLowerCase().includes(t.toLowerCase())).slice(0, 8);
+  }, [q, visibleNav]);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 grid place-items-start justify-center bg-black/60 backdrop-blur-sm p-4 pt-24" onClick={onClose}>
