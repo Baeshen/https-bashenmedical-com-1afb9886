@@ -19,6 +19,7 @@ import {
 import { buildLocalBusinessSchema } from "@/lib/localBusinessSchema";
 import { clinicSettingsQuery, type ClinicSettings } from "@/lib/clinicSettings";
 import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
+import { AnnouncementsSection } from "@/components/home/AnnouncementsSection";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
