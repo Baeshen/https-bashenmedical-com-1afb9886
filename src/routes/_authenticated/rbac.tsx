@@ -11,10 +11,12 @@ import {
   listPermissionsCatalog,
   listRolePermissionsMatrix,
   setRolePermission,
+  exportRolePermissions,
+  importRolePermissions,
   type AppRole,
 } from "@/lib/rbac.functions";
 import { getMyRoles } from "@/lib/admin.functions";
-import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers } from "lucide-react";
+import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers, Download, Upload } from "lucide-react";
 import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/rbac")({
