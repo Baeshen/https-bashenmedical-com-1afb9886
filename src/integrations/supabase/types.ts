@@ -1941,6 +1941,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          default_branch_id: string | null
           full_name: string | null
           id: string
           phone: string | null
@@ -1948,6 +1949,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_branch_id?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
@@ -1955,12 +1957,21 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_branch_id?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_default_branch_id_fkey"
+            columns: ["default_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
