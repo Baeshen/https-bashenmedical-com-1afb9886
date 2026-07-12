@@ -373,14 +373,24 @@ function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointme
             </p>
           </div>
         </div>
-        <button
-          onClick={() => mut.mutate()}
-          disabled={mut.isPending || activeCount === 0}
-          className="shrink-0 inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold bg-white/20 hover:bg-white/30 backdrop-blur disabled:opacity-60"
-        >
-          {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {plan ? "تحديث الخطة" : "توليد الخطة"}
-        </button>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <button
+            onClick={() => plan && exportPlanToIcs(plan, upcoming)}
+            disabled={!plan}
+            title="تنزيل ملف .ics لاستيراده في Google / Apple / Outlook Calendar"
+            className="inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold bg-white/20 hover:bg-white/30 backdrop-blur disabled:opacity-40"
+          >
+            <CalendarPlus className="h-4 w-4" /> تصدير للتقويم
+          </button>
+          <button
+            onClick={() => mut.mutate()}
+            disabled={mut.isPending || activeCount === 0}
+            className="inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold bg-white/20 hover:bg-white/30 backdrop-blur disabled:opacity-60"
+          >
+            {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {plan ? "تحديث الخطة" : "توليد الخطة"}
+          </button>
+        </div>
       </div>
 
       {activeCount === 0 && !plan && (
