@@ -103,27 +103,31 @@ function BookingConfirmationPage() {
   const [loading, setLoading] = useState(true);
   const [appt, setAppt] = useState<AppointmentSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveConnected, setLiveConnected] = useState(false);
+  const prevStatusRef = useRef<string | null>(null);
 
   // API returns refs like "BAA-XXXXXXXX" but lookup_appointment matches
   // raw hex from the appointment id. Strip prefix so both formats work.
   const normalizedRef = (ref ?? "").replace(/[^0-9a-fA-F]/g, "");
 
-  useEffect(() => {
-    if (!normalizedRef || !phone) {
-      setLoading(false);
-      setError("يرجى إدخال رقم الحجز ورقم الجوال لعرض التفاصيل.");
-      return;
-    }
-    let cancelled = false;
-    const fetchAppt = async () => {
-      setLoading(true);
+  const fetchAppt = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!normalizedRef || !phone) {
+        setLoading(false);
+        setError("يرجى إدخال رقم الحجز ورقم الجوال لعرض التفاصيل.");
+        return;
+      }
+      if (opts.silent) setRefreshing(true);
+      else setLoading(true);
       setError(null);
       const { data, error: rpcError } = await supabase.rpc("lookup_appointment", {
         _ref: normalizedRef,
         _phone: phone,
       });
-      if (cancelled) return;
       setLoading(false);
+      setRefreshing(false);
       if (rpcError) {
         setError(rpcError.message);
         return;
@@ -133,13 +137,44 @@ function BookingConfirmationPage() {
         setError(t("lookup_not_found"));
         return;
       }
-      setAppt(row as AppointmentSummary);
-    };
-    fetchAppt();
+      const next = row as AppointmentSummary;
+      setAppt((prev) => {
+        if (prev && prevStatusRef.current && prev.status !== next.status) {
+          toast.success(`تم تحديث حالة الحجز: ${statusLabel(next.status)}`);
+        }
+        prevStatusRef.current = next.status;
+        return next;
+      });
+      setLastUpdated(new Date());
+    },
+    [normalizedRef, phone, t],
+  );
+
+  useEffect(() => {
+    void fetchAppt();
+  }, [fetchAppt]);
+
+  // Realtime: subscribe to changes on this appointment's row and refetch.
+  useEffect(() => {
+    if (!appt?.id) return;
+    const channel = supabase
+      .channel(`appt-${appt.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "appointments", filter: `id=eq.${appt.id}` },
+        () => {
+          void fetchAppt({ silent: true });
+        },
+      )
+      .subscribe((status) => {
+        setLiveConnected(status === "SUBSCRIBED");
+      });
     return () => {
-      cancelled = true;
+      supabase.removeChannel(channel);
+      setLiveConnected(false);
     };
-  }, [normalizedRef, phone, t]);
+  }, [appt?.id, fetchAppt]);
+
 
 
   const share: ShareBooking | null = appt
