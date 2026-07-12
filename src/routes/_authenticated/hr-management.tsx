@@ -17,6 +17,7 @@ import {
 import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/hr-management")({
   head: () => ({
@@ -26,7 +27,11 @@ export const Route = createFileRoute("/_authenticated/hr-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: HrPage,
+  component: () => (
+    <RequirePermission anyOf="hr.manage">
+      <HrPage />
+    </RequirePermission>
+  ),
   errorComponent: HrError,
   notFoundComponent: () => null,
 });

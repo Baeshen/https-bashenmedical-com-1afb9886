@@ -40,6 +40,7 @@ import {
 import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/pharmacy-management")({
   head: () => ({
@@ -49,7 +50,11 @@ export const Route = createFileRoute("/_authenticated/pharmacy-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: PharmacyPage,
+  component: () => (
+    <RequirePermission anyOf="pharmacy.view">
+      <PharmacyPage />
+    </RequirePermission>
+  ),
   errorComponent: PharmacyError,
   notFoundComponent: () => null,
 });

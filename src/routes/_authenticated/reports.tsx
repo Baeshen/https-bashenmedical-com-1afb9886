@@ -19,6 +19,7 @@ import { listBranches } from "@/lib/dashboard.functions";
 import { listDoctorsForCalendar } from "@/lib/calendar.functions";
 import { exportCsv, exportXlsx, exportPdf, type Column } from "@/lib/export-utils";
 import {
+import { RequirePermission } from "@/components/rbac/RequirePermission";
   BarChart3,
   Download,
   FileSpreadsheet,
@@ -36,7 +37,11 @@ export const Route = createFileRoute("/_authenticated/reports")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: ReportsPage,
+  component: () => (
+    <RequirePermission anyOf="reports.view">
+      <ReportsPage />
+    </RequirePermission>
+  ),
 });
 
 type ReportType = "appointments" | "occupancy" | "pharmacy" | "patients";

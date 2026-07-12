@@ -18,6 +18,7 @@ import { listBranches } from "@/lib/dashboard.functions";
 import { listInventoryItems, type InventoryItem } from "@/lib/pharmacy.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/inventory-management")({
   head: () => ({
@@ -27,7 +28,11 @@ export const Route = createFileRoute("/_authenticated/inventory-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: InventoryPage,
+  component: () => (
+    <RequirePermission anyOf="inventory.manage">
+      <InventoryPage />
+    </RequirePermission>
+  ),
   errorComponent: InvError,
   notFoundComponent: () => null,
 });

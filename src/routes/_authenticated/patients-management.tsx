@@ -14,6 +14,7 @@ import {
 } from "@/lib/patients-mgmt.functions";
 import { listBranches } from "@/lib/dashboard.functions";
 import {
+import { RequirePermission } from "@/components/rbac/RequirePermission";
   Users,
   Search,
   Loader2,
@@ -41,7 +42,11 @@ export const Route = createFileRoute("/_authenticated/patients-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: PatientsManagement,
+  component: () => (
+    <RequirePermission anyOf="patients.view">
+      <PatientsManagement />
+    </RequirePermission>
+  ),
 });
 
 const STATUS_META: Record<PatientStatus, { ar: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {

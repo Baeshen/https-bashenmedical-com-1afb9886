@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import {
+import { RequirePermission } from "@/components/rbac/RequirePermission";
   listMessageTemplates,
   upsertMessageTemplate,
   deleteMessageTemplate,
@@ -33,7 +34,11 @@ export const Route = createFileRoute("/_authenticated/message-templates")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: MessageTemplatesPage,
+  component: () => (
+    <RequirePermission anyOf="notifications.manage">
+      <MessageTemplatesPage />
+    </RequirePermission>
+  ),
 });
 
 const CHANNELS: Array<{

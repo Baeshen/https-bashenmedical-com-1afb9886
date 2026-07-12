@@ -15,6 +15,7 @@ import {
 } from "@/lib/rbac.functions";
 import { getMyRoles } from "@/lib/admin.functions";
 import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/rbac")({
   head: () => ({
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/_authenticated/rbac")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: RbacPage,
+  component: () => (
+    <RequirePermission anyOf="rbac.manage">
+      <RbacPage />
+    </RequirePermission>
+  ),
 });
 
 const ROLE_LABELS: Record<AppRole, string> = {

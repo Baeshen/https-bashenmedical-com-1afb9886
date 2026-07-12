@@ -42,6 +42,7 @@ import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+import { RequirePermission } from "@/components/rbac/RequirePermission";
   Dialog,
   DialogContent,
   DialogHeader,
@@ -57,7 +58,11 @@ export const Route = createFileRoute("/_authenticated/nurses")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: NursesPage,
+  component: () => (
+    <RequirePermission anyOf="nurses.manage">
+      <NursesPage />
+    </RequirePermission>
+  ),
   errorComponent: NursesError,
   notFoundComponent: () => null,
 });

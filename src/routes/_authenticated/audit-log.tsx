@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { listAuditLog, listAuditActions } from "@/lib/rbac.functions";
 import { getMyRoles } from "@/lib/admin.functions";
 import { ShieldAlert, ArrowRight, RefreshCw, Download, X, Copy, ChevronDown, ChevronLeft } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 // Fields we never expose in exports even if a legacy row still has them.
 const SENSITIVE_KEYS = new Set([
@@ -143,7 +144,11 @@ export const Route = createFileRoute("/_authenticated/audit-log")({
     to: typeof raw.to === "string" ? raw.to : undefined,
     id: typeof raw.id === "string" ? raw.id : undefined,
   }),
-  component: AuditLogPage,
+  component: () => (
+    <RequirePermission anyOf="audit.view">
+      <AuditLogPage />
+    </RequirePermission>
+  ),
 });
 
 function AuditLogPage() {

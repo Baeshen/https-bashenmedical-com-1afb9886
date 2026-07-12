@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
+import { RequirePermission } from "@/components/rbac/RequirePermission";
   listOutboundNotifications,
   outboundNotificationStats,
   setNotificationStatus,
@@ -28,7 +29,11 @@ export const Route = createFileRoute("/_authenticated/notifications-queue")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: NotificationsQueuePage,
+  component: () => (
+    <RequirePermission anyOf="notifications.manage">
+      <NotificationsQueuePage />
+    </RequirePermission>
+  ),
 });
 
 const CHANNEL_LABEL: Record<string, { label: string; Icon: any; color: string }> = {
