@@ -244,3 +244,23 @@
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
+
+/* Global reduced-motion: respects the system pref and a user toggle
+   (html.reduce-motion). Kills all non-essential animation/transition
+   without breaking layout. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

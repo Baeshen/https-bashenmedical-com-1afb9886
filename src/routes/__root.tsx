@@ -18,6 +18,7 @@ import { Toaster } from "sonner";
 import { IntroOverlay } from "@/components/IntroOverlay";
 import { ChatbotBubble } from "@/components/ChatbotBubble";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
+import { MotionToggle } from "@/components/MotionToggle";
 
 function NotFoundComponent() {
   return (
@@ -148,6 +149,7 @@ function RootComponent() {
           <Toaster position="top-center" richColors closeButton />
           <ChatbotBubble />
           <WhatsAppFab />
+          <MotionToggle />
         </div>
       </I18nProvider>
     </QueryClientProvider>
