@@ -1,167 +1,320 @@
+/**
+ * /my-orders — تتبّع موحّد عمومي لجميع طلبات المراجع برقم الجوال.
+ *
+ * يستخدم RPC `track_orders_by_phone` التي تجمع:
+ *   - المواعيد (appointments)
+ *   - طلبات الصيدلية (medicine_orders)
+ *   - الرأي الطبي الثاني (second_opinion_requests)
+ *   - الرعاية المنزلية (home_care_requests)
+ *
+ * الرقم يبقى في sessionStorage للتنقل السريع، ولا نُخزّنه بشكل دائم.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  CalendarCheck,
-  Pill,
-  Stethoscope,
-  Home as HomeIcon,
-  Search,
-  ArrowLeft,
+  CalendarCheck, Pill, Stethoscope, Home as HomeIcon,
+  Search, Phone, ArrowLeft, Loader2, ExternalLink, Clock, MapPin,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/my-orders")({
   head: () => ({
     meta: [
-      { title: "طلباتي | باعشن الطبي" },
-      {
-        name: "description",
-        content: "تتبع مواعيدك، طلبات الصيدلية، الرأي الطبي الثاني والرعاية المنزلية في مكان واحد.",
-      },
-      { property: "og:title", content: "طلباتي — باعشن الطبي" },
-      {
-        property: "og:description",
-        content: "تتبع جميع طلباتك الطبية برقم الجوال أو رقم الطلب.",
-      },
+      { title: "طلباتي | مجمع باعشن الطبي" },
+      { name: "description", content: "تتبع جميع طلباتك (مواعيد، صيدلية، رأي طبي ثاني، رعاية منزلية) برقم جوالك." },
+      { property: "og:title", content: "طلباتي — مجمع باعشن الطبي" },
     ],
   }),
-  component: MyOrdersHub,
+  component: MyOrdersPage,
 });
 
-type TrackCard = {
-  key: string;
-  ar: string;
-  en: string;
-  descAr: string;
-  descEn: string;
-  icon: React.ComponentType<{ className?: string }>;
-  to: string;
-  hintAr: string;
-  hintEn: string;
+type Order = {
+  kind: "appointment" | "pharmacy" | "second_opinion" | "home_care";
+  id: string;
+  reference: string;
+  title: string;
+  status: string;
+  created_at: string;
+  scheduled_at: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
-const CARDS: TrackCard[] = [
-  {
-    key: "appointment",
-    ar: "المواعيد الطبية",
-    en: "Medical Appointments",
-    descAr: "تتبع، تعديل أو إلغاء موعدك مع الطبيب.",
-    descEn: "Track, reschedule or cancel your appointment.",
-    icon: CalendarCheck,
-    to: "/lookup",
-    hintAr: "برقم الحجز ورقم الجوال",
-    hintEn: "By booking ref + phone",
-  },
-  {
-    key: "pharmacy",
-    ar: "طلبات الصيدلية",
-    en: "Pharmacy Orders",
-    descAr: "حالة توصيل الأدوية.",
-    descEn: "Medicine delivery status.",
-    icon: Pill,
-    to: "/track",
-    hintAr: "برقم الطلب",
-    hintEn: "By order number",
-  },
-  {
-    key: "second-opinion",
-    ar: "الرأي الطبي الثاني",
-    en: "Second Opinion",
-    descAr: "تابع حالة طلب المراجعة.",
-    descEn: "Follow up on your review.",
-    icon: Stethoscope,
-    to: "/second-opinion",
-    hintAr: "بالبريد أو رقم الطلب",
-    hintEn: "By email or request ref",
-  },
-  {
-    key: "home-care",
-    ar: "الرعاية المنزلية",
-    en: "Home Care",
-    descAr: "حالة زيارتك المنزلية.",
-    descEn: "Your home visit status.",
-    icon: HomeIcon,
-    to: "/home-care",
-    hintAr: "برقم الطلب أو الجوال",
-    hintEn: "By ref or phone",
-  },
-];
+const KIND_META: Record<Order["kind"], { ar: string; en: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  appointment:    { ar: "موعد طبي",        en: "Appointment",     icon: CalendarCheck, color: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
+  pharmacy:       { ar: "طلب صيدلية",       en: "Pharmacy",        icon: Pill,          color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
+  second_opinion: { ar: "رأي طبي ثاني",     en: "Second opinion",  icon: Stethoscope,   color: "bg-purple-500/10 text-purple-700 border-purple-500/30" },
+  home_care:      { ar: "رعاية منزلية",     en: "Home care",       icon: HomeIcon,      color: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+};
 
-function MyOrdersHub() {
+const STATUS_AR: Record<string, string> = {
+  new: "جديد",
+  confirmed: "مؤكّد",
+  cancelled: "ملغى",
+  completed: "مكتمل",
+  no_show: "لم يحضر",
+  in_review: "قيد المراجعة",
+  answered: "تم الرد",
+  closed: "مُغلق",
+  processing: "قيد المعالجة",
+  ready: "جاهز",
+  delivered: "تم التسليم",
+  in_progress: "قيد التنفيذ",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  new: "bg-primary/10 text-primary",
+  confirmed: "bg-green-500/10 text-green-700",
+  completed: "bg-blue-500/10 text-blue-700",
+  cancelled: "bg-red-500/10 text-red-700",
+  no_show: "bg-amber-500/10 text-amber-700",
+};
+
+function fmt(iso: string, lang: "ar" | "en") {
+  try {
+    return new Date(iso).toLocaleString(lang === "ar" ? "ar-SA" : "en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+const STORAGE_KEY = "my-orders:phone";
+
+function MyOrdersPage() {
   const { lang } = useI18n();
   const isAr = lang === "ar";
+  const [phoneInput, setPhoneInput] = useState("");
+  const [queryPhone, setQueryPhone] = useState<string | null>(null);
+
+  // Restore last phone
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setPhoneInput(saved);
+        setQueryPhone(saved);
+      }
+    } catch {}
+  }, []);
+
+  const { data: orders, isLoading, isFetching, error } = useQuery({
+    queryKey: ["my-orders", queryPhone],
+    queryFn: async () => {
+      if (!queryPhone) return [] as Order[];
+      const { data, error } = await supabase.rpc("track_orders_by_phone", { _phone: queryPhone });
+      if (error) throw error;
+      return (data ?? []) as Order[];
+    },
+    enabled: !!queryPhone,
+    staleTime: 15_000,
+  });
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = phoneInput.trim();
+    if (trimmed.replace(/\D/g, "").length < 6) return;
+    setQueryPhone(trimmed);
+    try { sessionStorage.setItem(STORAGE_KEY, trimmed); } catch {}
+  };
+
+  const clear = () => {
+    setQueryPhone(null);
+    setPhoneInput("");
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+  };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-muted/30">
       {/* Hero */}
       <section className="bg-primary text-primary-foreground">
-        <div className="container-app py-12 md:py-16">
-          <div className="max-w-3xl">
+        <div className="container-app py-10 md:py-14">
+          <div className="mx-auto max-w-3xl text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-              {isAr ? "تتبع الطلبات" : "Track Orders"}
+              {isAr ? "تتبع الطلبات" : "Track orders"}
             </div>
-            <h1 className="text-4xl md:text-5xl leading-tight">
-              {isAr ? "طلباتي في مكان واحد" : "My orders in one place"}
+            <h1 className="text-3xl md:text-5xl font-bold">
+              {isAr ? "طلباتي" : "My Orders"}
             </h1>
-            <p className="mt-3 text-white/85 max-w-2xl">
+            <p className="mt-3 text-primary-foreground/85">
               {isAr
-                ? "اختر نوع الطلب الذي تريد تتبعه — سنطلب منك رقمًا للتحقق قبل عرض التفاصيل."
-                : "Pick what you want to track — we'll ask for a reference before showing details."}
+                ? "أدخل رقم جوالك لعرض جميع طلباتك (مواعيد، صيدلية، رأي ثاني، رعاية منزلية) في مكان واحد."
+                : "Enter your phone to view all your requests in one place."}
             </p>
           </div>
+
+          {/* Phone form */}
+          <form onSubmit={onSubmit} className="mx-auto mt-6 flex max-w-xl flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Label htmlFor="phone" className="sr-only">{isAr ? "رقم الجوال" : "Phone"}</Label>
+              <div className="relative">
+                <Phone className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder={isAr ? "05XXXXXXXX" : "05XXXXXXXX"}
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  className="ps-9 bg-background text-foreground h-12"
+                  required
+                />
+              </div>
+            </div>
+            <Button type="submit" variant="premium" size="xl" disabled={isFetching}>
+              {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {isAr ? "عرض طلباتي" : "Show my orders"}
+            </Button>
+          </form>
         </div>
       </section>
 
-      {/* Track cards */}
-      <section className="py-10 md:py-14">
-        <div className="container-app">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {CARDS.map((c) => {
-              const Icon = c.icon;
-              return (
-                <Link
-                  key={c.key}
-                  to={c.to}
-                  className="group bg-card border border-border rounded-2xl p-6 hover:border-primary/40 hover:shadow-md transition-all flex gap-4"
-                >
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold">{isAr ? c.ar : c.en}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground leading-6">
-                      {isAr ? c.descAr : c.descEn}
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 text-xs">
-                      <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">{isAr ? c.hintAr : c.hintEn}</span>
-                    </div>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                      {isAr ? "ابدأ التتبع" : "Start tracking"}
-                      <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+      <section className="container-app py-8 md:py-10">
+        {!queryPhone && <QuickLinks isAr={isAr} />}
 
-          {/* Signed-in shortcut */}
-          <div className="mt-8 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              {isAr
-                ? "لديك حساب مسجل؟ استعرض كل ملفك الطبي وطلباتك من بوابة المريض."
-                : "Have an account? See your full medical file and orders in the patient portal."}
-            </p>
-            <Link
-              to="/my"
-              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 h-10 text-sm font-semibold hover:bg-primary/90"
-            >
-              {isAr ? "بوابة المريض" : "Patient Portal"}
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-            </Link>
+        {queryPhone && (
+          <>
+            <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm text-muted-foreground">
+                {isAr ? "الطلبات المرتبطة بـ " : "Orders for "}
+                <span className="font-semibold text-foreground" dir="ltr">{queryPhone}</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={clear}>
+                {isAr ? "تغيير الرقم" : "Change number"}
+              </Button>
+            </div>
+
+            {isLoading ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 rounded-2xl bg-card border border-border animate-pulse" />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-destructive">
+                {isAr ? "تعذّر تحميل الطلبات — حاول مجددًا." : "Failed to load orders."}
+              </div>
+            ) : (orders?.length ?? 0) === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-10 text-center">
+                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <Search className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="font-bold">{isAr ? "لا توجد طلبات" : "No orders found"}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {isAr
+                    ? "لم نجد أي طلبات مرتبطة بهذا الرقم. تأكّد من الرقم أو ابدأ طلبًا جديدًا."
+                    : "No orders match this phone. Try another number or start a new request."}
+                </p>
+                <div className="mt-4">
+                  <Link to="/services"><Button variant="premium">{isAr ? "استعرض الخدمات" : "Browse services"}</Button></Link>
+                </div>
+              </div>
+            ) : (
+              <ul className="grid gap-3 md:grid-cols-2">
+                {orders!.map((o) => (
+                  <OrderCard key={`${o.kind}-${o.id}`} order={o} phone={queryPhone} isAr={isAr} />
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: boolean }) {
+  const meta = KIND_META[order.kind];
+  const Icon = meta.icon;
+  const statusLabel = STATUS_AR[order.status] ?? order.status;
+  const statusCls = STATUS_COLOR[order.status] ?? "bg-muted text-muted-foreground";
+
+  const meta2 = (order.metadata ?? {}) as Record<string, unknown>;
+  const doctor = meta2.doctor_ar as string | undefined;
+  const address = meta2.address as string | undefined;
+
+  const detailHref = order.kind === "appointment"
+    ? `/lookup?ref=${order.reference}&phone=${encodeURIComponent(phone)}`
+    : `/orders/${order.reference}?phone=${encodeURIComponent(phone)}&kind=${order.kind}`;
+
+  return (
+    <li className="card-panel group flex flex-col gap-3 hover:border-primary/40 transition">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`h-11 w-11 rounded-xl flex items-center justify-center border ${meta.color}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {isAr ? meta.ar : meta.en}
+            </div>
+            <div className="font-bold leading-tight">{order.title}</div>
           </div>
         </div>
-      </section>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusCls}`}>
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="text-xs text-muted-foreground space-y-1">
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{isAr ? "تم الإنشاء: " : "Created: "}{fmt(order.created_at, isAr ? "ar" : "en")}</span>
+        </div>
+        {order.scheduled_at && (
+          <div className="flex items-center gap-1.5">
+            <CalendarCheck className="h-3.5 w-3.5" />
+            <span>{isAr ? "الموعد: " : "Scheduled: "}{fmt(order.scheduled_at, isAr ? "ar" : "en")}</span>
+          </div>
+        )}
+        {doctor && <div>{isAr ? "الطبيب: " : "Doctor: "}{doctor}</div>}
+        {address && (
+          <div className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5" />
+            <span className="line-clamp-1">{address}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between pt-2 border-t border-border">
+        <span className="font-mono text-[11px] text-muted-foreground">#{order.reference}</span>
+        <Link to={detailHref} className="text-primary text-sm font-semibold inline-flex items-center gap-1 hover:underline">
+          {isAr ? "التفاصيل" : "Details"}
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </li>
+  );
+}
+
+function QuickLinks({ isAr }: { isAr: boolean }) {
+  const links = [
+    { to: "/book",           ar: "احجز موعدًا",         en: "Book appointment", icon: CalendarCheck },
+    { to: "/pharmacy",       ar: "طلب صيدلية",           en: "Pharmacy order",   icon: Pill },
+    { to: "/second-opinion", ar: "رأي طبي ثاني",         en: "Second opinion",   icon: Stethoscope },
+    { to: "/home-care",      ar: "رعاية منزلية",         en: "Home care",        icon: HomeIcon },
+  ];
+  return (
+    <div>
+      <h2 className="mb-4 text-xl font-bold">
+        {isAr ? "أو ابدأ طلبًا جديدًا" : "Or start a new request"}
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {links.map((l) => (
+          <Link key={l.to} to={l.to} className="card-panel group hover:border-primary/40 transition">
+            <l.icon className="h-6 w-6 text-primary" />
+            <div className="mt-2 font-bold">{isAr ? l.ar : l.en}</div>
+            <ArrowLeft className="mt-3 h-4 w-4 text-primary group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition" />
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
