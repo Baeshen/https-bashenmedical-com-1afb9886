@@ -128,13 +128,14 @@ export const Route = createFileRoute("/api/public/book/cancel")({
             });
           }
 
-          // Update + release slot atomically enough for our purposes: the
-          // DB row is the authoritative state; the slot release is a
-          // separate SECURITY DEFINER RPC on the same request.
-          const { error: updErr } = await supabaseAdmin
-            .from("appointments")
-            .update({ status: "cancelled" })
-            .eq("id", match.id);
+          // Route through update_appointment_status so the audit trigger
+          // sees a non-blank reason (required for status='cancelled'). The
+          // slot release is a separate SECURITY DEFINER RPC.
+          const selfReason = "إلغاء ذاتي عبر رابط المتابعة العام";
+          const { error: updErr } = await supabaseAdmin.rpc(
+            "update_appointment_status",
+            { _id: match.id, _status: "cancelled", _reason: selfReason } as any,
+          );
           if (updErr) {
             console.error("[cancel] update error", updErr);
             return json(500, {
