@@ -4,9 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -16,8 +18,10 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "sonner";
 import { IntroOverlay } from "@/components/IntroOverlay";
+import { WelcomeSplash } from "@/components/WelcomeSplash";
 import { ChatbotBubble } from "@/components/ChatbotBubble";
 import { MotionToggle } from "@/components/MotionToggle";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 
 function NotFoundComponent() {
