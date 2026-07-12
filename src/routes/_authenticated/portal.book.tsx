@@ -174,8 +174,16 @@ function BookPage() {
   }, [doctorId, dateStr, branchId, qc]);
 
   const createMut = useMutation({
-    mutationFn: (payload: Parameters<typeof createMyAppointment>[0]["data"]) =>
-      createMyAppointment({ data: payload }),
+    mutationFn: (payload: {
+      doctor_id: string;
+      branch_id?: string;
+      specialty_id?: string;
+      appointment_date: string;
+      appointment_time: string;
+      reason?: string;
+      patient_name: string;
+      patient_phone: string;
+    }) => createMyAppointment({ data: payload }),
     onSuccess: (res) => {
       toast.success("تم تأكيد الحجز بنجاح");
       setConfirmed({
