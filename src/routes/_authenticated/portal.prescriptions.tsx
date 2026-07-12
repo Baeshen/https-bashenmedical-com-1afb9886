@@ -353,8 +353,12 @@ function Field({ label, value }: { label: string; value: string }) {
 
 function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointment[]; activeCount: number }) {
   const qc = useQueryClient();
+  const { data: prefs = DEFAULT_REMINDER_PREFS } = useQuery(prefsQuery);
   const mut = useMutation({
-    mutationFn: () => generateMedicationReminders({ data: {} }),
+    mutationFn: () =>
+      generateMedicationReminders({
+        data: { preferredWakeHour: prefs.wake_hour, preferredSleepHour: prefs.sleep_hour },
+      }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر توليد الخطة"),
     onSuccess: () => {
       toast.success("تم توليد جدول التذكيرات.");
