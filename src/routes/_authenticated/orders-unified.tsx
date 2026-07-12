@@ -114,6 +114,9 @@ function OrdersUnifiedInner() {
   const [unifiedFilter, setUnifiedFilter] = useState<Set<UnifiedStatus>>(new Set());
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>(""); // YYYY-MM-DD
+  const [dateTo, setDateTo] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"created_at" | "updated_at">("updated_at");
   const [auditFor, setAuditFor] = useState<{ id: string; label: string } | null>(null);
 
   // debounce basic
@@ -121,7 +124,16 @@ function OrdersUnifiedInner() {
 
   const call = useServerFn(listAllUnifiedOrders);
   const kindsArr = Array.from(kinds);
-  const qk = ["orders-unified", kindsArr.sort().join(","), debounced];
+  const fromISO = dateFrom ? new Date(dateFrom + "T00:00:00").toISOString() : undefined;
+  const toISO = dateTo ? new Date(dateTo + "T23:59:59.999").toISOString() : undefined;
+  const qk = [
+    "orders-unified",
+    kindsArr.sort().join(","),
+    debounced,
+    fromISO ?? "",
+    toISO ?? "",
+    sortBy,
+  ];
   const query = useQuery({
     queryKey: qk,
     queryFn: () =>
@@ -130,6 +142,9 @@ function OrdersUnifiedInner() {
           kinds: kindsArr.length === ALL_KINDS.length ? undefined : kindsArr,
           search: debounced || undefined,
           limitPerKind: 50,
+          from: fromISO,
+          to: toISO,
+          sortBy,
         },
       }),
     staleTime: 15_000,
