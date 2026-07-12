@@ -10,6 +10,12 @@ import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } f
 import { ReminderHistoryByRefModal } from "@/components/ReminderPreferenceHistory";
 import { AppointmentAuditHistory } from "@/components/booking/AppointmentAuditHistory";
 import { OrderTimeline } from "@/components/booking/OrderTimeline";
+import {
+  parseOrderDetail,
+  isFinalStatus,
+  type AppointmentDetail,
+  type OrderStatus,
+} from "@/lib/order-types";
 
 const lookupSearch = z.object({
   ref: z.string().optional(),
