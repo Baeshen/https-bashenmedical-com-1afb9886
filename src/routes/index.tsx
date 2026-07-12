@@ -133,7 +133,7 @@ function HomePage() {
 
   return (
     <div>
-      <HeroSlider />
+      <HeroComplex />
       <QuickBar />
       <StatsBar />
 
