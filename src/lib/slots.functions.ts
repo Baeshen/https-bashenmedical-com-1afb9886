@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { riyadhTodayIso } from "@/lib/riyadh-date";
 
 /**
  * M2 — Atomic booking engine.
@@ -157,7 +158,8 @@ export const cancelMyAppointment = createServerFn({ method: "POST" })
     if (appt.status === "completed" || appt.status === "no_show") {
       throw new Error("لا يمكن إلغاء موعد منتهٍ.");
     }
-    const todayIso = new Date().toISOString().slice(0, 10);
+    // Riyadh-local "today" — matches booking UI (avoids ±3h drift near midnight).
+    const todayIso = riyadhTodayIso();
     if (appt.appointment_date < todayIso) {
       throw new Error("لا يمكن إلغاء موعد سابق.");
     }

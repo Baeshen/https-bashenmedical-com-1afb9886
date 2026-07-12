@@ -18,6 +18,7 @@
  * return PII or full uuids.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { riyadhTodayIso } from "@/lib/riyadh-date";
 import { z } from "zod";
 
 const cancelSchema = z.object({
@@ -119,7 +120,9 @@ export const Route = createFileRoute("/api/public/book/cancel")({
             });
           }
 
-          const todayIso = new Date().toISOString().slice(0, 10);
+          // "اليوم" يجب أن يُحسب بتوقيت الرياض — نفس التوقيت الذي يعرضه الحجز.
+          // استخدام UTC هنا كان يسمح/يمنع الإلغاء خطأً ٣ ساعات حول منتصف الليل.
+          const todayIso = riyadhTodayIso();
           if (String(match.appointment_date) < todayIso) {
             return json(409, {
               ok: false,
