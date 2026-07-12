@@ -9,7 +9,7 @@ import { buildLocalBusinessSchema } from "@/lib/localBusinessSchema";
 import { clinicSettingsQuery, type ClinicSettings } from "@/lib/clinicSettings";
 import { StatsBar } from "@/components/home/StatsBar";
 import { AwardsMarquee } from "@/components/home/AwardsMarquee";
-import { HeroSlider } from "@/components/home/HeroSlider";
+import { HeroComplex } from "@/components/home/HeroComplex";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { ServicesBento } from "@/components/home/ServicesBento";
 import { CentersStrip } from "@/components/home/CentersStrip";
@@ -133,7 +133,7 @@ function HomePage() {
 
   return (
     <div>
-      <HeroSlider />
+      <HeroComplex />
       <QuickBar />
       <StatsBar />
 
