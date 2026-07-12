@@ -724,11 +724,46 @@ function icsEscape(s: string) {
 function toIcsUtc(d: Date) {
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
 }
-function toIcsFloatingLocal(y: number, m: number, d: number, h: number, mi: number) {
+function toIcsLocalWall(y: number, m: number, d: number, h: number, mi: number) {
   return `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(mi)}00`;
 }
 
+/**
+ * Detect the browser's IANA timezone and compute its current UTC offset in minutes.
+ * Uses Intl.DateTimeFormat "longOffset" (e.g. "GMT+03:00") which is supported everywhere
+ * Intl is available. Falls back to `Date.getTimezoneOffset()` if parsing fails.
+ */
+function getUserTimezone(): { tzid: string; offsetMinutes: number; offsetIcs: string } {
+  const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  let offsetMinutes = -new Date().getTimezoneOffset(); // fallback
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tzid,
+      timeZoneName: "longOffset",
+    }).formatToParts(new Date());
+    const tzPart = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+    // "GMT+03:00" | "GMT-05:30" | "GMT" | "UTC"
+    const m = tzPart.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+    if (m) {
+      const sign = m[1] === "-" ? -1 : 1;
+      const hh = parseInt(m[2], 10);
+      const mm = parseInt(m[3] ?? "0", 10);
+      offsetMinutes = sign * (hh * 60 + mm);
+    } else if (/^GMT$|^UTC$/.test(tzPart)) {
+      offsetMinutes = 0;
+    }
+  } catch {
+    /* keep fallback */
+  }
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMinutes);
+  const offsetIcs = `${sign}${pad(Math.floor(abs / 60))}${pad(abs % 60)}`;
+  return { tzid, offsetMinutes, offsetIcs };
+}
+
 function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], prefs: ReminderPreferences) {
+  const tz = getUserTimezone();
+
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -736,6 +771,18 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${icsEscape("تذكيرات الأدوية والمواعيد")}`,
+    `X-WR-TIMEZONE:${tz.tzid}`,
+    // Minimal VTIMEZONE with current standard offset (Saudi Arabia has no DST,
+    // and for zones that do, calendar apps still resolve TZID from their own db).
+    "BEGIN:VTIMEZONE",
+    `TZID:${tz.tzid}`,
+    "BEGIN:STANDARD",
+    "DTSTART:19700101T000000",
+    `TZOFFSETFROM:${tz.offsetIcs}`,
+    `TZOFFSETTO:${tz.offsetIcs}`,
+    `TZNAME:${tz.tzid}`,
+    "END:STANDARD",
+    "END:VTIMEZONE",
   ];
 
   const now = new Date();
@@ -745,21 +792,21 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
   const m = today.getMonth() + 1;
   const d = today.getDate();
 
-  // Recurring daily medication reminders (30 days)
+  // Recurring daily medication reminders — tagged with TZID so calendars respect the user's zone.
   plan.slots.forEach((s, idx) => {
     const [hh, mm] = s.time.split(":").map((v) => parseInt(v, 10));
     if (Number.isNaN(hh) || Number.isNaN(mm)) return;
-    const start = toIcsFloatingLocal(y, m, d, hh, mm);
+    const start = toIcsLocalWall(y, m, d, hh, mm);
     const endMin = mm + 15;
     const endH = endMin >= 60 ? hh + 1 : hh;
-    const end = toIcsFloatingLocal(y, m, d, endH % 24, endMin % 60);
+    const end = toIcsLocalWall(y, m, d, endH % 24, endMin % 60);
     const uid = `med-${idx}-${hh}${mm}-${now.getTime()}@bashenmedical`;
     lines.push(
       "BEGIN:VEVENT",
       `UID:${uid}`,
       `DTSTAMP:${dtstamp}`,
-      `DTSTART:${start}`,
-      `DTEND:${end}`,
+      `DTSTART;TZID=${tz.tzid}:${start}`,
+      `DTEND;TZID=${tz.tzid}:${end}`,
       `RRULE:FREQ=DAILY;COUNT=${prefs.daily_repeat_days}`,
       `SUMMARY:${icsEscape(`💊 ${s.medication}${s.dosage ? ` — ${s.dosage}` : ""}`)}`,
       `DESCRIPTION:${icsEscape([s.label, s.note].filter(Boolean).join(" • "))}`,
@@ -783,15 +830,15 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
     const endTotal = startM + 30;
     const endH = (startH + Math.floor(endTotal / 60)) % 24;
     const endM = endTotal % 60;
-    const start = toIcsFloatingLocal(ay, am, ad, startH, startM);
-    const end = toIcsFloatingLocal(ay, am, ad, endH, endM);
+    const start = toIcsLocalWall(ay, am, ad, startH, startM);
+    const end = toIcsLocalWall(ay, am, ad, endH, endM);
     const uid = `apt-${a.id}-${idx}@bashenmedical`;
     lines.push(
       "BEGIN:VEVENT",
       `UID:${uid}`,
       `DTSTAMP:${dtstamp}`,
-      `DTSTART:${start}`,
-      `DTEND:${end}`,
+      `DTSTART;TZID=${tz.tzid}:${start}`,
+      `DTEND;TZID=${tz.tzid}:${end}`,
       `SUMMARY:${icsEscape(`🩺 موعد${a.doctor_name ? ` مع د. ${a.doctor_name}` : ""}`)}`,
       `DESCRIPTION:${icsEscape([a.specialty, a.reason].filter(Boolean).join(" • "))}`,
       "CATEGORIES:Appointment",
@@ -815,7 +862,7 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast.success("تم تنزيل ملف التقويم. افتحه لاستيراده في Google / Apple / Outlook.");
+  toast.success(`تم تنزيل ملف التقويم بتوقيت ${tz.tzid}.`);
 }
 
 /* --------------------------- Weekly adherence --------------------------- */
