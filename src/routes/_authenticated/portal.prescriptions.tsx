@@ -8,11 +8,15 @@ import {
   getMedicationReminderLog,
   getAdherenceStats,
   confirmMedicationReminder,
+  getReminderPreferences,
+  saveReminderPreferences,
+  DEFAULT_REMINDER_PREFS,
   type PrescriptionItem,
   type ReminderPlan,
   type ReminderLogEntry,
   type UpcomingAppointment,
   type AdherenceStats,
+  type ReminderPreferences,
 } from "@/lib/portal/prescriptions.functions";
 import { Badge } from "@/components/ui/badge";
 import {
