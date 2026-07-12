@@ -22,6 +22,8 @@ import {
   submitMyComplaint,
 } from "@/lib/complaints.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
+import { OrderStatusBadge } from "@/components/OrderStatusBadge";
+import { OrderProgressSteps } from "@/components/OrderProgressSteps";
 
 export const Route = createFileRoute("/_authenticated/portal/complaints")({
   head: () => ({
@@ -34,31 +36,12 @@ export const Route = createFileRoute("/_authenticated/portal/complaints")({
   component: MyComplaintsPage,
 });
 
-const STATUS_AR: Record<string, string> = {
-  submitted: "تم الإرسال",
-  under_review: "تحت المراجعة",
-  waiting_patient: "بانتظار إجراء منك",
-  resolved: "تم الحل",
-  closed: "مغلق",
-};
-const STATUS_COLOR: Record<string, string> = {
-  submitted: "bg-primary/10 text-primary border-primary/30",
-  under_review: "bg-amber-500/10 text-amber-700 border-amber-500/30",
-  waiting_patient: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-  resolved: "bg-green-500/10 text-green-700 border-green-500/30",
-  closed: "bg-muted text-muted-foreground border-border",
-};
 const TYPE_AR: Record<string, string> = {
   complaint: "شكوى",
   suggestion: "اقتراح",
   thanks: "شكر",
   inquiry: "استفسار",
 };
-const STAGES: Array<{ key: string; label: string }> = [
-  { key: "submitted", label: "تم الإرسال" },
-  { key: "under_review", label: "تحت المراجعة" },
-  { key: "resolved", label: "تم الحل" },
-];
 
 function MyComplaintsPage() {
   const qc = useQueryClient();
@@ -166,9 +149,11 @@ function MyComplaintsPage() {
               className="rounded-md border border-border bg-background px-2 py-1 text-sm"
             >
               <option value="all">الكل</option>
-              {Object.entries(STATUS_AR).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
+              <option value="submitted">تم الإرسال</option>
+              <option value="under_review">تحت المراجعة</option>
+              <option value="waiting_patient">بانتظار إجراء منك</option>
+              <option value="resolved">تم الحل</option>
+              <option value="closed">مغلق</option>
             </select>
             <label className="text-xs text-muted-foreground ms-2">الترتيب</label>
             <select
@@ -220,13 +205,7 @@ function MyComplaintsPage() {
                   </p>
                 </div>
                 <div className="shrink-0 flex flex-col items-end gap-1">
-                  <span
-                    className={`inline-block text-xs px-2 py-0.5 rounded-full border ${
-                      STATUS_COLOR[r.status] ?? ""
-                    }`}
-                  >
-                    {STATUS_AR[r.status] ?? r.status}
-                  </span>
+                  <OrderStatusBadge kind="complaint" status={r.status} />
                   <ChevronRight className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
                 </div>
               </div>
@@ -242,13 +221,7 @@ function MyComplaintsPage() {
         <Modal onClose={() => setSelectedId(null)} title={`بلاغ ${selected.reference}`}>
           <div className="space-y-4 text-sm">
             <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`inline-block text-xs px-2 py-0.5 rounded-full border ${
-                  STATUS_COLOR[selected.status] ?? ""
-                }`}
-              >
-                {STATUS_AR[selected.status] ?? selected.status}
-              </span>
+              <OrderStatusBadge kind="complaint" status={selected.status} />
               <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
                 {TYPE_AR[selected.type] ?? selected.type}
               </span>
@@ -268,7 +241,15 @@ function MyComplaintsPage() {
               </button>
             </div>
 
-            <Timeline currentStatus={selected.status} />
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">مراحل معالجة البلاغ</p>
+              <OrderProgressSteps kind="complaint" status={selected.status} />
+              {selected.status === "waiting_patient" && (
+                <p className="mt-2 text-xs text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded p-2">
+                  يحتاج البلاغ إجراءً منك — يرجى مراجعة تفاصيلك أو التواصل مع فريق تجربة المريض.
+                </p>
+              )}
+            </div>
 
             <EditableMessage
               id={selected.id}
@@ -339,43 +320,6 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       >
         <Plus className="h-4 w-4" /> إرسال بلاغ
       </button>
-    </div>
-  );
-}
-
-function Timeline({ currentStatus }: { currentStatus: string }) {
-  // Cancelled/closed shown as its own final state
-  const closedState = currentStatus === "closed" || currentStatus === "waiting_patient";
-  const currentIdx =
-    currentStatus === "resolved" ? 2 : currentStatus === "under_review" ? 1 : 0;
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-2">مراحل معالجة البلاغ</p>
-      <ol className="flex items-center gap-2">
-        {STAGES.map((s, i) => {
-          const done = i <= currentIdx && currentStatus !== "waiting_patient";
-          return (
-            <li key={s.key} className="flex-1">
-              <div
-                className={`h-1.5 rounded-full ${
-                  done ? "bg-primary" : "bg-muted"
-                }`}
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground text-center">
-                {s.label}
-              </p>
-            </li>
-          );
-        })}
-      </ol>
-      {currentStatus === "waiting_patient" && (
-        <p className="mt-2 text-xs text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded p-2">
-          يحتاج البلاغ إجراءً منك — يرجى مراجعة تفاصيلك أو التواصل مع فريق تجربة المريض.
-        </p>
-      )}
-      {closedState && currentStatus === "closed" && (
-        <p className="mt-2 text-xs text-muted-foreground">تم إغلاق البلاغ.</p>
-      )}
     </div>
   );
 }
