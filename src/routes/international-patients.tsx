@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plane, Hotel, Languages, FileText, ShieldCheck, HeartPulse, MapPin } from "lucide-react";
 import { PageHero, SectionCard } from "@/components/PageShell";
 import { ServiceRequestForm } from "@/components/ServiceRequestForm";
+import { whatsappUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/international-patients")({
   head: () => ({
@@ -53,7 +54,7 @@ function IntlPage() {
             ابدأ طلبك — Start your request
           </a>
           <a
-            href="https://wa.me/966500000000"
+            href={whatsappUrl("Hello Baeshen Medical, I need help with international patient services. — مرحبًا، أحتاج مساعدة في خدمات المرضى الدوليين.")}
             target="_blank"
             rel="noreferrer noopener"
             className="rounded-md border border-primary text-primary px-5 py-2.5 font-semibold hover:bg-primary/5"

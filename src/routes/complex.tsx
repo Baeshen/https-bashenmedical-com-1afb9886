@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { SITE } from "@/lib/site";
+import { SITE, whatsappUrl } from "@/lib/site";
 import {
   MapPin,
   Phone,
@@ -241,7 +241,7 @@ function ComplexPage() {
                     <Calendar className="h-4 w-4" /> {ar ? "احجز موعدك" : "Book an Appointment"}
                   </Link>
                   <a
-                    href={`https://wa.me/${SITE.whatsapp}`}
+                    href={whatsappUrl(ar ? `مرحبًا ${SITE.nameAr}، أرغب بالاستفسار.` : `Hello ${SITE.nameEn}, I would like to inquire.`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/40 hover:bg-white/20"
@@ -285,7 +285,7 @@ function ComplexPage() {
             icon={<MessageCircle className="h-5 w-5" />}
             title={ar ? "واتساب" : "WhatsApp"}
             value={SITE.mobileDisplay}
-            href={`https://wa.me/${SITE.whatsapp}`}
+            href={whatsappUrl(ar ? `مرحبًا ${SITE.nameAr}، أرغب بالاستفسار.` : `Hello ${SITE.nameEn}, I would like to inquire.`)}
           />
         </div>
       </section>
@@ -545,7 +545,7 @@ function ComplexPage() {
                 <li className="flex items-start gap-3">
                   <MessageCircle className="h-4 w-4 text-primary mt-1 shrink-0" />
                   <a
-                    href={`https://wa.me/${SITE.whatsapp}`}
+                    href={whatsappUrl(ar ? `مرحبًا ${SITE.nameAr}، أرغب بالاستفسار.` : `Hello ${SITE.nameEn}, I would like to inquire.`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary"

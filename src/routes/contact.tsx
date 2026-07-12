@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
-import { SITE } from "@/lib/site";
+import { SITE, whatsappUrl } from "@/lib/site";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
 import {
   buildLocalBusinessSchema,
@@ -75,7 +75,7 @@ function ContactPage() {
           {
             icon: MessageCircle,
             l: "WhatsApp",
-            href: `https://wa.me/${SITE.whatsapp}`,
+            href: whatsappUrl(lang === "ar" ? `مرحبًا ${SITE.nameAr}، أرغب في الاستفسار عن خدماتكم.` : `Hello ${SITE.nameEn}, I'd like to inquire about your services.`),
             sub: SITE.mobileDisplay,
           },
           {
