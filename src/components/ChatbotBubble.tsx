@@ -180,17 +180,25 @@ export function ChatbotBubble() {
             </>
           )}
 
-          <footer className="border-t border-border p-3">
+          <footer className="border-t border-border p-3 space-y-2">
             <a
               href={waHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-500 text-white px-3 py-2 text-sm font-semibold hover:bg-emerald-600"
+              onClick={handleWaClick}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#25D366] text-white px-3 py-2 text-sm font-semibold hover:bg-[#1EBE5D] transition"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              تحدّث معنا على واتساب
+              تحدّث معنا على واتساب · {SITE.phoneDisplay}
+            </a>
+            <a
+              href={`tel:${SITE.phoneE164}`}
+              className="block text-center text-[11px] text-muted-foreground hover:text-primary"
+            >
+              أو اتصل مباشرة: {SITE.phoneDisplay}
             </a>
           </footer>
+
         </div>
       )}
     </>
