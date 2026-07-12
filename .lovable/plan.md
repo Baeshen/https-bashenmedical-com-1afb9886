@@ -1,153 +1,85 @@
+# Patient Portal — Baashen Medical Complex
 
-# خطة تطوير مجمع باعشن الطبي — نموذج فريق متكامل
+## Approach
 
-## 1) هيكل الفريق (أدوار افتراضية داخل Lovable)
+The project already has a rich backend (patients, appointments, doctors, invoices, lab_reports, prescriptions, radiology_reports, patient_visits, patient_medications, patient_allergies, notifications, profiles, user_roles). We will **reuse the existing schema**, add only what's missing, and layer a new patient-facing portal on top — kept separate from the public marketing site.
 
-سنعتمد نموذج «Squads» بثلاث فرق متوازية، يقودها Tech Lead واحد (أنت):
-
-| الفريق | المسؤولية | المخرجات |
-|---|---|---|
-| **Design Squad** | نظام تصميم, Hero, Sliders, بطاقات, أيقونات, تايبوغرافي عربي/إنجليزي | Design tokens في `src/styles.css`, مكوّنات UI موحّدة, Figma-like previews عبر `design--create_directions` |
-| **Frontend Squad** | صفحات TanStack Start, i18n, SEO, أداء, إمكانية وصول | صفحات `/`, `/doctors`, `/book`, `/specialties`, `/branches` بمعايير Lighthouse ≥ 90 |
-| **Backend/Data Squad** | Supabase (RLS, RPCs, migrations), MCP tools, Edge/Server functions, تحليلات | `list_public_doctors`, `book_appointment` RPC, تدقيقات RLS, لوحات إدارة |
-
-تنسيق أسبوعي عبر `.lovable/plan.md` وتقارير تقدّم في `mcp-status`.
+Because the full spec is ~13 screens, we ship in three phases in this same conversation. Each phase is verifiable on its own.
 
 ---
 
-## 2) المرجعان
+## Phase 1 — Auth + Portal Shell + Dashboard (this turn)
 
-- **udh.sa** — رئيسية مستشفى جامعي: Hero فيديو + شريط خدمات سريع + شبكة تخصصات + أطباء مميّزون + مراكز تميّز + أخبار + مؤشرات ثقة (اعتمادات/أرقام) + Footer غني.
-- **eservices.udh.sa/e-services** — بوابة خدمات: بطاقات خدمات (حجز موعد، تقارير مخبرية، أشعة، وصفات، آراء ثانية، شكاوى) مع Wizard حجز متعدد الخطوات، تتبع حالة، تسجيل دخول موحّد (Nafath/OTP).
+### 1. Auth
+- Enable Email/Password + Google + Apple (managed) via `configure_social_auth` (`providers: ["google","apple"]`).
+- Extend the existing `profiles` table with patient-facing columns: `national_id`, `phone`, `date_of_birth`, `gender`, `preferred_language`, `emergency_contact_name`, `emergency_contact_phone`, `insurance_provider`, `insurance_policy_no`, `avatar_url`, `dark_mode`, `notification_prefs jsonb`.
+- Auto-create profile on signup via `handle_new_user()` trigger on `auth.users`.
+- Link profile → patients: add `patients.profile_id uuid references profiles.id unique` so a signed-in user maps to their patient record; server functions look up the patient by `profile_id`.
+- Add helper `get_my_patient_id()` (SECURITY DEFINER) to resolve current patient.
 
----
-
-## 3) المرحلة الأولى — نظام تصميم موحّد (أسبوعان)
-
-**Design Squad:**
-- استخراج palette من هوية باعشن (Teal/Emerald + Sand) وتحديد `--primary`, `--accent`, `--surface`, `--gradient-hero`, `--shadow-elegant` في `src/styles.css`.
-- Typography: عربي `IBM Plex Sans Arabic` أو `Tajawal`, إنجليزي `Inter`. تحميل عبر `<link>` في `__root.tsx`.
-- توليد 3 اتجاهات بصرية للرئيسية عبر `design--create_directions` واختيار واحد.
-- مكتبة مكوّنات: `HeroVideo`, `ServiceQuickCard`, `SpecialtyTile`, `DoctorCard v2`, `StatCounter`, `TrustBar`, `NewsCard`, `CenterOfExcellenceCard`, `FooterMega`.
-
-**مخرجات:** `src/components/ui-kit/*` + توثيق mini-storybook داخل صفحة `/dev/kit` (dev-only).
-
----
-
-## 4) المرحلة الثانية — الصفحة الرئيسية على غرار udh.sa (أسبوعان)
-
-**أقسام مطلوبة بالترتيب:**
-1. **Hero** — فيديو/سلايدر ملء الشاشة + CTA «احجز موعد» و«الخدمات الإلكترونية».
-2. **QuickBar** — 6 أيقونات: حجز, تقارير, أشعة, صيدلية, رعاية منزلية, رأي ثانٍ.
-3. **مؤشرات** — StatsBar (سنوات خبرة, أطباء, مرضى, فروع) مع عدّاد متحرك.
-4. **التخصصات** — شبكة 12 تخصصًا + رابط «كل التخصصات».
-5. **مراكز التميّز** — Carousel لبطاقات كبيرة (قلب, أورام, نساء وولادة, ...).
-6. **أطباؤنا** — 4-8 بطاقات + فلترة سريعة.
-7. **لماذا باعشن** — 4 قيم (CBAHI, تقنية, رعاية شاملة, رضا المرضى).
-8. **أخبار وقصص** — 3 بطاقات من `patient_stories` + `health_articles`.
-9. **الاعتمادات** — Marquee لشعارات (CBAHI, JCI مستقبلاً, ...).
-10. **الموقع + CTA تواصل**.
-11. **Footer Mega** — أعمدة: خدمات, تخصصات, الشركة, تواصل, سوشيال + شهادات.
-
-**Frontend Squad:** إعادة كتابة `src/routes/index.tsx` بتقسيم كل قسم لمكوّن مستقل تحت `src/components/home/`.
-
-**SEO:** JSON-LD `MedicalOrganization` + `WebSite` + `BreadcrumbList` لكل صفحة داخلية.
-
----
-
-## 5) المرحلة الثالثة — بوابة الخدمات الإلكترونية `/services` (3 أسابيع)
-
-مسار جديد `/services` يحاكي `eservices.udh.sa`:
-
-**بطاقات خدمات (9):**
-1. حجز موعد (`/book`)
-2. تعديل/إلغاء موعد (`/lookup`)
-3. تقارير مخبرية (`/my/lab-reports`)
-4. تقارير أشعة (`/my/radiology`)
-5. الوصفات الطبية (`/my/prescriptions`)
-6. طلب دواء (`/pharmacy`)
-7. رأي طبي ثانٍ (`/second-opinion`)
-8. رعاية منزلية (`/home-care`)
-9. الشكاوى والاقتراحات (`/complaints`)
-
-كل بطاقة: أيقونة + وصف + زر + شارة «يتطلب تسجيل دخول» عند الحاجة.
-
-**تسجيل دخول موحّد:** إبقاء Email/Google + إضافة OTP عبر الهاتف (Supabase Phone Auth) — مستقبلاً Nafath.
-
----
-
-## 6) المرحلة الرابعة — تطوير نظام الحجز (أسبوعان)
-
-الأساس موجود في `/book` بـ 9 خطوات. التحسينات:
-
-- **Deep-links** `?service`, `?doctor`, `?specialty`, `?branch` — validateSearch + قفز تلقائي.
-- **Progress سحابي**: حفظ في `sessionStorage` + استرجاع من رابط `resume`.
-- **Slot lock مؤقّت** (2 دقيقة) عبر RPC `reserve_slot` لمنع التعارض.
-- **تأكيد OTP** قبل الإنشاء للمرضى غير المسجّلين.
-- **شاشة نجاح**: QR + إضافة للتقويم (`.ics`) + WhatsApp + PDF + رابط تتبع.
-- **صفحة تتبع** `/track/$reference` تعرض حالة الموعد وتسمح بالتعديل/الإلغاء.
-
----
-
-## 7) المرحلة الخامسة — لوحات إدارية وتحليلات (أسبوع)
-
-- `/admin/analytics` — KPIs: حجوزات/يوم, معدل الإلغاء, زمن الانتظار, رضا المرضى.
-- `/admin/doctors-management` — رفع صور فعلية (Supabase Storage) + جدولة إجازات.
-- `/admin/content` — إدارة أخبار وقصص ومقالات صحية.
-- `/mcp-status` (موجود) — يُوسَّع لعرض مقاييس أداء الأدوات.
-
----
-
-## 8) المرحلة السادسة — الجودة والإطلاق (أسبوع)
-
-- **Playwright E2E** لكل مسار خدمة (11 مسار).
-- **RLS tests** لكل جدول جديد.
-- **Lighthouse** ≥ 90 على الرئيسية والحجز موبايل/سطح مكتب.
-- **Accessibility**: WCAG 2.1 AA — تباين, تنقّل لوحة مفاتيح, ARIA.
-- **i18n**: مراجعة كل السلاسل عربي/إنجليزي.
-- **Sitemap** + `robots.txt` + hreflang.
-
----
-
-## 9) الجدول الزمني الإجمالي
-
+### 2. Routes
 ```text
-الأسبوع 1-2:  نظام التصميم + اختيار الاتجاه البصري
-الأسبوع 3-4:  الرئيسية الجديدة
-الأسبوع 5-7:  بوابة /services + Auth محسّن
-الأسبوع 8-9:  ترقية Wizard الحجز + تتبع
-الأسبوع 10:   لوحات الإدارة والتحليلات
-الأسبوع 11:   QA + Lighthouse + إطلاق
+/auth                              (public — login/signup, glassmorphism card)
+/auth/reset-password               (public — recovery form, mandatory)
+/_authenticated/portal             (layout — sidebar + topbar; managed gate already handles redirect)
+/_authenticated/portal/            (Dashboard: Welcome, Health Summary, Quick Appointments, Active Doctors, AI Summary card, Notifications preview)
 ```
 
----
+Portal routes are separated from the marketing site so `/` stays public.
 
-## 10) تفاصيل تقنية (للمطوّرين)
+### 3. UI System
+- New tokens in `src/styles.css` for the portal palette (Primary `#0F6CBD`, Secondary `#34C8FF`, Accent `#00B8D9`, Background `#F8FBFF`).
+- Glassmorphism card + soft-shadow + 24px radius utilities added as CSS `@utility`.
+- Cairo (AR) / Work Sans (EN) already loaded; reuse.
+- Shared components: `PortalShell` (sidebar + topbar + content), `GlassCard`, `StatTile`, `AppointmentCard`, `DoctorCard`, `SectionHeader`, `SearchBar`, `AIChatBubble` (Floating FAB — UI only in Phase 1, wired in Phase 3).
 
-- **Stack**: TanStack Start + React 19 + Tailwind v4 + Supabase (Lovable Cloud) + Cloudflare Workers.
-- **مكوّنات Home** تُقسم إلى: `HeroVideo.tsx`, `ServicesGrid.tsx`, `SpecialtiesGrid.tsx`, `CentersCarousel.tsx`, `DoctorsStrip.tsx`, `NewsStrip.tsx`, `FooterMega.tsx`.
-- **RPCs جديدة**: `reserve_slot(_doctor_id, _date, _time)`, `confirm_slot(_reservation_id)`, `service_metrics()`.
-- **جداول جديدة**: `slot_reservations` (TTL 2min via trigger), `service_requests` موحّد.
-- **MCP**: إضافة `list_services`, `track_appointment`, `request_lab_report`.
-- **CI**: توسيع `.github/workflows/ci.yml` بمسارات Playwright الجديدة.
+### 4. Server functions (Phase 1)
+- `getMyProfile`, `updateMyProfile`
+- `getDashboardSummary` → returns `{ profile, next_appointment, upcoming_count, active_medications_count, unread_notifications, recent_lab_stats, active_doctors[] }`
 
----
+All under `src/lib/portal/*.functions.ts` with `.middleware([requireSupabaseAuth])`.
 
-## 11) قرارات معلّقة (تحتاج موافقتك)
-
-1. **الاتجاه البصري**: هل أُطلق `design--create_directions` بثلاثة خيارات قبل البدء؟
-2. **الخط**: `Tajawal` أم `IBM Plex Sans Arabic`؟
-3. **OTP**: تفعيل Twilio عبر Supabase Phone Auth الآن أم مرحلة لاحقة؟
-4. **صور الأطباء**: بدء رفع فعلي أم إبقاء Initials حتى تجهيز التصوير؟
-5. **مراكز التميّز**: نفس القائمة الحالية أم توسعتها لتشابه udh.sa (قلب, أورام, أعصاب, ...)؟
+### 5. Verification
+- `tsgo` clean, `bun run build:dev` succeeds.
+- Playwright: navigate `/auth` → sign up → land on `/portal` → see dashboard.
 
 ---
 
-## ماذا أنفّذ بعد موافقتك؟
+## Phase 2 — Records, Appointments, Doctors, Labs (next turn)
 
-اقتراحي بدء **المرحلة 1 + 2** فورًا:
-1. إطلاق 3 اتجاهات تصميم للرئيسية.
-2. تحديث نظام الألوان والخطوط.
-3. إعادة بناء الرئيسية قسمًا قسمًا.
+- `/portal/book-appointment` — calendar + doctor cards + slot picker (reads `availability`, writes `appointments`).
+- `/portal/doctors` + `/portal/doctors/$id` — grid + doctor profile.
+- `/portal/appointments` — my upcoming/past appointments.
+- `/portal/medical-records` — timeline (visits, prescriptions, allergies, medications, surgeries, vaccinations).
+- `/portal/laboratory` — charts (Recharts) + normal ranges + PDF download link from `lab_reports.file_url`.
+- `/portal/radiology` — same pattern from `radiology_reports`.
+- `/portal/prescriptions` — from `prescriptions` + `patient_medications`.
 
-أخبرني بالقرارات في الفقرة (11) أو قل «ابدأ» لأعتمد الافتراضات وأبدأ فورًا.
+---
+
+## Phase 3 — Insurance, Invoices, Payments, Notifications, Profile, AI Assistant (final turn)
+
+- `/portal/insurance` — from profile insurance fields + `patients.insurance_*` if present.
+- `/portal/invoices` + `/portal/payments` — from `invoices`. Payment buttons UI-only (Apple Pay / Google Pay / Visa / Mastercard) — real payment integration will require enabling Stripe/Paddle in a separate ask.
+- `/portal/notifications` — from `notifications`.
+- `/portal/profile` + `/portal/settings` — edit profile, language toggle, dark mode, notification prefs.
+- AI Assistant FAB wired to Lovable AI Gateway (`google/gemini-2.5-flash`) with streaming; system prompt grounded in the current patient's summary; conversation stored in a new `ai_conversations` + `ai_messages` pair.
+
+---
+
+## Technical notes (for reference)
+
+- Portal design tokens live in `src/styles.css` scoped under `.portal-root` so they don't override the marketing site.
+- `PortalShell` uses shadcn `Sidebar` with `collapsible="icon"` and highlights active route via `useRouterState`.
+- Loader pattern: `context.queryClient.ensureQueryData(dashboardQueryOptions)` + `useSuspenseQuery` in the component; every portal route has `errorComponent` and `notFoundComponent`.
+- Payment buttons in Phase 3 are visual only until Stripe/Paddle is enabled — we will ask before charging real money.
+- Apple sign-in uses the managed OAuth path; the user does not need Apple Developer credentials for it to appear in the UI. If it fails at runtime we'll flag BYO Apple credentials.
+
+## Out of scope for now
+
+- Real payment processing (needs `enable_stripe_payments` / `enable_paddle_payments` + Pro plan — will offer after Phase 3).
+- Face ID / Fingerprint / Passkeys (buttons will be visual only — real WebAuthn can be added later).
+- Native mobile app.
+- Editing marketing site pages (this is additive only).
+
+Approve to start Phase 1.
