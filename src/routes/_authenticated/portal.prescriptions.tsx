@@ -204,6 +204,9 @@ function PrescriptionsPage() {
         </div>
       )}
 
+      {/* Weekly adherence */}
+      <AdherenceCard />
+
       {/* Reminder log */}
       <ReminderLogSection />
 
