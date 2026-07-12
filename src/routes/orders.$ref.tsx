@@ -226,7 +226,7 @@ function OrderDetailCard({
       toast.success(isAr ? "تم إلغاء الطلب" : "Order cancelled");
       setCancelOpen(false);
       setCancelReason("");
-      qc.invalidateQueries({ queryKey: ["order-detail", order.reference, phone] });
+      qc.invalidateQueries({ queryKey: ["order-detail", order.reference, phone, order.kind] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
     },
     onError: (err: Error) => {
