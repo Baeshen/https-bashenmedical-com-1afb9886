@@ -86,7 +86,7 @@ const NAV: NavItem[] = [
   { label: "الطوارئ", icon: Ambulance, comingSoon: true },
   { label: "الفوترة", icon: CreditCard, comingSoon: true },
   { label: "التأمين", icon: ShieldCheck, comingSoon: true },
-  { label: "المخزون", icon: Package, comingSoon: true },
+  { label: "المخزون", icon: Package, to: "/_authenticated/inventory-management" as string },
   { label: "المستلزمات", icon: Truck, comingSoon: true },
   { label: "الموظفون", icon: UserCog, comingSoon: true },
   { label: "الحضور", icon: Clock, comingSoon: true },
