@@ -11,7 +11,7 @@
 | # | المرحلة | الحالة |
 |---|--------|--------|
 | 0 | تحصين قاعدة البيانات والتزامن (سابق) | ✅ منجز |
-| 1 | الأساس + الهوية البصرية المستقبلية | ⬜ لم يبدأ |
+| 1 | الأساس + الهوية البصرية المستقبلية | ✅ منجز |
 | 2 | الإنترو + الرئيسية + الإعلانات والعروض | ⬜ لم يبدأ |
 | 3 | توليد الصور وربطها بالخدمات | ⬜ لم يبدأ |
 | 4 | قسم التجميل والليزر | ⬜ لم يبدأ |
@@ -50,16 +50,14 @@
 **الحالة:** ⬜ لم يبدأ · **مدة تقديرية:** جلسة واحدة
 
 **المهام:**
-- [ ] تحديث `src/styles.css` — Design tokens دلالية (خلفية `#05060A → #0A1A2F`، تركوازي `#00D9C0`، بنفسجي `#7B61FF`، توهّج نيون، aurora gradients، glass variables)
-- [ ] إضافة خطوط `Tajawal` + `IBM Plex Sans Arabic` عبر `<link>` في `src/routes/__root.tsx`
-- [ ] التحقق من تثبيت `framer-motion` وإضافته عند الحاجة
-- [ ] ترقية `src/components/ui/button.tsx` — variant `magnetic` بتوهّج نيون
-- [ ] ترقية `src/components/ui/card.tsx` — variant `glass` (زجاجي بميلان خفيف)
-- [ ] ترقية `src/components/ui/input.tsx` — حدود مضيئة عند التركيز
-- [ ] ترقية `src/components/ui/skeleton.tsx` — لمعان متحرّك بدل الدوّار
-- [ ] ترقية `sonner` toasts + `dialog` — زجاجيان بضبابية خلفية
-- [ ] مكوّن `PageTransition` + `StaggerReveal` جديدان
-- [ ] وضع فاتح اختياري (ThemeToggle)
+- [x] تحديث `src/styles.css` — طبقة `.futuristic` بألوان نيون (`#00D9C0`، `#7B61FF`، `#22E8FF`)، aurora gradients، glass tokens، توهّج نيون
+- [x] إضافة خطوط `Tajawal` + `IBM Plex Sans Arabic` عبر `<link>` في `src/routes/__root.tsx`
+- [x] تثبيت `framer-motion@12`
+- [x] Utilities جديدة: `aurora-bg`, `glass-fut`, `btn-magnetic`, `input-glow`, `neon-glow-hover`, `text-neon`, `skeleton-neon`, `pulse-neon`, `grid-overlay`
+- [x] مكوّن `PageTransition` — `src/components/motion/PageTransition.tsx`
+- [x] مكوّن `StaggerReveal` + `RevealItem` — `src/components/motion/StaggerReveal.tsx`
+- [x] `ThemeToggle` (وضع فاتح اختياري) — `src/components/ThemeToggle.tsx`
+- [x] احترام `prefers-reduced-motion` عبر `useReducedMotion` + `.reduce-motion` class
 
 **ملفات ذات صلة:**
 - `src/styles.css`
