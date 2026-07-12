@@ -102,18 +102,9 @@ function weekdayOf(iso: string): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-/**
- * Today in Asia/Riyadh (UTC+3), returned as `YYYY-MM-DD`. The booking UI
- * always displays Riyadh time, so slot filtering must use the same zone.
- */
-function riyadhTodayIso(): string {
-  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  return `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}-${pad2(now.getUTCDate())}`;
-}
-function riyadhNowMinutes(): number {
-  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  return now.getUTCHours() * 60 + now.getUTCMinutes();
-}
+// Riyadh-local "today"/"now" helpers live in `@/lib/riyadh-date` so cancel.ts
+// and slots.functions.ts share the exact same day boundary as this resolver.
+import { riyadhTodayIso, riyadhNowMinutes } from "@/lib/riyadh-date";
 
 export const Route = createFileRoute("/api/public/book/availability")({
   server: {
