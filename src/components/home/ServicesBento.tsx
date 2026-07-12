@@ -146,7 +146,7 @@ export function ServicesBento() {
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/40">
       <div className="container-app">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
               {lang === "ar" ? "الخدمات الإلكترونية" : "E-Services"}
@@ -160,7 +160,14 @@ export function ServicesBento() {
                 : "An integrated portal for appointments, medical reports, pharmacy and home-care."}
             </p>
           </div>
+          <Link
+            to="/services"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shrink-0"
+          >
+            {lang === "ar" ? "عرض كل الخدمات ←" : "View all services →"}
+          </Link>
         </div>
+
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 auto-rows-[minmax(140px,auto)]">
           {SERVICES.map((s) => {
