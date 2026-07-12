@@ -81,7 +81,7 @@ const NAV: NavItem[] = [
   { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string },
   { label: "المختبر", icon: FlaskConical, comingSoon: true },
   { label: "الأشعة", icon: Radiation, comingSoon: true },
-  { label: "الصيدلية", icon: Pill, comingSoon: true },
+  { label: "الصيدلية", icon: Pill, to: "/_authenticated/pharmacy-management" as string },
   { label: "السجلات الطبية", icon: ClipboardList, to: "/_authenticated/patients-analytics" as string },
   { label: "الطوارئ", icon: Ambulance, comingSoon: true },
   { label: "الفوترة", icon: CreditCard, comingSoon: true },
