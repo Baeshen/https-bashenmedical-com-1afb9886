@@ -103,19 +103,30 @@ function OrderDetailPage() {
   const { lang } = useI18n();
   const isAr = lang === "ar";
 
-  // Poll every 20s + toast on status change
+  // Poll every 20s + toast on status change — but stop once the order
+  // reaches a final state (avoids infinite background requests).
+  const FINAL_STATES = new Set(["cancelled", "completed", "delivered", "closed", "answered"]);
   const previousStatus = useRef<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["order-detail", ref, phone],
+    queryKey: ["order-detail", ref, phone, kind],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("track_orders_by_phone", { _phone: phone });
+      // Detail fetch requires ref + phone + kind (patient-scoped RPC).
+      const { data, error } = await supabase.rpc("get_order_by_ref", {
+        _ref: ref,
+        _phone: phone,
+        _kind: kind ?? "pharmacy",
+      });
       if (error) throw error;
       const list = (data ?? []) as Order[];
-      return list.find((o) => o.reference === ref) ?? null;
+      return list[0] ?? null;
     },
     staleTime: 10_000,
-    refetchInterval: 20_000, // status polling
+    // Stop polling once the order is in a terminal state.
+    refetchInterval: (query) => {
+      const status = (query.state.data as Order | null | undefined)?.status;
+      return status && FINAL_STATES.has(status) ? false : 20_000;
+    },
   });
 
   useEffect(() => {
@@ -215,7 +226,7 @@ function OrderDetailCard({
       toast.success(isAr ? "تم إلغاء الطلب" : "Order cancelled");
       setCancelOpen(false);
       setCancelReason("");
-      qc.invalidateQueries({ queryKey: ["order-detail", order.reference, phone] });
+      qc.invalidateQueries({ queryKey: ["order-detail", order.reference, phone, order.kind] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
     },
     onError: (err: Error) => {

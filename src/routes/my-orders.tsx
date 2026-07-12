@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CalendarCheck, Pill, Stethoscope, Home as HomeIcon,
-  Search, Phone, ArrowLeft, Loader2, ExternalLink, Clock, MapPin,
+  Search, Phone, ArrowLeft, Loader2, ExternalLink, Clock,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -35,13 +35,11 @@ export const Route = createFileRoute("/my-orders")({
 
 type Order = {
   kind: "appointment" | "pharmacy" | "second_opinion" | "home_care";
-  id: string;
   reference: string;
   title: string;
   status: string;
   created_at: string;
   scheduled_at: string | null;
-  metadata: Record<string, unknown> | null;
 };
 
 const KIND_META: Record<Order["kind"], { ar: string; en: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
@@ -230,7 +228,7 @@ function MyOrdersPage() {
             ) : (
               <ul className="grid gap-3 md:grid-cols-2">
                 {orders!.map((o) => (
-                  <OrderCard key={`${o.kind}-${o.id}`} order={o} phone={queryPhone} isAr={isAr} />
+                  <OrderCard key={`${o.kind}-${o.reference}`} order={o} phone={queryPhone} isAr={isAr} />
                 ))}
               </ul>
             )}
@@ -246,10 +244,6 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
   const Icon = meta.icon;
   const statusLabel = STATUS_AR[order.status] ?? order.status;
   const statusCls = STATUS_COLOR[order.status] ?? "bg-muted text-muted-foreground";
-
-  const meta2 = (order.metadata ?? {}) as Record<string, unknown>;
-  const doctor = meta2.doctor_ar as string | undefined;
-  const address = meta2.address as string | undefined;
 
   const detailHref = order.kind === "appointment"
     ? `/lookup?ref=${order.reference}&phone=${encodeURIComponent(phone)}`
@@ -274,6 +268,9 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
         </span>
       </div>
 
+      {/* Summary-only fields — sensitive metadata is never returned by
+          `track_orders_by_phone`; full detail requires ref+phone via
+          `get_order_by_ref` on the detail page. */}
       <div className="text-xs text-muted-foreground space-y-1">
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" />
@@ -283,13 +280,6 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
           <div className="flex items-center gap-1.5">
             <CalendarCheck className="h-3.5 w-3.5" />
             <span>{isAr ? "الموعد: " : "Scheduled: "}{fmt(order.scheduled_at, isAr ? "ar" : "en")}</span>
-          </div>
-        )}
-        {doctor && <div>{isAr ? "الطبيب: " : "Doctor: "}{doctor}</div>}
-        {address && (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />
-            <span className="line-clamp-1">{address}</span>
           </div>
         )}
       </div>

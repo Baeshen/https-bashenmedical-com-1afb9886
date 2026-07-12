@@ -2532,6 +2532,19 @@ export type Database = {
       }
       enqueue_appointment_reminders: { Args: never; Returns: Json }
       generate_mrn: { Args: { _branch_id: string }; Returns: string }
+      get_order_by_ref: {
+        Args: { _kind: string; _phone: string; _ref: string }
+        Returns: {
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          reference: string
+          scheduled_at: string
+          status: string
+          title: string
+        }[]
+      }
       get_public_doctor_rating_summary: {
         Args: { _doctor_id: string }
         Returns: {
@@ -2922,9 +2935,7 @@ export type Database = {
         Args: { _phone: string }
         Returns: {
           created_at: string
-          id: string
           kind: string
-          metadata: Json
           reference: string
           scheduled_at: string
           status: string

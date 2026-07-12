@@ -23,16 +23,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { friendlyInsertError, FRIENDLY_INSERT_MESSAGES } from "@/lib/insert-errors";
-
-// Mirrors the client-side caps in src/routes/book.tsx so both paths reject
-// identically. Any change here MUST also update book.tsx (and vice versa).
-const NAME_MIN = 2,
-  NAME_MAX = 120;
-const PHONE_MIN = 6,
-  PHONE_MAX = 32;
-const NID_MAX = 20;
-const REASON_MAX = 500;
-const PHONE_RE = /^[+0-9\s\-()]+$/;
+// Single source of truth — shared with the client wizard.
+// See src/lib/booking-limits.ts and src/components/booking/types.ts.
+import {
+  NAME_MIN, NAME_MAX,
+  PHONE_MIN, PHONE_MAX,
+  NID_MAX,
+  REASON_MAX,
+  PHONE_RE,
+} from "@/lib/booking-limits";
 
 const bookingCreateSchema = z.object({
   patient_name: z
