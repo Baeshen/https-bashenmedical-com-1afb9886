@@ -225,8 +225,10 @@ function MyComplaintsPage() {
                 </div>
               </div>
             </button>
-          ))}
-        </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Detail modal */}
