@@ -204,9 +204,9 @@ function ServicesPortal() {
       <section className="py-10 md:py-14">
         <div className="container-app">
           <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-serif text-2xl md:text-3xl">
+            <h2 className="text-2xl md:text-3xl">
               {lang === "ar" ? "الخدمات المتاحة" : "Available services"}
-              <span className="ms-2 text-sm text-muted-foreground font-sans">
+              <span className="ms-2 text-sm text-muted-foreground font-normal">
                 ({results.length})
               </span>
             </h2>
