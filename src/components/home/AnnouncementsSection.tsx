@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Megaphone, Tag, Sparkles, CalendarDays, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
+import { SkeletonSwap } from "@/components/home/HomeSkeletons";
+
 
 type Kind = "offer" | "news" | "event";
 
