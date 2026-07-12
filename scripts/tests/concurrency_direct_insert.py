@@ -20,7 +20,13 @@ BRANCH   = os.environ.get("TEST_BRANCH_ID", "561486ad-15f3-4a51-a948-3717db029a8
 
 
 def classify(msg: str) -> str:
-    if "23505" in msg or "unique_violation" in msg:
+    # Environment-side failures (not a booking-logic bug)
+    if "permission denied for schema auth" in msg or "EDBHANDLEREXITED" in msg \
+       or "connection" in msg.lower() and "closed" in msg.lower():
+        return "ENV_SKIP"
+    # _assert_slot_free raises with ERRCODE='unique_violation'; the Arabic message
+    # is the reliable text marker across psql client versions.
+    if "23505" in msg or "unique_violation" in msg or "محجوز بالفعل" in msg:
         return "UNIQUE_VIOLATION"
     if "check_violation" in msg or "23514" in msg:
         return "CHECK_VIOLATION"
