@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import manifest from "../../../.lovable/mcp/manifest.json";
 import { getLastMcpInvocations, type LastToolInvocation } from "@/lib/mcp-diagnostics.functions";
+import { runMcpTool, type RunToolResult } from "@/lib/mcp-run.functions";
 
 export const Route = createFileRoute("/_authenticated/mcp-status")({
   head: () => ({
@@ -224,8 +225,168 @@ function McpStatusPage() {
         )}
       </section>
 
+      <TryToolSection tools={tools} />
+
       <ToolInvocationsSection toolNames={tools.map((t: any) => t.name)} />
     </main>
+  );
+}
+
+const EXAMPLE_ARGS: Record<string, string> = {
+  list_branches: "{}",
+  list_doctors: `{
+  "limit": 5
+}`,
+  list_my_appointments: "{}",
+  create_appointment: `{
+  "patient_name": "تجربة",
+  "patient_phone": "0500000000",
+  "appointment_date": "2026-12-31",
+  "appointment_time": "10:00"
+}`,
+  update_appointment_status: `{
+  "appointment_id": "00000000-0000-0000-0000-000000000000",
+  "status": "cancelled"
+}`,
+};
+
+function TryToolSection({ tools }: { tools: any[] }) {
+  const run = useServerFn(runMcpTool);
+  const [toolName, setToolName] = useState<string>(tools[0]?.name ?? "");
+  const [argsText, setArgsText] = useState<string>(EXAMPLE_ARGS[tools[0]?.name] ?? "{}");
+  const [result, setResult] = useState<RunToolResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  function onToolChange(name: string) {
+    setToolName(name);
+    setArgsText(EXAMPLE_ARGS[name] ?? "{}");
+    setResult(null);
+    setError(null);
+  }
+
+  async function onRun() {
+    setError(null);
+    setResult(null);
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = argsText.trim() ? JSON.parse(argsText) : {};
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new Error("الوسائط يجب أن تكون كائن JSON");
+      }
+    } catch (e) {
+      setError(`JSON غير صالح: ${(e as Error).message}`);
+      return;
+    }
+    setRunning(true);
+    try {
+      const res = await run({ data: { toolName, args: parsed } });
+      setResult(res);
+    } catch (e) {
+      setError((e as Error).message ?? String(e));
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const current = tools.find((t) => t.name === toolName);
+
+  return (
+    <section className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-3">
+        <h2 className="text-lg font-semibold">تجربة أداة يدويًا</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          يستدعي الأداة تحت هويّتك (RLS مُطبَّق) كما لو كانت من ChatGPT. يُسجَّل الاستدعاء في سجل الأدوات أعلاه.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_1fr]">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">الأداة</label>
+          <select
+            value={toolName}
+            onChange={(e) => onToolChange(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          >
+            {tools.map((t) => (
+              <option key={t.name} value={t.name}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          {current?.description && (
+            <p className="mt-2 text-xs text-muted-foreground">{current.description}</p>
+          )}
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            الوسائط (JSON)
+          </label>
+          <textarea
+            value={argsText}
+            onChange={(e) => setArgsText(e.target.value)}
+            spellCheck={false}
+            dir="ltr"
+            className="min-h-[140px] w-full rounded-md border border-input bg-background p-3 font-mono text-xs leading-relaxed"
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={running || !toolName}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {running ? "جارٍ التنفيذ…" : "تشغيل الأداة"}
+        </button>
+        {result && (
+          <span className="text-xs text-muted-foreground font-mono">
+            {result.durationMs} ms — {result.isError ? "فشل" : "نجاح"}
+          </span>
+        )}
+      </div>
+
+      {error && (
+        <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-3 space-y-2">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">النتيجة</div>
+            <pre
+              dir="ltr"
+              className={`mt-1 max-h-96 overflow-auto rounded p-3 text-[11px] font-mono leading-snug whitespace-pre-wrap break-all ${result.isError ? "bg-destructive/10 text-destructive" : "bg-muted/50"}`}
+            >
+              {result.text || "(بدون نص)"}
+            </pre>
+          </div>
+          {result.structuredJson && (
+            <details>
+              <summary className="cursor-pointer text-xs text-muted-foreground">
+                structuredContent
+              </summary>
+              <pre
+                dir="ltr"
+                className="mt-1 max-h-72 overflow-auto rounded bg-muted/50 p-3 text-[11px] font-mono"
+              >
+                {(() => {
+                  try {
+                    return JSON.stringify(JSON.parse(result.structuredJson!), null, 2);
+                  } catch {
+                    return result.structuredJson;
+                  }
+                })()}
+              </pre>
+            </details>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
