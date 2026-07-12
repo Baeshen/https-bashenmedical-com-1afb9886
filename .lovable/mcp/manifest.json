@@ -158,6 +158,42 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "update_appointment_status",
+        "title": "Cancel or confirm an appointment",
+        "description": "Update an appointment's status to `cancelled` or `confirmed`. Row-level security decides who can do what: patients can cancel their own upcoming appointments (matched by phone); confirming an appointment requires staff (admin/reception) with branch access.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "appointment_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Appointment UUID to update."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "cancelled",
+                "confirmed"
+              ],
+              "description": "New status. `cancelled` for patients cancelling their own; `confirmed` for staff."
+            }
+          },
+          "required": [
+            "appointment_id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
