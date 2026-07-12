@@ -124,7 +124,7 @@ function MyComplaintsPage() {
           </h1>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
             <Radio className={`h-3 w-3 ${live ? "text-green-600 animate-pulse" : ""}`} />
-            {live ? "تحديث مباشر" : "غير متصل"} · {rows.length} بلاغ
+            {live ? "تحديث مباشر" : "غير متصل"} · {filteredRows.length} من {rows.length} بلاغ
           </p>
         </div>
         <div className="flex items-center gap-2">
