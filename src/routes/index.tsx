@@ -11,6 +11,7 @@ import { StatsBar } from "@/components/home/StatsBar";
 import { AwardsMarquee } from "@/components/home/AwardsMarquee";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
+import { ServicesBento } from "@/components/home/ServicesBento";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
