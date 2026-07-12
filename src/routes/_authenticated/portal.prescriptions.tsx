@@ -6,10 +6,13 @@ import {
   getMyPrescriptions,
   generateMedicationReminders,
   getMedicationReminderLog,
+  getAdherenceStats,
+  confirmMedicationReminder,
   type PrescriptionItem,
   type ReminderPlan,
   type ReminderLogEntry,
   type UpcomingAppointment,
+  type AdherenceStats,
 } from "@/lib/portal/prescriptions.functions";
 import { Badge } from "@/components/ui/badge";
 import {
