@@ -203,7 +203,7 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
     const pid = patientRes.data.id;
 
     const today = new Date().toISOString().slice(0, 10);
-    const [medsRes, allergyRes, aptsRes] = await Promise.all([
+    const [medsRes, allergyRes, aptsRes, prefsRes] = await Promise.all([
       supabase
         .from("patient_medications")
         .select("medication_name, dosage, frequency, route, notes, status, start_date, end_date")
@@ -219,7 +219,13 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
         .in("status", ["new", "confirmed"])
         .order("appointment_date", { ascending: true })
         .limit(10),
+      supabase
+        .from("reminder_preferences")
+        .select("wake_hour, sleep_hour")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
+    const prefsRow = prefsRes.data;
 
     const activeMeds = (medsRes.data ?? []).filter((m) => {
       const status = ((m.status as string | null) ?? "").toLowerCase();
@@ -231,8 +237,8 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
     const facts = {
       patient: patientRes.data.full_name_ar,
       preferences: {
-        wakeHour: data.preferredWakeHour ?? 7,
-        sleepHour: data.preferredSleepHour ?? 23,
+        wakeHour: data.preferredWakeHour ?? prefsRow?.wake_hour ?? 7,
+        sleepHour: data.preferredSleepHour ?? prefsRow?.sleep_hour ?? 23,
       },
       activeMedications: activeMeds,
       allergies: allergyRes.data ?? [],
@@ -493,4 +499,57 @@ export const getAdherenceStats = createServerFn({ method: "GET" })
     );
 
     return { days, weekTotal, weekTaken, weekPct, streak, bestDay };
+  });
+
+/* --------------------------- Reminder preferences --------------------------- */
+
+export type ReminderPreferences = {
+  medication_lead_minutes: number;
+  appointment_lead_minutes: number;
+  wake_hour: number;
+  sleep_hour: number;
+  daily_repeat_days: number;
+};
+
+export const DEFAULT_REMINDER_PREFS: ReminderPreferences = {
+  medication_lead_minutes: 10,
+  appointment_lead_minutes: 120,
+  wake_hour: 7,
+  sleep_hour: 23,
+  daily_repeat_days: 30,
+};
+
+export const getReminderPreferences = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ReminderPreferences> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("reminder_preferences")
+      .select("medication_lead_minutes, appointment_lead_minutes, wake_hour, sleep_hour, daily_repeat_days")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ?? DEFAULT_REMINDER_PREFS;
+  });
+
+const PrefsInput = z.object({
+  medication_lead_minutes: z.number().int().min(0).max(240),
+  appointment_lead_minutes: z.number().int().min(0).max(1440),
+  wake_hour: z.number().int().min(4).max(11),
+  sleep_hour: z.number().int().min(20).max(26),
+  daily_repeat_days: z.number().int().min(7).max(90),
+});
+
+export const saveReminderPreferences = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => PrefsInput.parse(i))
+  .handler(async ({ context, data }): Promise<ReminderPreferences> => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("reminder_preferences")
+      .upsert({ user_id: userId, ...data }, { onConflict: "user_id" })
+      .select("medication_lead_minutes, appointment_lead_minutes, wake_hour, sleep_hour, daily_repeat_days")
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
   });
