@@ -278,6 +278,46 @@ function LookupPage() {
   };
 
 
+  const FINAL_STATUSES = ["cancelled", "completed", "no_show"] as const;
+  const isFinal = (s?: string | null) => !!s && (FINAL_STATUSES as readonly string[]).includes(s);
+
+  const fetchAppt = async (opts?: { silent?: boolean }): Promise<AppointmentRow | null> => {
+    const { data, error } = await supabase.rpc("get_order_by_ref", {
+      _ref: ref.trim(),
+      _phone: phone.trim(),
+      _kind: "appointment",
+    });
+    if (error) {
+      if (!opts?.silent) toast.error(error.message);
+      return null;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+    const m = (row.metadata ?? {}) as Record<string, unknown>;
+    const get = <T,>(k: string) => (m[k] as T | undefined) ?? null;
+    return {
+      id: row.id,
+      status: row.status,
+      created_at: row.created_at,
+      patient_name: (get<string>("patient_name") ?? "") as string,
+      patient_phone: (get<string>("patient_phone") ?? "") as string,
+      appointment_date: (get<string>("appointment_date") ?? "") as string,
+      appointment_time: (get<string>("appointment_time") ?? "") as string,
+      reason: get<string>("reason"),
+      notes: get<string>("notes"),
+      specialty_id: get<string>("specialty_id"),
+      doctor_id: get<string>("doctor_id"),
+      specialty_name_ar: get<string>("specialty_name_ar"),
+      specialty_name_en: get<string>("specialty_name_en"),
+      doctor_name_ar: get<string>("doctor_name_ar"),
+      doctor_name_en: get<string>("doctor_name_en"),
+      reminder_24h: get<boolean>("reminder_24h"),
+      reminder_2h: get<boolean>("reminder_2h"),
+      cancel_reason: get<string>("cancel_reason"),
+      cancelled_at: get<string>("cancelled_at"),
+    };
+  };
+
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!ref.trim() || !phone.trim()) {
@@ -286,17 +326,9 @@ function LookupPage() {
     }
     setLoading(true);
     setSearched(true);
-    const { data, error } = await supabase.rpc("lookup_appointment", {
-      _ref: ref.trim(),
-      _phone: phone.trim(),
-    });
+    const row = await fetchAppt();
     setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const row = Array.isArray(data) ? data[0] : data;
-    setAppt(row ?? null);
+    setAppt(row);
     setShowCancel(false);
     setCancelReason("");
   };
@@ -338,6 +370,23 @@ function LookupPage() {
     void submit();
   }, [routeSearch.ref, routeSearch.phone]);
 
+  // Poll for status updates every 25s while the appointment is not in a
+  // final state. Stops automatically once status becomes cancelled/completed/no_show.
+  useEffect(() => {
+    if (!appt || isFinal(appt.status)) return;
+    const timer = setInterval(async () => {
+      const fresh = await fetchAppt({ silent: true });
+      if (!fresh) return;
+      setAppt((prev) => {
+        if (prev && fresh.status !== prev.status) {
+          toast.info(`تحديث الحالة: ${fresh.status}`);
+        }
+        return fresh;
+      });
+    }, 25000);
+    return () => clearInterval(timer);
+  }, [appt?.id, appt?.status]);
+
   useEffect(() => {
     if (!appt) return;
     if (routeSearch.action === "cancel" && (appt.status === "new" || appt.status === "confirmed")) {
@@ -346,6 +395,7 @@ function LookupPage() {
       setShowReschedule(true);
     }
   }, [appt, routeSearch.action]);
+
 
 
   const doctorName = appt
