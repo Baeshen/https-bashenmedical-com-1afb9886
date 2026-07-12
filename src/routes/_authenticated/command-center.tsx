@@ -105,6 +105,7 @@ const NAV: NavItem[] = [
   { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string, permission: "notifications.manage" },
   { label: "الصلاحيات", icon: ShieldCheck, to: "/_authenticated/rbac" as string, permission: "rbac.manage" },
   { label: "سجل التدقيق", icon: ClipboardList, to: "/_authenticated/audit-log" as string, permission: "audit.view" },
+  { label: "تدقيق الصلاحيات", icon: ShieldAlert, to: "/_authenticated/rbac-audit" as string, permission: "rbac.manage" },
   { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
 ];
 
