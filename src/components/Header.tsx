@@ -217,13 +217,16 @@ export function Header() {
           )}
         </div>
 
-        <button
-          className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-foreground"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="xl:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            className="inline-flex items-center justify-center rounded-md p-2 text-foreground"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
