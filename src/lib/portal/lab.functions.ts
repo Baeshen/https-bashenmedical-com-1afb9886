@@ -75,6 +75,7 @@ export const getLabFileUrl = createServerFn({ method: "POST" })
       .select("id")
       .eq("patient_id", patientId)
       .eq("file_path", data.path)
+      .not("released_at", "is", null)
       .limit(1);
     if (!(owns.data ?? []).length) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
 
