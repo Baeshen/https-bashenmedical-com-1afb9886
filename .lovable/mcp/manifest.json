@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://rcerbsywuovcleqybumg.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "baeshen-medical-mcp",
+      "version": "0.1.0",
+      "title": "Baeshen Medical MCP"
+    },
+    "tools": [
+      {
+        "name": "list_branches",
+        "title": "List clinic branches",
+        "description": "List all active branches of Baeshen Medical Complex with basic contact info (name, city, phone, address).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_doctors",
+        "title": "List doctors",
+        "description": "List active doctors at Baeshen Medical Complex. Optionally filter by branch slug or specialty slug. Returns up to 50 doctors per call.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "branch_slug": {
+              "type": "string",
+              "description": "Optional branch slug filter."
+            },
+            "specialty_slug": {
+              "type": "string",
+              "description": "Optional specialty slug filter."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Max rows (default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_appointments",
+        "title": "List my appointments",
+        "description": "List appointments visible to the signed-in user. Row-level security limits results to appointments the user is authorized to see.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max rows (default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
