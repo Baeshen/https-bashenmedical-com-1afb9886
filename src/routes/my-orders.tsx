@@ -33,7 +33,8 @@ export const Route = createFileRoute("/my-orders")({
   component: MyOrdersPage,
 });
 
-import { parseOrderSummaries, type OrderSummary } from "@/lib/order-types";
+import { parseOrderSummaries, OrderParseError, type OrderSummary } from "@/lib/order-types";
+import { toast } from "sonner";
 
 type Order = OrderSummary;
 
@@ -104,12 +105,22 @@ function MyOrdersPage() {
       if (!queryPhone) return [];
       const { data, error } = await supabase.rpc("track_orders_by_phone", { _phone: queryPhone });
       if (error) throw error;
-      return parseOrderSummaries(data);
+      try {
+        return parseOrderSummaries(data);
+      } catch (e) {
+        if (e instanceof OrderParseError) {
+          toast.error("تعذّر عرض بعض الطلبات", {
+            description: `بيانات غير متوقعة (${e.kind ?? "؟"}/${e.status ?? "؟"}). يرجى تحديث الصفحة أو التواصل مع الاستقبال.`,
+          });
+        }
+        throw e;
+      }
     },
-
     enabled: !!queryPhone,
     staleTime: 15_000,
+    retry: (count, err) => !(err instanceof OrderParseError) && count < 2,
   });
+
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();

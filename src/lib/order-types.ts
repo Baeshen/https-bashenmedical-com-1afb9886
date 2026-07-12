@@ -152,12 +152,45 @@ type SummaryRow = {
   scheduled_at: string | null;
 };
 
-/** يُصفّي صفوف الملخّص المجهولة النوع إلى `OrderSummary[]` مع رفض الحالات غير المعروفة. */
+/** خطأ مخصّص يُرفع عندما تصل بيانات لا تطابق الأنواع المُعلنة. */
+export class OrderParseError extends Error {
+  readonly kind: string | null;
+  readonly status: string | null;
+  readonly reference: string | null;
+  constructor(
+    message: string,
+    opts: { kind?: string | null; status?: string | null; reference?: string | null } = {},
+  ) {
+    super(message);
+    this.name = "OrderParseError";
+    this.kind = opts.kind ?? null;
+    this.status = opts.status ?? null;
+    this.reference = opts.reference ?? null;
+  }
+}
+
+/**
+ * يحوّل صفوف الملخّص إلى `OrderSummary[]`. يرفع `OrderParseError` عند أول صف
+ * يحمل نوعًا أو حالة غير معروفة — بدل الابتلاع الصامت — كي تستطيع الواجهة إخبار
+ * المستخدم بأن هناك سجلًا لا يمكن عرضه.
+ */
 export function parseOrderSummaries(rows: readonly SummaryRow[] | null | undefined): OrderSummary[] {
   if (!rows) return [];
   const out: OrderSummary[] = [];
   for (const r of rows) {
-    if (!isKind(r.kind) || !isStatus(r.status)) continue;
+    if (!isKind(r.kind)) {
+      throw new OrderParseError(`نوع طلب غير معروف: ${r.kind}`, {
+        kind: r.kind,
+        reference: r.reference ?? null,
+      });
+    }
+    if (!isStatus(r.status)) {
+      throw new OrderParseError(`حالة طلب غير معروفة: ${r.status}`, {
+        kind: r.kind,
+        status: r.status,
+        reference: r.reference ?? null,
+      });
+    }
     out.push({
       kind: r.kind,
       reference: r.reference,
@@ -169,6 +202,7 @@ export function parseOrderSummaries(rows: readonly SummaryRow[] | null | undefin
   }
   return out;
 }
+
 
 type DetailRow = {
   kind: string;
@@ -184,7 +218,20 @@ type DetailRow = {
 /** يحوّل صف تفاصيل الطلب إلى `OrderDetail` مكتوب — يُرجع null عند نوع/حالة غير معروفة. */
 export function parseOrderDetail(row: DetailRow | null | undefined): OrderDetail | null {
   if (!row) return null;
-  if (!isKind(row.kind) || !isStatus(row.status)) return null;
+  if (!isKind(row.kind)) {
+    throw new OrderParseError(`نوع طلب غير معروف: ${row.kind}`, {
+      kind: row.kind,
+      reference: row.reference ?? null,
+    });
+  }
+  if (!isStatus(row.status)) {
+    throw new OrderParseError(`حالة طلب غير معروفة: ${row.status}`, {
+      kind: row.kind,
+      status: row.status,
+      reference: row.reference ?? null,
+    });
+  }
+
   const m = (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<string, unknown>;
   const base: BaseDetail = {
     id: row.id,
