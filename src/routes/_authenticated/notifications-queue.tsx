@@ -20,6 +20,7 @@ import {
   setNotificationStatus,
   type OutboundNotification,
 } from "@/lib/notifications.functions";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/notifications-queue")({
   head: () => ({
@@ -28,7 +29,11 @@ export const Route = createFileRoute("/_authenticated/notifications-queue")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: NotificationsQueuePage,
+  component: () => (
+    <RequirePermission anyOf="notifications.manage">
+      <NotificationsQueuePage />
+    </RequirePermission>
+  ),
 });
 
 const CHANNEL_LABEL: Record<string, { label: string; Icon: any; color: string }> = {

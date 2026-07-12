@@ -40,6 +40,7 @@ import {
 import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/pharmacy-management")({
   head: () => ({
@@ -49,7 +50,11 @@ export const Route = createFileRoute("/_authenticated/pharmacy-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: PharmacyPage,
+  component: () => (
+    <RequirePermission anyOf="pharmacy.view">
+      <PharmacyPage />
+    </RequirePermission>
+  ),
   errorComponent: PharmacyError,
   notFoundComponent: () => null,
 });
@@ -101,7 +106,7 @@ function PharmacyPage() {
               {branchesQ.data?.map((b) => <option key={b.id} value={b.id}>{b.name_ar}</option>)}
             </select>
             <Link
-              to="/_authenticated/command-center"
+              to="/command-center"
               className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
             >
               <ArrowRight className="h-4 w-4" /> لوحة التحكم

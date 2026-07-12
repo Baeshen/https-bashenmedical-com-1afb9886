@@ -27,6 +27,7 @@ import {
   type DoctorLeave,
 } from "@/lib/doctors.functions";
 import { listBranches } from "@/lib/dashboard.functions";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/doctors-management")({
   head: () => ({
@@ -35,7 +36,11 @@ export const Route = createFileRoute("/_authenticated/doctors-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: DoctorsManagementPage,
+  component: () => (
+    <RequirePermission anyOf="doctors.manage">
+      <DoctorsManagementPage />
+    </RequirePermission>
+  ),
 });
 
 const WEEKDAYS = [

@@ -5,9 +5,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { getClinicSettingsAdmin, updateClinicSettings } from "@/lib/admin.functions";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/clinic-settings")({
-  component: ClinicSettingsPage,
+  component: () => (
+    <RequirePermission anyOf="settings.manage">
+      <ClinicSettingsPage />
+    </RequirePermission>
+  ),
 });
 
 type OpeningHours = { days: string[]; opens: string; closes: string };

@@ -17,6 +17,7 @@ import {
 import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/hr-management")({
   head: () => ({
@@ -26,7 +27,11 @@ export const Route = createFileRoute("/_authenticated/hr-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: HrPage,
+  component: () => (
+    <RequirePermission anyOf="hr.manage">
+      <HrPage />
+    </RequirePermission>
+  ),
   errorComponent: HrError,
   notFoundComponent: () => null,
 });
@@ -49,7 +54,7 @@ function HrPage() {
     <div dir="rtl" className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         <div className="mb-6 flex items-center gap-3">
-          <Link to="/_authenticated/command-center" className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-accent">
+          <Link to="/command-center" className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-accent">
             <ArrowRight className="h-3.5 w-3.5" /> مركز التحكم
           </Link>
           <div>

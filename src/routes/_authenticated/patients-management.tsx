@@ -32,6 +32,7 @@ import {
   Save,
   MoreVertical,
 } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/patients-management")({
   head: () => ({
@@ -41,7 +42,11 @@ export const Route = createFileRoute("/_authenticated/patients-management")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: PatientsManagement,
+  component: () => (
+    <RequirePermission anyOf="patients.view">
+      <PatientsManagement />
+    </RequirePermission>
+  ),
 });
 
 const STATUS_META: Record<PatientStatus, { ar: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {

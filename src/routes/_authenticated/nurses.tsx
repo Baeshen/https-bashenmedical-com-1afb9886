@@ -48,6 +48,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/nurses")({
   head: () => ({
@@ -57,7 +58,11 @@ export const Route = createFileRoute("/_authenticated/nurses")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: NursesPage,
+  component: () => (
+    <RequirePermission anyOf="nurses.manage">
+      <NursesPage />
+    </RequirePermission>
+  ),
   errorComponent: NursesError,
   notFoundComponent: () => null,
 });
@@ -113,7 +118,7 @@ function NursesPage() {
               ))}
             </select>
             <Link
-              to="/_authenticated/command-center"
+              to="/command-center"
               className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
             >
               <ArrowRight className="h-4 w-4" /> لوحة التحكم

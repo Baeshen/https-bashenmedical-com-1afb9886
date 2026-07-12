@@ -27,6 +27,7 @@ import {
   LogOut,
   ArrowRight,
 } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -36,7 +37,11 @@ export const Route = createFileRoute("/_authenticated/reports")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: ReportsPage,
+  component: () => (
+    <RequirePermission anyOf="reports.view">
+      <ReportsPage />
+    </RequirePermission>
+  ),
 });
 
 type ReportType = "appointments" | "occupancy" | "pharmacy" | "patients";
