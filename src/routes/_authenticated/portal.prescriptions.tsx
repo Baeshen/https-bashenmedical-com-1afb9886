@@ -760,7 +760,7 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], pr
       `DTSTAMP:${dtstamp}`,
       `DTSTART:${start}`,
       `DTEND:${end}`,
-      "RRULE:FREQ=DAILY;COUNT=30",
+      `RRULE:FREQ=DAILY;COUNT=${prefs.daily_repeat_days}`,
       `SUMMARY:${icsEscape(`💊 ${s.medication}${s.dosage ? ` — ${s.dosage}` : ""}`)}`,
       `DESCRIPTION:${icsEscape([s.label, s.note].filter(Boolean).join(" • "))}`,
       "CATEGORIES:Medication",
