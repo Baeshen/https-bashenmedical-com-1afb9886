@@ -58,3 +58,25 @@ export function DoctorsSkeleton({ count = 4 }: { count?: number }) {
     </div>
   );
 }
+
+export function AnnouncementsSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="glass-fut flex flex-col p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="skeleton-neon h-6 w-24 rounded-full" />
+            <div className="skeleton-neon h-3 w-16 rounded" />
+          </div>
+          <div className="skeleton-neon h-5 w-4/5 rounded" />
+          <div className="space-y-2">
+            <div className="skeleton-neon h-3 w-full rounded" />
+            <div className="skeleton-neon h-3 w-11/12 rounded" />
+            <div className="skeleton-neon h-3 w-3/4 rounded" />
+          </div>
+          <div className="skeleton-neon mt-2 h-9 w-40 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
