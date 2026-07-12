@@ -108,6 +108,7 @@ type LabReport = {
   file_path: string | null;
   summary: string | null;
   status: string;
+  released_at: string | null;
 };
 
 type RadReport = {
@@ -118,6 +119,7 @@ type RadReport = {
   findings: string | null;
   file_path: string | null;
   status: string;
+  released_at: string | null;
 };
 
 type Invoice = {
