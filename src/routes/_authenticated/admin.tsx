@@ -2522,7 +2522,7 @@ function RemindersDeliveryStatsTab() {
   const { data, isLoading, error, refetch, isFetching } = useQuery<DeliveryStats>({
     queryKey: ["reminders-delivery-stats", applied],
     queryFn: () => fn({ data: applied }),
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
     placeholderData: (prev) => prev,
   });
 
