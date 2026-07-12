@@ -147,6 +147,15 @@ function PatientsList() {
                 </option>
               ))}
             </select>
+            <label className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="h-4 w-4"
+              />
+              عرض المؤرشفين
+            </label>
           </div>
 
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
