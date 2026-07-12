@@ -64,6 +64,7 @@ import { Route as AuthenticatedRbacRouteImport } from './routes/_authenticated/r
 import { Route as AuthenticatedRatingsRouteImport } from './routes/_authenticated/ratings'
 import { Route as AuthenticatedQuickAddRouteImport } from './routes/_authenticated/quick-add'
 import { Route as AuthenticatedQrCardsRouteImport } from './routes/_authenticated/qr-cards'
+import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as AuthenticatedPatientsManagementRouteImport } from './routes/_authenticated/patients-management'
 import { Route as AuthenticatedPatientsAnalyticsRouteImport } from './routes/_authenticated/patients-analytics'
 import { Route as AuthenticatedPatientStoriesAdminRouteImport } from './routes/_authenticated/patient-stories-admin'
@@ -82,6 +83,7 @@ import { Route as AuthenticatedAppointmentsQueueRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal.index'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as MediaStoriesSlugRouteImport } from './routes/media.stories.$slug'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
@@ -370,6 +372,11 @@ const AuthenticatedQrCardsRoute = AuthenticatedQrCardsRouteImport.update({
   path: '/qr-cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPatientsManagementRoute =
   AuthenticatedPatientsManagementRouteImport.update({
     id: '/patients-management',
@@ -471,6 +478,12 @@ const Char91DotmcpChar93ListToolsRoute =
     id: '/.mcp/list-tools',
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedPortalIndexRoute =
+  AuthenticatedPortalIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPortalRoute,
   } as any)
 const AuthenticatedPatientsIndexRoute =
   AuthenticatedPatientsIndexRouteImport.update({
@@ -579,6 +592,7 @@ export interface FileRoutesByFullPath {
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/portal': typeof AuthenticatedPortalRouteWithChildren
   '/qr-cards': typeof AuthenticatedQrCardsRoute
   '/quick-add': typeof AuthenticatedQuickAddRoute
   '/ratings': typeof AuthenticatedRatingsRoute
@@ -607,6 +621,7 @@ export interface FileRoutesByFullPath {
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -691,6 +706,7 @@ export interface FileRoutesByTo {
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
+  '/portal': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -749,6 +765,7 @@ export interface FileRoutesById {
   '/_authenticated/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/_authenticated/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/_authenticated/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/_authenticated/portal': typeof AuthenticatedPortalRouteWithChildren
   '/_authenticated/qr-cards': typeof AuthenticatedQrCardsRoute
   '/_authenticated/quick-add': typeof AuthenticatedQuickAddRoute
   '/_authenticated/ratings': typeof AuthenticatedRatingsRoute
@@ -777,6 +794,7 @@ export interface FileRoutesById {
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
@@ -835,6 +853,7 @@ export interface FileRouteTypes {
     | '/patient-stories-admin'
     | '/patients-analytics'
     | '/patients-management'
+    | '/portal'
     | '/qr-cards'
     | '/quick-add'
     | '/ratings'
@@ -863,6 +882,7 @@ export interface FileRouteTypes {
     | '/patients/$patientId'
     | '/media/stories/$slug'
     | '/patients/'
+    | '/portal/'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -947,6 +967,7 @@ export interface FileRouteTypes {
     | '/patients/$patientId'
     | '/media/stories/$slug'
     | '/patients'
+    | '/portal'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -1004,6 +1025,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patient-stories-admin'
     | '/_authenticated/patients-analytics'
     | '/_authenticated/patients-management'
+    | '/_authenticated/portal'
     | '/_authenticated/qr-cards'
     | '/_authenticated/quick-add'
     | '/_authenticated/ratings'
@@ -1032,6 +1054,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/$patientId'
     | '/media/stories/$slug'
     | '/_authenticated/patients/'
+    | '/_authenticated/portal/'
     | '/api/public/book/availability'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
@@ -1481,6 +1504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal': {
+      id: '/_authenticated/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof AuthenticatedPortalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patients-management': {
       id: '/_authenticated/patients-management'
       path: '/patients-management'
@@ -1607,6 +1637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/portal/': {
+      id: '/_authenticated/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof AuthenticatedPortalIndexRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
     '/_authenticated/patients/': {
       id: '/_authenticated/patients/'
       path: '/patients'
@@ -1680,6 +1717,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPortalRouteChildren {
+  AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
+}
+
+const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
+  AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
+}
+
+const AuthenticatedPortalRouteWithChildren =
+  AuthenticatedPortalRoute._addFileChildren(AuthenticatedPortalRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppointmentsQueueRoute: typeof AuthenticatedAppointmentsQueueRoute
@@ -1697,6 +1745,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientStoriesAdminRoute: typeof AuthenticatedPatientStoriesAdminRoute
   AuthenticatedPatientsAnalyticsRoute: typeof AuthenticatedPatientsAnalyticsRoute
   AuthenticatedPatientsManagementRoute: typeof AuthenticatedPatientsManagementRoute
+  AuthenticatedPortalRoute: typeof AuthenticatedPortalRouteWithChildren
   AuthenticatedQrCardsRoute: typeof AuthenticatedQrCardsRoute
   AuthenticatedQuickAddRoute: typeof AuthenticatedQuickAddRoute
   AuthenticatedRatingsRoute: typeof AuthenticatedRatingsRoute
@@ -1727,6 +1776,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientStoriesAdminRoute: AuthenticatedPatientStoriesAdminRoute,
   AuthenticatedPatientsAnalyticsRoute: AuthenticatedPatientsAnalyticsRoute,
   AuthenticatedPatientsManagementRoute: AuthenticatedPatientsManagementRoute,
+  AuthenticatedPortalRoute: AuthenticatedPortalRouteWithChildren,
   AuthenticatedQrCardsRoute: AuthenticatedQrCardsRoute,
   AuthenticatedQuickAddRoute: AuthenticatedQuickAddRoute,
   AuthenticatedRatingsRoute: AuthenticatedRatingsRoute,
