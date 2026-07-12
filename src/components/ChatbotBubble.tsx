@@ -192,11 +192,12 @@ export function ChatbotBubble() {
               تحدّث معنا على واتساب · {SITE.phoneDisplay}
             </a>
             <a
-              href={`tel:${SITE.phoneE164}`}
+              href={`tel:${SITE.phone}`}
               className="block text-center text-[11px] text-muted-foreground hover:text-primary"
             >
               أو اتصل مباشرة: {SITE.phoneDisplay}
             </a>
+
           </footer>
 
         </div>
