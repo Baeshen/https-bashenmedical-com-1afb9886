@@ -18,6 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavItem = {
   to: string;
