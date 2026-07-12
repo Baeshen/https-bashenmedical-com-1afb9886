@@ -265,12 +265,13 @@ function MyComplaintsPage() {
 
             <Timeline currentStatus={selected.status} />
 
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">الرسالة</p>
-              <div className="rounded-md border border-border bg-muted/30 p-3 whitespace-pre-wrap">
-                {selected.message}
-              </div>
-            </div>
+            <EditableMessage
+              id={selected.id}
+              status={selected.status}
+              message={selected.message}
+              department={selected.department}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["portal", "my-complaints"] })}
+            />
 
             <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
               <div>
