@@ -48,6 +48,7 @@ const ListInput = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable()
     .optional(),
+  includeInactive: z.boolean().default(false),
   page: z.number().int().min(1).max(1000).default(1),
   pageSize: z.number().int().min(10).max(100).default(25),
 });
