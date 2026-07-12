@@ -364,8 +364,12 @@ function HomePage() {
         </div>
       </section>
 
+      {/* ===== ANNOUNCEMENTS ===== */}
+      <AnnouncementsSection />
+
       {/* ===== WHY US ===== */}
       <section className="py-16 md:py-20">
+
         <div className="container-app">
           <div className="mb-10 max-w-2xl">
             <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
