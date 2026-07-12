@@ -328,7 +328,7 @@ export const getRecordsAiSummary = createServerFn({ method: "POST" })
       supabase.from("patient_allergies").select("allergen, reaction, severity").eq("patient_id", pid).limit(20),
       supabase.from("patient_medications").select("medication_name, dosage, frequency, status").eq("patient_id", pid).eq("status", "active").limit(50),
       supabase.from("patient_immunizations").select("vaccine_name, administered_on, next_due_on").eq("patient_id", pid).order("administered_on", { ascending: false }).limit(20),
-      supabase.from("lab_reports").select("title, test_type, summary, report_date").eq("patient_id", pid).order("report_date", { ascending: false }).limit(10),
+      supabase.from("lab_reports").select("title, test_type, summary, report_date").eq("patient_id", pid).not("released_at", "is", null).order("report_date", { ascending: false }).limit(10),
     ]);
 
     const facts = {
