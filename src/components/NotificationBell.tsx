@@ -62,7 +62,7 @@ export function NotificationBell() {
     queryKey: ["notifications", "unread-count"],
     queryFn: () => countFn({ data: undefined as never }),
     enabled: signedIn,
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
   });
 
   const listQuery = useQuery({
