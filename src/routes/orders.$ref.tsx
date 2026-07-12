@@ -1,19 +1,31 @@
 /**
  * /orders/$ref — صفحة تفاصيل موحدة لأي طلب غير المواعيد.
- * تتطلب ?phone=…&kind=(pharmacy|second_opinion|home_care) وتستخدم
- * `track_orders_by_phone` للتحقق قبل عرض التفاصيل.
- *
- * الحجوزات (kind=appointment) يتم توجيهها إلى /lookup الذي يحتوي على
- * كل قدرات الإلغاء / إعادة الجدولة / السجل.
+ * الميزات:
+ *   - Timeline موحّدة عبر OrderTimeline.
+ *   - قسم مدخلات/نتائج مخصص لكل خدمة.
+ *   - طباعة نظيفة + رمز QR يفتح رابط التتبع مباشرة.
+ *   - إلغاء الطلب عبر RPC آمن (cancel_order_by_ref).
+ *   - Polling كل 20 ثانية + Toast عند تغيّر الحالة.
+ * الحجوزات (kind=appointment) تُوجَّه إلى /lookup.
  */
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User, FileText, ClipboardList, Truck, MessageCircle, Package } from "lucide-react";
+import {
+  ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User,
+  FileText, ClipboardList, Truck, MessageCircle, Package, Printer, XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/booking/OrderTimeline";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const search = z.object({
   phone: z.string(),
@@ -32,6 +44,7 @@ export const Route = createFileRoute("/orders/$ref")({
       { title: "تفاصيل الطلب | مجمع باعشن الطبي" },
       { name: "description", content: "تفاصيل طلبك في مجمع باعشن الطبي." },
       { property: "og:title", content: "تفاصيل الطلب" },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: OrderDetailPage,
@@ -66,6 +79,15 @@ const STATUS_AR: Record<string, string> = {
   in_progress: "قيد التنفيذ",
   ready: "جاهز",
   delivered: "تم التسليم",
+  processing: "قيد التجهيز",
+};
+
+/** الحالات النهائية التي لا يمكن الإلغاء بعدها. تُطابق تحقّق RPC في الـ DB. */
+const NOT_CANCELLABLE: Record<Order["kind"], string[]> = {
+  pharmacy:       ["delivered", "cancelled", "completed"],
+  second_opinion: ["closed", "answered", "cancelled"],
+  home_care:      ["completed", "cancelled", "in_progress"],
+  appointment:    [],
 };
 
 function fmt(iso: string | null, lang: "ar" | "en") {
@@ -77,9 +99,12 @@ function fmt(iso: string | null, lang: "ar" | "en") {
 
 function OrderDetailPage() {
   const { ref } = Route.useParams();
-  const { phone } = Route.useSearch();
+  const { phone, kind } = Route.useSearch();
   const { lang } = useI18n();
   const isAr = lang === "ar";
+
+  // Poll every 20s + toast on status change
+  const previousStatus = useRef<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["order-detail", ref, phone],
@@ -89,13 +114,26 @@ function OrderDetailPage() {
       const list = (data ?? []) as Order[];
       return list.find((o) => o.reference === ref) ?? null;
     },
-    staleTime: 15_000,
+    staleTime: 10_000,
+    refetchInterval: 20_000, // status polling
   });
 
+  useEffect(() => {
+    if (!data) return;
+    if (previousStatus.current && previousStatus.current !== data.status) {
+      const label = STATUS_AR[data.status] ?? data.status;
+      toast.success(
+        isAr ? "تحديث الحالة" : "Status updated",
+        { description: isAr ? `طلبك أصبح: ${label}` : `Your order is now: ${data.status}` }
+      );
+    }
+    previousStatus.current = data.status;
+  }, [data, isAr]);
+
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 print:bg-white">
       <div className="container-app py-8 md:py-12 max-w-3xl">
-        <Link to="/my-orders" className="mb-6 inline-flex items-center gap-2 text-sm text-primary hover:underline">
+        <Link to="/my-orders" className="mb-6 inline-flex items-center gap-2 text-sm text-primary hover:underline print:hidden">
           <ArrowLeft className="h-4 w-4" />
           {isAr ? "العودة إلى طلباتي" : "Back to my orders"}
         </Link>
@@ -119,17 +157,76 @@ function OrderDetailPage() {
             </Link>
           </div>
         ) : (
-          <OrderDetailCard order={data} phone={phone} isAr={isAr} />
+          <OrderDetailCard order={data} phone={phone} kind={kind} isAr={isAr} />
         )}
       </div>
+
+      {/* Print stylesheet — hide interactive chrome, expand cards. */}
+      <style>{`
+        @media print {
+          .print\\:hidden { display: none !important; }
+          body { background: #fff !important; }
+          .container-app { max-width: 100% !important; padding: 0 !important; }
+          .rounded-2xl { break-inside: avoid; border-color: #e5e7eb !important; box-shadow: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
 
-function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; isAr: boolean }) {
+function OrderDetailCard({
+  order, phone, kind, isAr,
+}: { order: Order; phone: string; kind?: Order["kind"]; isAr: boolean }) {
   const meta = KIND_META[order.kind];
   const Icon = meta.icon;
   const meta2 = (order.metadata ?? {}) as Record<string, unknown>;
+  const qc = useQueryClient();
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  // Build the shareable tracking URL and QR
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(`/orders/${order.reference}`, window.location.origin);
+    url.searchParams.set("phone", phone);
+    url.searchParams.set("kind", order.kind);
+    QRCode.toDataURL(url.toString(), { width: 220, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [order.reference, order.kind, phone]);
+
+  const canCancel = !NOT_CANCELLABLE[order.kind].includes(order.status);
+
+  const cancelMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      const { data, error } = await supabase.rpc("cancel_order_by_ref", {
+        _ref: order.reference,
+        _phone: phone,
+        _kind: order.kind,
+        _reason: reason || undefined,
+      });
+      if (error) throw error;
+      const res = data as { ok: boolean; error?: string; status?: string };
+      if (!res?.ok) throw new Error(res?.error ?? "cancel_failed");
+      return res;
+    },
+    onSuccess: () => {
+      toast.success(isAr ? "تم إلغاء الطلب" : "Order cancelled");
+      setCancelOpen(false);
+      setCancelReason("");
+      qc.invalidateQueries({ queryKey: ["order-detail", order.reference, phone] });
+      qc.invalidateQueries({ queryKey: ["my-orders"] });
+    },
+    onError: (err: Error) => {
+      const map: Record<string, string> = {
+        not_found: isAr ? "لم يُعثر على الطلب" : "Order not found",
+        not_cancellable: isAr ? "لا يمكن إلغاء الطلب في هذه المرحلة" : "Order can no longer be cancelled",
+        invalid_phone: isAr ? "رقم الجوال غير صحيح" : "Invalid phone",
+      };
+      toast.error(map[err.message] ?? (isAr ? "تعذّر إلغاء الطلب" : "Failed to cancel"));
+    },
+  });
 
   return (
     <div className="space-y-4">
@@ -146,9 +243,18 @@ function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; 
               <div className="mt-1 font-mono text-xs text-muted-foreground">#{order.reference}</div>
             </div>
           </div>
-          <span className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-semibold">
-            {STATUS_AR[order.status] ?? order.status}
-          </span>
+          <div className="flex items-start gap-3">
+            <span className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-semibold">
+              {STATUS_AR[order.status] ?? order.status}
+            </span>
+            {qrDataUrl && (
+              <img
+                src={qrDataUrl}
+                alt={isAr ? "رمز تتبع الطلب" : "Tracking QR"}
+                className="h-20 w-20 rounded-md border border-border bg-white p-1"
+              />
+            )}
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 text-sm">
@@ -172,39 +278,83 @@ function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; 
       <ServiceDetailsSection kind={order.kind} status={order.status} meta={meta2} isAr={isAr} />
 
       {/* Actions */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="font-bold mb-2">{isAr ? "هل تحتاج تعديلًا؟" : "Need changes?"}</h3>
+      <div className="rounded-2xl border border-border bg-card p-6 print:hidden">
+        <h3 className="font-bold mb-2">{isAr ? "إجراءات على الطلب" : "Actions"}</h3>
         <p className="text-sm text-muted-foreground">
           {isAr
-            ? "للتعديل أو الاستفسار عن هذا الطلب، تواصل مع الاستقبال."
-            : "To modify or ask about this request, please contact reception."}
+            ? "يمكنك طباعة إيصال الطلب، أو إلغاؤه إن لم يبدأ التنفيذ بعد."
+            : "You can print the receipt, or cancel if execution has not started."}
         </p>
         <div className="mt-3 flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" />
+            {isAr ? "طباعة" : "Print"}
+          </Button>
+          {canCancel ? (
+            <Button variant="destructive" onClick={() => setCancelOpen(true)}>
+              <XCircle className="h-4 w-4" />
+              {isAr ? "إلغاء الطلب" : "Cancel order"}
+            </Button>
+          ) : order.status !== "cancelled" ? (
+            <span className="inline-flex items-center rounded-md bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+              {isAr ? "لا يمكن الإلغاء في هذه المرحلة" : "Cannot cancel at this stage"}
+            </span>
+          ) : null}
           <Link to="/contact"><Button variant="premium">{isAr ? "تواصل معنا" : "Contact us"}</Button></Link>
-          <Link to="/my-orders"><Button variant="outline">{isAr ? "كل طلباتي" : "All my orders"}</Button></Link>
+          <Link to="/my-orders"><Button variant="ghost">{isAr ? "كل طلباتي" : "All my orders"}</Button></Link>
         </div>
       </div>
+
+      {/* Cancel dialog */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAr ? "تأكيد إلغاء الطلب" : "Cancel order"}</DialogTitle>
+            <DialogDescription>
+              {isAr
+                ? `سيتم إلغاء الطلب #${order.reference}. لا يمكن التراجع عن هذا الإجراء.`
+                : `This will cancel order #${order.reference}. This cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">
+              {isAr ? "سبب الإلغاء (اختياري)" : "Reason (optional)"}
+            </label>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder={isAr ? "مثال: تغيّر الموعد، الحصول على الخدمة في مكان آخر…" : "e.g. schedule changed…"}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelOpen(false)} disabled={cancelMutation.isPending}>
+              {isAr ? "تراجع" : "Keep order"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelMutation.mutate(cancelReason.trim())}
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isAr ? "تأكيد الإلغاء" : "Confirm cancel"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 /**
  * قسم مدخلات/نتائج الخدمة — يعرض التفاصيل والنتائج المرتبطة بنوع الطلب:
- *   - صيدلية: نوع التسليم، العنوان، ملاحظات، رابط تتبع (مستقبلًا)
+ *   - صيدلية: نوع التسليم، العنوان، ملاحظات
  *   - رأي طبي ثاني: التخصص، البريد للرد، ملخص الرد عند توفره
  *   - رعاية منزلية: العنوان، ملاحظات المريض
  */
 function ServiceDetailsSection({
-  kind,
-  status,
-  meta,
-  isAr,
-}: {
-  kind: Order["kind"];
-  status: string;
-  meta: Record<string, unknown>;
-  isAr: boolean;
-}) {
+  kind, status, meta, isAr,
+}: { kind: Order["kind"]; status: string; meta: Record<string, unknown>; isAr: boolean }) {
   const s = (k: string) => (typeof meta[k] === "string" ? (meta[k] as string) : "");
 
   if (kind === "pharmacy") {
@@ -213,10 +363,7 @@ function ServiceDetailsSection({
     const district = s("district");
     const notes = s("notes");
     return (
-      <DetailsShell
-        title={isAr ? "تفاصيل طلب الصيدلية" : "Pharmacy details"}
-        icon={<Package className="h-4 w-4" />}
-      >
+      <DetailsShell title={isAr ? "تفاصيل طلب الصيدلية" : "Pharmacy details"} icon={<Package className="h-4 w-4" />}>
         <DetailGrid>
           {delivery && <Cell icon={<Truck className="h-4 w-4" />} label={isAr ? "طريقة الاستلام" : "Delivery"} value={delivery === "delivery" ? (isAr ? "توصيل للمنزل" : "Home delivery") : (isAr ? "استلام من الفرع" : "Pickup")} />}
           {address && <Cell icon={<MapPin className="h-4 w-4" />} label={isAr ? "عنوان التوصيل" : "Address"} value={address} />}
@@ -238,10 +385,7 @@ function ServiceDetailsSection({
     const email = s("email");
     const answer = s("answer") || s("reply");
     return (
-      <DetailsShell
-        title={isAr ? "تفاصيل الرأي الطبي الثاني" : "Second opinion details"}
-        icon={<ClipboardList className="h-4 w-4" />}
-      >
+      <DetailsShell title={isAr ? "تفاصيل الرأي الطبي الثاني" : "Second opinion details"} icon={<ClipboardList className="h-4 w-4" />}>
         <DetailGrid>
           {specialty && <Cell icon={<Stethoscope className="h-4 w-4" />} label={isAr ? "التخصص" : "Specialty"} value={specialty} />}
           {email && <Cell icon={<User className="h-4 w-4" />} label={isAr ? "بريد الرد" : "Reply email"} value={email} />}
@@ -270,10 +414,7 @@ function ServiceDetailsSection({
     const address = s("address");
     const notes = s("notes");
     return (
-      <DetailsShell
-        title={isAr ? "تفاصيل الرعاية المنزلية" : "Home care details"}
-        icon={<HomeIcon className="h-4 w-4" />}
-      >
+      <DetailsShell title={isAr ? "تفاصيل الرعاية المنزلية" : "Home care details"} icon={<HomeIcon className="h-4 w-4" />}>
         <DetailGrid>
           {address && <Cell icon={<MapPin className="h-4 w-4" />} label={isAr ? "عنوان الزيارة" : "Visit address"} value={address} />}
         </DetailGrid>
