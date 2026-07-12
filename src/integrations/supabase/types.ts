@@ -332,6 +332,67 @@ export type Database = {
           },
         ]
       }
+      availability_slots: {
+        Row: {
+          appointment_id: string | null
+          branch_id: string | null
+          created_at: string
+          doctor_id: string
+          end_time: string
+          id: string
+          slot_date: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          branch_id?: string | null
+          created_at?: string
+          doctor_id: string
+          end_time: string
+          id?: string
+          slot_date: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          branch_id?: string | null
+          created_at?: string
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          slot_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_slots_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_slots_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_slots_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_excellence_centers: {
         Row: {
           branch_id: string
@@ -3309,6 +3370,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      book_slot: {
+        Args: {
+          p_gender?: string
+          p_national_id?: string
+          p_notes?: string
+          p_patient_email?: string
+          p_patient_id?: string
+          p_patient_name: string
+          p_patient_phone: string
+          p_reason?: string
+          p_slot_id: string
+        }
+        Returns: string
+      }
       can_access_patient: { Args: { _patient_id: string }; Returns: boolean }
       can_write_patient_clinical: {
         Args: { _patient_id: string }
@@ -3797,6 +3872,7 @@ export type Database = {
         }
         Returns: Json
       }
+      release_slot: { Args: { p_appointment_id: string }; Returns: boolean }
       reply_to_rating: {
         Args: { _id: string; _reply: string }
         Returns: undefined
