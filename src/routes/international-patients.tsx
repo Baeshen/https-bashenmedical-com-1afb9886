@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plane, Hotel, Languages, FileText, ShieldCheck, HeartPulse, MapPin } from "lucide-react";
 import { PageHero, SectionCard } from "@/components/PageShell";
 import { ServiceRequestForm } from "@/components/ServiceRequestForm";
+import { whatsappUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/international-patients")({
   head: () => ({
