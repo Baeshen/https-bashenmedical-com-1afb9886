@@ -236,8 +236,8 @@ function UsersTab(props: {
               </tr>
             )}
             {filtered.map((u: any) => {
-              const branchMap = new Map(
-                (branches.data ?? []).map((b: any) => [b.id, b.name_ar as string]),
+              const branchMap = new Map<string, string>(
+                (branches.data ?? []).map((b: any) => [b.id as string, b.name_ar as string]),
               );
               return (
                 <tr key={u.user_id} className="border-t border-border align-top">
