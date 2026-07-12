@@ -99,12 +99,12 @@ export const bookSlot = createServerFn({ method: "POST" })
       p_slot_id: data.slotId,
       p_patient_name: data.patientName,
       p_patient_phone: data.patientPhone,
-      p_patient_email: data.patientEmail ?? null,
-      p_national_id: data.nationalId ?? null,
-      p_gender: data.gender ?? null,
-      p_reason: data.reason ?? null,
-      p_notes: data.notes ?? null,
-      p_patient_id: data.patientId ?? null,
+      p_patient_email: data.patientEmail ?? undefined,
+      p_national_id: data.nationalId ?? undefined,
+      p_gender: data.gender ?? undefined,
+      p_reason: data.reason ?? undefined,
+      p_notes: data.notes ?? undefined,
+      p_patient_id: data.patientId ?? undefined,
     });
     if (error) throw new Error(friendlyRpcError(error.message));
     return { appointmentId: apptId as unknown as string };
