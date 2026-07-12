@@ -365,7 +365,7 @@ function TryToolSection({ tools }: { tools: any[] }) {
               {result.text || "(بدون نص)"}
             </pre>
           </div>
-          {result.structuredContent != null && result.structuredJson && (
+          {result.structuredJson && (
             <details>
               <summary className="cursor-pointer text-xs text-muted-foreground">
                 structuredContent
