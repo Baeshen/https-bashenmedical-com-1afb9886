@@ -62,7 +62,7 @@ export const runMcpTool = createServerFn({ method: "POST" })
         isError: true,
         durationMs: Date.now() - startedAt,
         text: msg,
-        structured: null,
+        structuredJson: null,
       };
     }
 
@@ -73,6 +73,6 @@ export const runMcpTool = createServerFn({ method: "POST" })
       isError: !!result.isError,
       durationMs: Date.now() - startedAt,
       text,
-      structured: result.structuredContent ?? null,
+      structuredJson: result.structuredContent ? JSON.stringify(result.structuredContent) : null,
     };
   });
