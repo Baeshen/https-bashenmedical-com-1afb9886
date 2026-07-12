@@ -228,7 +228,7 @@ function MyOrdersPage() {
             ) : (
               <ul className="grid gap-3 md:grid-cols-2">
                 {orders!.map((o) => (
-                  <OrderCard key={`${o.kind}-${o.id}`} order={o} phone={queryPhone} isAr={isAr} />
+                  <OrderCard key={`${o.kind}-${o.reference}`} order={o} phone={queryPhone} isAr={isAr} />
                 ))}
               </ul>
             )}
