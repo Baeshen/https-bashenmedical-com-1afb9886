@@ -18,6 +18,7 @@ import { Route as RateRouteImport } from './routes/rate'
 import { Route as ProgramsRouteImport } from './routes/programs'
 import { Route as PharmacyRouteImport } from './routes/pharmacy'
 import { Route as PackagesRouteImport } from './routes/packages'
+import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LookupRouteImport } from './routes/lookup'
 import { Route as InternationalPatientsRouteImport } from './routes/international-patients'
@@ -134,6 +135,11 @@ const PharmacyRoute = PharmacyRouteImport.update({
 const PackagesRoute = PackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyOrdersRoute = MyOrdersRouteImport.update({
+  id: '/my-orders',
+  path: '/my-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -539,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
   '/mcp': typeof McpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -621,6 +628,7 @@ export interface FileRoutesByTo {
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
   '/mcp': typeof McpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -705,6 +713,7 @@ export interface FileRoutesById {
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
   '/mcp': typeof McpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -789,6 +798,7 @@ export interface FileRouteTypes {
     | '/international-patients'
     | '/lookup'
     | '/mcp'
+    | '/my-orders'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
     | '/international-patients'
     | '/lookup'
     | '/mcp'
+    | '/my-orders'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -954,6 +965,7 @@ export interface FileRouteTypes {
     | '/international-patients'
     | '/lookup'
     | '/mcp'
+    | '/my-orders'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -1038,6 +1050,7 @@ export interface RootRouteChildren {
   InternationalPatientsRoute: typeof InternationalPatientsRoute
   LookupRoute: typeof LookupRoute
   McpRoute: typeof McpRoute
+  MyOrdersRoute: typeof MyOrdersRoute
   PackagesRoute: typeof PackagesRoute
   PharmacyRoute: typeof PharmacyRoute
   ProgramsRoute: typeof ProgramsRoute
@@ -1131,6 +1144,13 @@ declare module '@tanstack/react-router' {
       path: '/packages'
       fullPath: '/packages'
       preLoaderRoute: typeof PackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-orders': {
+      id: '/my-orders'
+      path: '/my-orders'
+      fullPath: '/my-orders'
+      preLoaderRoute: typeof MyOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -1774,6 +1794,7 @@ const rootRouteChildren: RootRouteChildren = {
   InternationalPatientsRoute: InternationalPatientsRoute,
   LookupRoute: LookupRoute,
   McpRoute: McpRoute,
+  MyOrdersRoute: MyOrdersRoute,
   PackagesRoute: PackagesRoute,
   PharmacyRoute: PharmacyRoute,
   ProgramsRoute: ProgramsRoute,
