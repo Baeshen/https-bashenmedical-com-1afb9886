@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import type { Database } from "@/integrations/supabase/types";
+import { logMcpInvocation } from "../log-invocation";
 
 export default defineTool({
   name: "list_branches",
@@ -9,7 +10,8 @@ export default defineTool({
     "List all active branches of Baeshen Medical Complex with basic contact info (name, city, phone, address).",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async () => {
+  handler: async (_input, ctx: ToolContext) => {
+    const startedAt = Date.now();
     const supabase = createClient<Database>(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_PUBLISHABLE_KEY!,
@@ -23,13 +25,17 @@ export default defineTool({
       )
       .order("sort_order", { ascending: true });
 
-    if (error) {
-      return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
-    }
+    const result = error
+      ? {
+          content: [{ type: "text" as const, text: `Error: ${error.message}` }],
+          isError: true,
+        }
+      : {
+          content: [{ type: "text" as const, text: JSON.stringify(data ?? [], null, 2) }],
+          structuredContent: { branches: data ?? [] },
+        };
 
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
-      structuredContent: { branches: data ?? [] },
-    };
+    await logMcpInvocation({ ctx, toolName: "list_branches", args: {}, result, startedAt });
+    return result;
   },
 });
