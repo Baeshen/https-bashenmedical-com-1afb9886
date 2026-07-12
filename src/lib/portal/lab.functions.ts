@@ -112,6 +112,7 @@ export const shareLabWithDoctor = createServerFn({ method: "POST" })
       .select("id, title, test_type, report_date")
       .eq("patient_id", patient.id)
       .eq("id", data.report_id)
+      .not("released_at", "is", null)
       .maybeSingle();
     if (!labRes.data) throw new Error("تقرير المختبر غير موجود.");
 
