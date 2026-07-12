@@ -1,21 +1,21 @@
-// Subtle floating medical motifs overlay: DNA, ECG line, and medical cross.
-// Positions use logical properties (start/end) so they auto-flip in RTL,
-// and sizes/positions adapt per breakpoint to avoid the text zone.
+// Ultra-light medical motifs overlay: single ECG line + one DNA helix.
+// Pure SVG + CSS keyframes, no shadows/blurs/gradients, GPU-friendly transforms.
+// Positions use logical properties (start/end) to auto-flip in RTL.
 export function MedicalMotifs() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_82%)] motion-reduce:[&_*]:!animate-none"
+      className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:[&_*]:!animate-none"
     >
-      {/* ECG pulse line — spans full width, sits lower on desktop */}
+      {/* ECG pulse line — full width, bottom */}
       <svg
-        className="absolute inset-x-0 bottom-[12%] sm:bottom-[16%] lg:bottom-[20%] w-full h-10 sm:h-14 lg:h-16 opacity-[0.12] sm:opacity-[0.14] text-cyan-200"
+        className="absolute inset-x-0 bottom-[14%] sm:bottom-[18%] w-full h-12 sm:h-14 opacity-[0.12] text-cyan-200"
         viewBox="0 0 1200 80"
         preserveAspectRatio="none"
         fill="none"
       >
         <path
-          d="M0 40 L220 40 L245 40 L260 20 L275 60 L290 10 L305 70 L320 40 L560 40 L585 40 L600 22 L615 58 L630 12 L645 68 L660 40 L900 40 L925 40 L940 24 L955 56 L970 14 L985 66 L1000 40 L1200 40"
+          d="M0 40 L280 40 L300 20 L315 60 L330 10 L345 70 L360 40 L720 40 L740 22 L755 58 L770 12 L785 68 L800 40 L1200 40"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
@@ -23,14 +23,14 @@ export function MedicalMotifs() {
           style={{
             strokeDasharray: 2400,
             strokeDashoffset: 2400,
-            animation: "ecg-draw 9s linear infinite",
+            animation: "ecg-draw 10s linear infinite",
           }}
         />
       </svg>
 
-      {/* DNA helix — opposite text side (end = right in LTR, left in RTL) */}
+      {/* DNA helix — desktop only, opposite text side */}
       <svg
-        className="absolute top-[6%] sm:top-[8%] end-[4%] sm:end-[6%] lg:end-[8%] w-24 h-40 sm:w-32 sm:h-52 lg:w-40 lg:h-64 opacity-[0.09] sm:opacity-[0.10] text-white float-slow"
+        className="hidden md:block absolute top-[10%] end-[6%] lg:end-[8%] w-28 h-44 lg:w-36 lg:h-56 opacity-[0.10] text-white float-y"
         viewBox="0 0 100 200"
         fill="none"
         stroke="currentColor"
@@ -38,35 +38,16 @@ export function MedicalMotifs() {
       >
         <path d="M20 0 Q50 25 80 50 Q50 75 20 100 Q50 125 80 150 Q50 175 20 200" />
         <path d="M80 0 Q50 25 20 50 Q50 75 80 100 Q50 125 20 150 Q50 175 80 200" />
-        {Array.from({ length: 9 }).map((_, i) => {
-          const y = 10 + i * 22;
-          return <line key={i} x1="26" y1={y} x2="74" y2={y} strokeOpacity="0.7" />;
-        })}
       </svg>
 
-      {/* Medical cross — hidden on small screens (text zone), shown from md up on end side */}
+      {/* Single medical cross — desktop only */}
       <svg
-        className="hidden md:block absolute top-[62%] end-[14%] lg:end-[18%] w-10 h-10 lg:w-14 lg:h-14 opacity-[0.10] text-cyan-100 float-slower"
+        className="hidden lg:block absolute top-[60%] end-[16%] w-10 h-10 opacity-[0.10] text-cyan-100 float-y"
         viewBox="0 0 40 40"
         fill="currentColor"
       >
         <path d="M16 4h8v12h12v8H24v12h-8V24H4v-8h12z" />
       </svg>
-
-      {/* Second small cross — desktop only, upper end area */}
-      <svg
-        className="hidden lg:block absolute top-[26%] end-[38%] w-6 h-6 opacity-[0.09] text-white float-slow"
-        viewBox="0 0 40 40"
-        fill="currentColor"
-      >
-        <path d="M16 4h8v12h12v8H24v12h-8V24H4v-8h12z" />
-      </svg>
-
-      {/* Small floating dots (molecules) — biased toward end side to avoid text */}
-      <div className="hidden sm:block absolute top-[22%] end-[32%] w-1.5 h-1.5 rounded-full bg-cyan-200/40 float-slow" />
-      <div className="absolute top-[74%] end-[10%] w-1 h-1 rounded-full bg-white/40 float-slower" />
-      <div className="hidden md:block absolute top-[46%] end-[28%] w-1 h-1 rounded-full bg-cyan-200/40 float-slow" />
-      <div className="hidden lg:block absolute top-[38%] end-[46%] w-1 h-1 rounded-full bg-white/30 float-slower" />
 
       <style>{`
         @keyframes ecg-draw {
@@ -75,11 +56,10 @@ export function MedicalMotifs() {
           100% { stroke-dashoffset: -2400; }
         }
         @keyframes float-y {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          0%, 100% { transform: translate3d(0,0,0); }
+          50% { transform: translate3d(0,-8px,0); }
         }
-        .float-slow { animation: float-y 7s ease-in-out infinite; }
-        .float-slower { animation: float-y 11s ease-in-out infinite; }
+        .float-y { animation: float-y 9s ease-in-out infinite; will-change: transform; }
       `}</style>
     </div>
   );
