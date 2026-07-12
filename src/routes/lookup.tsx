@@ -35,27 +35,16 @@ export const Route = createFileRoute("/lookup")({
   component: LookupPage,
 });
 
-type AppointmentRow = {
+/**
+ * الشكل المسطّح المستخدم داخل هذه الصفحة — مبنيّ حصراً من الحقول المُعلنة في
+ * `AppointmentDetail`. أي وصول لحقل غير موجود في metadata أو BaseDetail يفشل ترجمة.
+ */
+type AppointmentRow = AppointmentDetail["metadata"] & {
   id: string;
-  patient_name: string;
-  patient_phone: string;
-  appointment_date: string;
-  appointment_time: string;
-  status: string;
-  reason: string | null;
-  notes: string | null;
-  specialty_id: string | null;
-  doctor_id: string | null;
-  specialty_name_ar: string | null;
-  specialty_name_en: string | null;
-  doctor_name_ar: string | null;
-  doctor_name_en: string | null;
+  status: OrderStatus;
   created_at: string;
-  reminder_24h: boolean | null;
-  reminder_2h: boolean | null;
-  cancel_reason: string | null;
-  cancelled_at: string | null;
 };
+
 
 
 function statusKey(s: string) {
