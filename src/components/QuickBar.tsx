@@ -1,6 +1,6 @@
 import { Phone, MessageCircle, MapPin, AlertCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { SITE } from "@/lib/site";
+import { SITE, whatsappUrl } from "@/lib/site";
 
 export function QuickBar() {
   const { lang } = useI18n();
