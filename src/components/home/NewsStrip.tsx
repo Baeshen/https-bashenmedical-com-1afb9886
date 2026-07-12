@@ -68,7 +68,7 @@ export function NewsStrip() {
                 {a.cover_image_url ? (
                   <img
                     src={a.cover_image_url}
-                    alt={isAr ? a.title_ar : a.title_en}
+                    alt={(isAr ? a.title_ar : a.title_en) ?? a.title_ar}
                     loading="lazy"
                     className="h-full w-full object-cover transition group-hover:scale-105"
                   />
