@@ -204,9 +204,9 @@ function HomePage() {
               {t("nav_doctors")} →
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {doctors?.map((d) => (
-              <div key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
+              <RevealItem key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
                 <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground grid place-items-center text-2xl font-bold shadow-lg shadow-primary/20">
                   {(lang === "ar" ? d.name_ar : d.name_en).charAt(0)}
                 </div>
@@ -223,9 +223,9 @@ function HomePage() {
                 >
                   {t("book_with_doctor")}
                 </Link>
-              </div>
+              </RevealItem>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
