@@ -1,21 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { QuickBar } from "@/components/QuickBar";
 import { SITE } from "@/lib/site";
-import { Stethoscope } from "lucide-react";
+import {
+  Stethoscope,
+  CalendarCheck2,
+  Phone,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  ArrowLeft,
+  Search,
+  Clock3,
+  HeartPulse,
+} from "lucide-react";
 import { buildLocalBusinessSchema } from "@/lib/localBusinessSchema";
 import { clinicSettingsQuery, type ClinicSettings } from "@/lib/clinicSettings";
-import { StatsBar } from "@/components/home/StatsBar";
-import { AwardsMarquee } from "@/components/home/AwardsMarquee";
-import { HeroComplex } from "@/components/home/HeroComplex";
-import { WhyChooseUs } from "@/components/home/WhyChooseUs";
-import { ServicesBento } from "@/components/home/ServicesBento";
-import { CentersStrip } from "@/components/home/CentersStrip";
-import { PatientJourney } from "@/components/home/PatientJourney";
-import { NewsStrip } from "@/components/home/NewsStrip";
-import { AppPromo } from "@/components/home/AppPromo";
 import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
