@@ -22,7 +22,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
-import { StatusTimeline } from "@/components/booking/StatusTimeline";
+import { OrderTimeline } from "@/components/booking/OrderTimeline";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
