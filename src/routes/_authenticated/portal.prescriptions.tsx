@@ -567,14 +567,25 @@ function ReminderLogSection() {
 }
 
 function ReminderLogRow({ r }: { r: ReminderLogEntry }) {
+  const qc = useQueryClient();
+  const confirm = useMutation({
+    mutationFn: (taken: boolean) => confirmMedicationReminder({ data: { id: r.id, taken } }),
+    onSuccess: (_d, taken) => {
+      toast.success(taken ? "تم تسجيل تناول الجرعة." : "تم إلغاء التأكيد.");
+      qc.invalidateQueries({ queryKey: ["portal", "reminder-log"] });
+      qc.invalidateQueries({ queryKey: ["portal", "adherence"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر الحفظ"),
+  });
+  const taken = !!r.read_at;
   return (
     <li className="p-3.5 flex items-start gap-3 hover:bg-white/70 transition-colors">
-      <div className="shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-sky-100 grid place-items-center text-violet-600">
+      <div className={`shrink-0 h-10 w-10 rounded-xl grid place-items-center ${taken ? "bg-emerald-50 text-emerald-600" : "bg-gradient-to-br from-violet-100 to-sky-100 text-violet-600"}`}>
         <Pill className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold truncate">{r.medication || "تذكير دواء"}</span>
+          <span className={`font-semibold truncate ${taken ? "line-through opacity-70" : ""}`}>{r.medication || "تذكير دواء"}</span>
           {r.time && (
             <span className="text-xs bg-slate-100 text-slate-700 rounded-md px-1.5 py-0.5 tabular-nums inline-flex items-center gap-1">
               <Clock className="h-3 w-3" /> {r.time}
@@ -600,14 +611,34 @@ function ReminderLogRow({ r }: { r: ReminderLogEntry }) {
               ? `أُرسل ${formatDistanceToNow(parseISO(r.sent_at), { addSuffix: true, locale: arLocale })}`
               : `أُنشئ ${formatDistanceToNow(parseISO(r.created_at), { addSuffix: true, locale: arLocale })}`}
           </span>
-          {r.read_at && (
+          {taken && r.read_at && (
             <span className="inline-flex items-center gap-1 text-emerald-600">
-              <CheckCheck className="h-3 w-3" /> مقروء
+              <CheckCheck className="h-3 w-3" /> تم التناول {formatDistanceToNow(parseISO(r.read_at), { addSuffix: true, locale: arLocale })}
             </span>
           )}
         </div>
       </div>
-      <StatusBadge status={r.send_status} />
+      <div className="shrink-0 flex flex-col items-end gap-1.5">
+        <StatusBadge status={r.send_status} />
+        <button
+          onClick={() => confirm.mutate(!taken)}
+          disabled={confirm.isPending}
+          className={`inline-flex items-center gap-1 rounded-full h-7 px-2.5 text-[11px] font-semibold transition-colors disabled:opacity-60 ${
+            taken
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              : "bg-slate-900 text-white hover:bg-slate-800"
+          }`}
+          title={taken ? "إلغاء تأكيد التناول" : "تأكيد تناول الجرعة"}
+        >
+          {confirm.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : taken ? (
+            <><XCircle className="h-3 w-3" /> إلغاء</>
+          ) : (
+            <><Check className="h-3 w-3" /> تناولتها</>
+          )}
+        </button>
+      </div>
     </li>
   );
 }
