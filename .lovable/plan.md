@@ -1,62 +1,50 @@
+# وحدة Nurses (التمريض) داخل لوحة الإدارة
 
-# لوحة الإدارة الفاخرة — مجمع باعشن الطبي
+إضافة وحدة كاملة للتمريض تشمل:
+- سجل الممرضين/الممرضات (ربطًا بالفروع).
+- **جداول الورديات** (Shifts) لعرض ومن يعمل متى.
+- **استدعاءات المرضى** (Nurse Call Queue) لإدارة الطلبات القادمة من غرف المرضى.
 
-المواصفات التي طلبتها ضخمة (24 قسم جانبي + 12 KPI + مركز ذكاء اصطناعي + وحدات صيدلية/مخبر/أشعة/مالية/موارد بشرية…). المشروع يحوي فعلاً ~30 صفحة إدارية منفصلة (`admin.tsx` وحده 4381 سطراً)، لذلك الأفضل أن نضيف **قشرة (Shell) موحّدة جديدة** على شكل *Command Center* دون هدم الصفحات القائمة، ثم نربطها تدريجياً.
+## الصفحات
 
-## المخرجات (مرحلة أولى — هذا الطلب)
+المسار الرئيسي: `/_authenticated/nurses` مع 3 تبويبات RTL:
 
-سأنجز في هذه الدفعة:
+1. **الطاقم (Nurses):** جدول بأسماء الممرضين، الفرع، القسم، الحالة (متاح/إجازة)، مع نموذج إضافة/تعديل/حذف (Admin فقط).
+2. **الورديات (Shifts):** عرض أسبوعي (Grid: 7 أيام × Nurses) مع لون لكل نوع وردية (صباحية/مسائية/ليلية). فلترة بالفرع والتاريخ. إضافة/حذف وردية عبر Dialog.
+3. **استدعاءات المرضى (Calls):** قائمة الاستدعاءات النشطة بأولوية (عادي/عاجل/حرج)، مع أزرار: قبول → قيد المعالجة → مكتمل / ملغى. تحديث تلقائي كل 15 ثانية.
 
-1. **مسار جديد** `/_authenticated/command-center` (لا نلمس `/admin` القائم).
-2. **قشرة تصميم مؤسسية** بلون خلفية داكن (Dark Navy `#0B1220`) + زجاجية Glassmorphism + بطاقات بحواف 24px + ظلال ناعمة، مع دعم Light/Dark و RTL.
-3. **شريط جانبي قابل للطي** يحوي 24 عنصراً بأيقونات Lucide، مع مؤشر نشط متحرك (Framer Motion) وشعار المجمع.
-4. **شريط علوي** (بحث عام + تنبيهات + بروفايل مدير + Command Palette عبر ⌘K).
-5. **12 بطاقة KPI** بمخطط شرارة (sparkline) صغير، تغيّر النسبة، أيقونة متحركة، وتدرّج لوني.
-6. **مركز الذكاء الاصطناعي**: بطاقة كبيرة تحوي مخطط تدفق المرضى (Recharts) + قائمة توصيات AI + توقع الإيرادات.
-7. **إدارة المواعيد**: تقويم أسبوعي بصفوف الأطباء + شارات "Video Consultation / Booked" (عرض فقط في هذه المرحلة، بدون سحب/إفلات).
-8. **بطاقات الوحدات الأربع في الأسفل**: Laboratory / Radiology / Pharmacy / Billing (ملخّصات فقط).
-9. **مساعد AI عائم** في الزاوية (زر يفتح لوحة صغيرة، يعيد استخدام منطق `ChatbotBubble` مع تصميم Command Center).
-10. توكينات ألوان جديدة في `src/styles.css` مطابقة تماماً لباليتّتك:
-    - Primary Blue `#0F6CBD`
-    - Medical Cyan `#1CC8EE`
-    - Dark Navy `#102A43`
-    - Success `#22C55E` / Warning `#F59E0B` / Danger `#EF4444`
-    - `--gradient-primary`, `--gradient-cyan`, `--shadow-glass`, `--surface-glass`
+كما تُضاف بطاقة "Nurses" في `command-center` سايدبار كرابط نشط.
 
-**البيانات في هذه المرحلة**: مزيج من بيانات حقيقية (المرضى/المواعيد/الأطباء عبر server functions موجودة أصلاً) + بيانات mock للـ KPIs غير المتوفرة بعد (Emergency, Occupancy, Satisfaction…) مع تعليم واضح `MOCK` حتى نربطها لاحقاً.
+## الجداول الجديدة
 
-## المراحل التالية (لن تُنفّذ الآن — تحتاج تأكيدك بعد رؤية المرحلة الأولى)
+- `nurses`: `id, full_name, phone, email, branch_id → branches, department, employee_no, status ('active'|'on_leave'|'inactive'), notes, created_at, updated_at`.
+- `nurse_shifts`: `id, nurse_id → nurses, branch_id, shift_date (date), shift_type ('morning'|'evening'|'night'), start_time, end_time, notes, created_by, created_at, updated_at`. فهارس على `(branch_id, shift_date)` و `(nurse_id, shift_date)`.
+- `nurse_calls`: `id, branch_id, patient_id → patients (nullable), room_no, reason, priority ('normal'|'urgent'|'critical'), status ('pending'|'in_progress'|'completed'|'cancelled'), assigned_nurse_id → nurses (nullable), called_at, accepted_at, completed_at, notes, created_at, updated_at`. فهرس على `(status, priority, called_at)`.
 
-- **مرحلة 2**: صفحات فرعية حقيقية لكل قسم لم يُغطَّ (Nurses / Pharmacy / Inventory / HR / Payroll / Insurance) — كل واحدة تحتاج جدول قاعدة بيانات + RLS + CRUD.
-- **مرحلة 3**: Drag-and-drop للتقويم، عارض صور DICOM للأشعة، ماسح باركود للصيدلية.
-- **مرحلة 4**: تكامل مدفوعات (Apple Pay/Google Pay) عبر Stripe.
-- **مرحلة 5**: RBAC كامل بأدوار (admin / doctor / nurse / receptionist / accountant / lab_tech / radiologist / pharmacist) + Audit Log موسّع.
+RLS + GRANTs (Admin/Staff قراءة+كتابة عبر `has_role`؛ لا وصول لـ anon):
+- Admin: كل شيء.
+- staff/nurse role: قراءة الطاقم/الورديات؛ كتابة `nurse_calls` (تحديث الحالة والإسناد).
 
-## الملفات التي ستُنشأ/تُعدَّل
+## Server functions
 
-```text
-src/styles.css                                    ← إضافة توكينات Command Center
-src/routes/_authenticated/command-center.tsx      ← الصفحة الرئيسية الجديدة
-src/components/command-center/
-  Shell.tsx                                       ← Sidebar + Topbar + Layout
-  Sidebar.tsx                                     ← الشريط الجانبي (24 عنصر)
-  Topbar.tsx                                      ← بحث + تنبيهات + بروفايل
-  KpiCard.tsx                                     ← بطاقة KPI مع sparkline
-  KpiGrid.tsx                                     ← شبكة الـ 12 بطاقة
-  AiCommandCenter.tsx                             ← مركز الذكاء الاصطناعي
-  AppointmentBoard.tsx                            ← جدول مواعيد الأسبوع
-  ModuleSummaryCards.tsx                          ← Lab/Radiology/Pharmacy/Billing
-  CommandPalette.tsx                              ← ⌘K
-  FloatingAiAssistant.tsx                         ← المساعد العائم
-src/lib/command-center/kpis.functions.ts          ← server fn يجمع الأرقام من جداول موجودة
-```
+ملف `src/lib/nurses.functions.ts` مع `requireSupabaseAuth` + فحص الدور:
+- `listNurses({ branchId? })`, `upsertNurse(data)`, `deleteNurse(id)`.
+- `listShifts({ branchId, fromDate, toDate })`, `upsertShift(data)`, `deleteShift(id)`.
+- `listCalls({ branchId?, status? })`, `createCall(data)`, `updateCallStatus({ id, status, assigned_nurse_id? })`.
 
-## ملاحظات تقنية
+## الواجهة
 
-- **بدون Next.js**: البقاء على TanStack Start / React 19 / Tailwind v4 / shadcn المثبت. Magic UI و Aceternity ليست ضمن الحزم؛ سأحاكي تأثيراتهم (Shine border, animated gradient, glass card) بـ Framer Motion + Tailwind بدل تثبيت مكتبات ثقيلة إضافية.
-- **ApexCharts** غير مثبت والمشروع يستخدم Recharts فعلاً؛ سأستمر بـ Recharts للسرعة والاتساق. إن أصررت على ApexCharts أخبرني.
-- **RTL**: كل المكوّنات مبنية بـ `dir="rtl"` + `start`/`end` بدل `left`/`right`.
-- **الأداء**: كل بطاقة KPI تُحمّل بيانتها عبر `useQuery` منفصل حتى لا تنتظر الصفحة الأبطأ.
-- **الأمان**: `/_authenticated/command-center` محمي تلقائياً بطبقة الـ auth. سنضيف فحص دور `admin` عبر `has_role` داخل server function الـ KPIs قبل إرجاع أي رقم إيرادات.
+- استخدام `Tabs`, `Dialog`, `Select`, `Badge` من shadcn.
+- عرض الوردية: Grid CSS مع بطاقة صغيرة لكل وردية (لون حسب النوع).
+- الاستدعاءات: بطاقات تحمل شارة أولوية ملوّنة + مؤقت "منذ كم دقيقة" + أزرار حالة.
+- التحديث التلقائي عبر `useQuery` + `refetchInterval: 15000` على الاستدعاءات النشطة.
 
-هل أبدأ بتنفيذ المرحلة الأولى كما وُصف، أم تريد تعديلاً (مثل: تغيير قائمة الـ KPI، أو اقتصار الشريط الجانبي على أقسام أقل، أو استبدال المخططات)؟
+## تفاصيل تقنية
+
+- المسارات: `src/routes/_authenticated/nurses.tsx` (تبويبات في مكوّن واحد لتبسيط الحالة والفلاتر).
+- نمط التحميل: `context.queryClient.ensureQueryData` في loader + `useSuspenseQuery` للطاقم؛ `useQuery` مع polling للاستدعاءات.
+- ربط في `command-center` كعنصر Sidebar نشط بدل "Coming Soon".
+- لا Realtime حاليًا (Polling كافٍ)؛ يمكن ترقيته لاحقًا.
+- لا يُدمج مع `doctor_leaves`؛ الإجازات مستقبلًا.
+
+هل أبدأ التنفيذ بهذا النطاق أو تفضّل تعديل أي جزء (مثلاً إخفاء المرضى/الغرف، أو تبسيط الورديات لقائمة بدل شبكة أسبوعية)؟
