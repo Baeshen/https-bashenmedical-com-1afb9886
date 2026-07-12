@@ -22,6 +22,8 @@ import {
   submitMyComplaint,
 } from "@/lib/complaints.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
+import { OrderStatusBadge } from "@/components/OrderStatusBadge";
+import { OrderProgressSteps } from "@/components/OrderProgressSteps";
 
 export const Route = createFileRoute("/_authenticated/portal/complaints")({
   head: () => ({
