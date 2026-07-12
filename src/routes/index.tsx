@@ -147,7 +147,7 @@ function HomePage() {
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
 
-  const { data: specialties } = useQuery({
+  const { data: specialties, isPending: specialtiesLoading } = useQuery({
     queryKey: ["specialties"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -159,7 +159,7 @@ function HomePage() {
       return data;
     },
   });
-  const { data: doctors } = useQuery({
+  const { data: doctors, isPending: doctorsLoading } = useQuery({
     queryKey: ["doctors_featured"],
     queryFn: async () => {
       const { data, error } = await supabase
