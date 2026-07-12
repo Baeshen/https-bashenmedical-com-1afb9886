@@ -37,14 +37,34 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Restrict redirect to same-origin relative paths (must start with "/" and
+  // not with "//") to avoid open-redirect. Non-conforming values fall back to /admin.
+  function safeRedirectTarget(): string {
+    if (!redirect) return "/admin";
+    if (!redirect.startsWith("/") || redirect.startsWith("//")) return "/admin";
+    return redirect;
+  }
+
+  function goToRedirect() {
+    const target = safeRedirectTarget();
+    // window.location.assign preserves query strings (e.g. ?authorization_id=...)
+    // that TanStack's typed navigate({to}) does not handle for arbitrary paths.
+    if (target.includes("?") || target.startsWith("/.")) {
+      window.location.assign(target);
+    } else {
+      navigate({ to: target });
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: redirect ?? "/admin" });
+      if (data.user) goToRedirect();
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") navigate({ to: redirect ?? "/admin" });
+      if (event === "SIGNED_IN") goToRedirect();
     });
     return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, redirect]);
 
   async function handleSubmit(e: React.FormEvent) {

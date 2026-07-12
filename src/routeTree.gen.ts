@@ -17,6 +17,7 @@ import { Route as RateRouteImport } from './routes/rate'
 import { Route as ProgramsRouteImport } from './routes/programs'
 import { Route as PharmacyRouteImport } from './routes/pharmacy'
 import { Route as PackagesRouteImport } from './routes/packages'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LookupRouteImport } from './routes/lookup'
 import { Route as InternationalPatientsRouteImport } from './routes/international-patients'
 import { Route as InsuranceRouteImport } from './routes/insurance'
@@ -75,9 +76,13 @@ import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAuditExportRouteImport } from './routes/_authenticated/audit-export'
 import { Route as AuthenticatedAppointmentsQueueRouteImport } from './routes/_authenticated/appointments-queue'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as MediaStoriesSlugRouteImport } from './routes/media.stories.$slug'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 import { Route as ApiPublicBookTrackRouteImport } from './routes/api/public/book/track'
 import { Route as ApiPublicBookMonthAvailabilityRouteImport } from './routes/api/public/book/month-availability'
@@ -122,6 +127,11 @@ const PharmacyRoute = PharmacyRouteImport.update({
 const PackagesRoute = PackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LookupRoute = LookupRouteImport.update({
@@ -426,6 +436,18 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPatientsIndexRoute =
   AuthenticatedPatientsIndexRouteImport.update({
     id: '/patients/',
@@ -443,6 +465,17 @@ const AuthenticatedPatientsPatientIdRoute =
     path: '/patients/$patientId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksSendRemindersRoute =
   ApiPublicHooksSendRemindersRouteImport.update({
     id: '/api/public/hooks/send-reminders',
@@ -493,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/insurance': typeof InsuranceRoute
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
+  '/mcp': typeof McpRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -501,6 +535,8 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/telemedicine': typeof TelemedicineRoute
   '/track': typeof TrackRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/audit-export': typeof AuthenticatedAuditExportRoute
@@ -538,6 +574,8 @@ export interface FileRoutesByFullPath {
   '/doctors/': typeof DoctorsIndexRoute
   '/health/': typeof HealthIndexRoute
   '/specialties/': typeof SpecialtiesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
@@ -568,6 +606,7 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceRoute
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
+  '/mcp': typeof McpRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -576,6 +615,8 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/telemedicine': typeof TelemedicineRoute
   '/track': typeof TrackRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/audit-export': typeof AuthenticatedAuditExportRoute
@@ -613,6 +654,8 @@ export interface FileRoutesByTo {
   '/doctors': typeof DoctorsIndexRoute
   '/health': typeof HealthIndexRoute
   '/specialties': typeof SpecialtiesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
@@ -645,6 +688,7 @@ export interface FileRoutesById {
   '/insurance': typeof InsuranceRoute
   '/international-patients': typeof InternationalPatientsRoute
   '/lookup': typeof LookupRoute
+  '/mcp': typeof McpRoute
   '/packages': typeof PackagesRoute
   '/pharmacy': typeof PharmacyRoute
   '/programs': typeof ProgramsRoute
@@ -653,6 +697,8 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/telemedicine': typeof TelemedicineRoute
   '/track': typeof TrackRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/_authenticated/audit-export': typeof AuthenticatedAuditExportRoute
@@ -690,6 +736,8 @@ export interface FileRoutesById {
   '/doctors/': typeof DoctorsIndexRoute
   '/health/': typeof HealthIndexRoute
   '/specialties/': typeof SpecialtiesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRoute
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
@@ -722,6 +770,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/international-patients'
     | '/lookup'
+    | '/mcp'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -730,6 +779,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/telemedicine'
     | '/track'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/appointments-queue'
     | '/audit-export'
@@ -767,6 +818,8 @@ export interface FileRouteTypes {
     | '/doctors/'
     | '/health/'
     | '/specialties/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
     | '/media/stories/$slug'
     | '/patients/'
@@ -797,6 +850,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/international-patients'
     | '/lookup'
+    | '/mcp'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -805,6 +859,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/telemedicine'
     | '/track'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/appointments-queue'
     | '/audit-export'
@@ -842,6 +898,8 @@ export interface FileRouteTypes {
     | '/doctors'
     | '/health'
     | '/specialties'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/patients/$patientId'
     | '/media/stories/$slug'
     | '/patients'
@@ -873,6 +931,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/international-patients'
     | '/lookup'
+    | '/mcp'
     | '/packages'
     | '/pharmacy'
     | '/programs'
@@ -881,6 +940,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/telemedicine'
     | '/track'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/appointments-queue'
     | '/_authenticated/audit-export'
@@ -918,6 +979,8 @@ export interface FileRouteTypes {
     | '/doctors/'
     | '/health/'
     | '/specialties/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/patients/$patientId'
     | '/media/stories/$slug'
     | '/_authenticated/patients/'
@@ -950,6 +1013,7 @@ export interface RootRouteChildren {
   InsuranceRoute: typeof InsuranceRoute
   InternationalPatientsRoute: typeof InternationalPatientsRoute
   LookupRoute: typeof LookupRoute
+  McpRoute: typeof McpRoute
   PackagesRoute: typeof PackagesRoute
   PharmacyRoute: typeof PharmacyRoute
   ProgramsRoute: typeof ProgramsRoute
@@ -958,6 +1022,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TelemedicineRoute: typeof TelemedicineRoute
   TrackRoute: typeof TrackRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DoctorsSlugRoute: typeof DoctorsSlugRoute
   HealthSlugRoute: typeof HealthSlugRoute
   HealthSearchRoute: typeof HealthSearchRoute
@@ -968,6 +1034,8 @@ export interface RootRouteChildren {
   DoctorsIndexRoute: typeof DoctorsIndexRoute
   HealthIndexRoute: typeof HealthIndexRoute
   SpecialtiesIndexRoute: typeof SpecialtiesIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicBookAvailabilityRoute: typeof ApiPublicBookAvailabilityRoute
   ApiPublicBookCreateRoute: typeof ApiPublicBookCreateRoute
   ApiPublicBookMonthAvailabilityRoute: typeof ApiPublicBookMonthAvailabilityRoute
@@ -1031,6 +1099,13 @@ declare module '@tanstack/react-router' {
       path: '/packages'
       fullPath: '/packages'
       preLoaderRoute: typeof PackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lookup': {
@@ -1439,6 +1514,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/patients/': {
       id: '/_authenticated/patients/'
       path: '/patients'
@@ -1459,6 +1548,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/patients/$patientId'
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/send-reminders': {
       id: '/api/public/hooks/send-reminders'
@@ -1629,6 +1732,7 @@ const rootRouteChildren: RootRouteChildren = {
   InsuranceRoute: InsuranceRoute,
   InternationalPatientsRoute: InternationalPatientsRoute,
   LookupRoute: LookupRoute,
+  McpRoute: McpRoute,
   PackagesRoute: PackagesRoute,
   PharmacyRoute: PharmacyRoute,
   ProgramsRoute: ProgramsRoute,
@@ -1637,6 +1741,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TelemedicineRoute: TelemedicineRoute,
   TrackRoute: TrackRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DoctorsSlugRoute: DoctorsSlugRoute,
   HealthSlugRoute: HealthSlugRoute,
   HealthSearchRoute: HealthSearchRoute,
@@ -1647,6 +1754,8 @@ const rootRouteChildren: RootRouteChildren = {
   DoctorsIndexRoute: DoctorsIndexRoute,
   HealthIndexRoute: HealthIndexRoute,
   SpecialtiesIndexRoute: SpecialtiesIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicBookAvailabilityRoute: ApiPublicBookAvailabilityRoute,
   ApiPublicBookCreateRoute: ApiPublicBookCreateRoute,
   ApiPublicBookMonthAvailabilityRoute: ApiPublicBookMonthAvailabilityRoute,
@@ -1656,3 +1765,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
