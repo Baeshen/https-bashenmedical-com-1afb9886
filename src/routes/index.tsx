@@ -107,8 +107,45 @@ export const Route = createFileRoute("/")({
 
 
 
+const STATS = [
+  { k: "12+", ar: "تخصص طبي", en: "Specialties" },
+  { k: "40+", ar: "طبيب استشاري", en: "Consultants" },
+  { k: "24/7", ar: "طوارئ ورعاية", en: "Emergency" },
+  { k: "CBAHI", ar: "معتمد", en: "Accredited" },
+];
+
+const FEATURES = [
+  {
+    icon: ShieldCheck,
+    ar: { t: "معتمد CBAHI", d: "معايير جودة ورعاية مرضى معتمدة وطنيًا." },
+    en: { t: "CBAHI accredited", d: "Nationally accredited quality standards." },
+  },
+  {
+    icon: HeartPulse,
+    ar: { t: "استشاريون خبراء", d: "فريق طبي متعدد التخصصات في قلب صبيا." },
+    en: { t: "Expert consultants", d: "Multi-specialty team in the heart of Sabya." },
+  },
+  {
+    icon: Clock3,
+    ar: { t: "حجز فوري", d: "احجز موعدك في أقل من دقيقة بتأكيد مباشر." },
+    en: { t: "Instant booking", d: "Confirm your slot in under a minute." },
+  },
+  {
+    icon: Sparkles,
+    ar: { t: "تجربة رقمية", d: "بوابة مريض، تقارير، تذكيرات، وصيدلية أونلاين." },
+    en: { t: "Digital-first", d: "Portal, reports, reminders, online pharmacy." },
+  },
+];
+
 function HomePage() {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
+  const isAr = lang === "ar";
+
+  const [quickSpecialty, setQuickSpecialty] = useState("");
+  const [quickName, setQuickName] = useState("");
+  const [quickPhone, setQuickPhone] = useState("");
+
   const { data: specialties } = useQuery({
     queryKey: ["specialties"],
     queryFn: async () => {
@@ -134,48 +171,190 @@ function HomePage() {
     },
   });
 
+  const onQuickBook = (e: React.FormEvent) => {
+    e.preventDefault();
+    const search: Record<string, string> = {};
+    if (quickSpecialty) search.specialty = quickSpecialty;
+    if (quickName) search.name = quickName;
+    if (quickPhone) search.phone = quickPhone;
+    navigate({ to: "/book", search });
+  };
+
   return (
-    <div>
-      <HeroComplex />
-      <QuickBar />
-      <StatsBar />
+    <div className="futuristic" dir={isAr ? "rtl" : "ltr"}>
+      {/* ===== HERO ===== */}
+      <section className="aurora-bg grid-overlay relative">
+        <div className="container-app relative py-20 md:py-28">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--fut-border-strong)] bg-white/[0.03] px-4 py-1.5 text-[11px] tracking-[0.35em] uppercase text-[color:var(--fut-ink-muted)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon-teal)] pulse-neon" />
+              {isAr ? "طب المستقبل · مجمع باعشن" : "Future of Care · Baeshen"}
+            </div>
+            <h1 className="mt-6 text-4xl md:text-6xl font-extrabold leading-[1.1]">
+              <span className="block text-[color:var(--fut-ink)]">
+                {isAr ? "رعاية طبية بذكاء" : "Care meets"}
+              </span>
+              <span className="block text-neon">
+                {isAr ? "الجيل القادم" : "next-gen intelligence"}
+              </span>
+            </h1>
+            <p className="mt-5 text-base md:text-lg text-[color:var(--fut-ink-muted)] leading-8">
+              {isAr
+                ? "احجز مع استشاريين معتمدين، تابع تقاريرك، واطلب دواءك من صيدلياتنا — كلها من مكان واحد."
+                : "Book certified consultants, track reports, and order medication — all in one place."}
+            </p>
 
-      <ServicesBento />
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/book" className="btn-magnetic">
+                <CalendarCheck2 className="h-4 w-4" />
+                {isAr ? "احجز موعدك الآن" : "Book an appointment"}
+              </Link>
+              <Link
+                to="/doctors"
+                className="neon-glow-purple inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-[color:var(--fut-ink)] backdrop-blur-md"
+              >
+                <Search className="h-4 w-4" />
+                {isAr ? "تصفّح الأطباء" : "Browse doctors"}
+              </Link>
+            </div>
+          </div>
 
-      {/* Specialties grid */}
+          {/* Stats strip */}
+          <StaggerReveal className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {STATS.map((s) => (
+              <RevealItem key={s.k} className="glass-fut p-5 text-center">
+                <div className="text-3xl md:text-4xl font-black text-neon">{s.k}</div>
+                <div className="mt-1 text-xs tracking-widest uppercase text-[color:var(--fut-ink-muted)]">
+                  {isAr ? s.ar : s.en}
+                </div>
+              </RevealItem>
+            ))}
+          </StaggerReveal>
+        </div>
+      </section>
+
+      {/* ===== QUICK BOOKING ===== */}
+      <section className="relative py-16 md:py-20">
+        <div className="container-app">
+          <div className="glass-fut mx-auto max-w-4xl p-6 md:p-8">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
+                  {isAr ? "حجز سريع" : "Quick booking"}
+                </div>
+                <h2 className="mt-2 text-2xl md:text-3xl font-bold text-[color:var(--fut-ink)]">
+                  {isAr ? "ابدأ موعدك في 30 ثانية" : "Start your appointment in 30 seconds"}
+                </h2>
+              </div>
+              <Link
+                to="/book"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--neon-teal)] hover:opacity-80"
+              >
+                {isAr ? "نموذج الحجز الكامل" : "Full booking form"}
+                <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
+              </Link>
+            </div>
+
+            <form onSubmit={onQuickBook} className="grid gap-3 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+              <label className="block">
+                <span className="mb-1 block text-xs text-[color:var(--fut-ink-muted)]">
+                  {isAr ? "التخصص" : "Specialty"}
+                </span>
+                <select
+                  value={quickSpecialty}
+                  onChange={(e) => setQuickSpecialty(e.target.value)}
+                  className="input-glow w-full appearance-none"
+                >
+                  <option value="">{isAr ? "اختر تخصصًا" : "Select a specialty"}</option>
+                  {specialties?.map((s) => (
+                    <option key={s.id} value={s.slug}>
+                      {isAr ? s.name_ar : s.name_en}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs text-[color:var(--fut-ink-muted)]">
+                  {isAr ? "الاسم" : "Full name"}
+                </span>
+                <input
+                  type="text"
+                  value={quickName}
+                  onChange={(e) => setQuickName(e.target.value)}
+                  placeholder={isAr ? "الاسم الكامل" : "Your name"}
+                  className="input-glow w-full"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs text-[color:var(--fut-ink-muted)]">
+                  {isAr ? "الجوال" : "Mobile"}
+                </span>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={quickPhone}
+                  onChange={(e) => setQuickPhone(e.target.value)}
+                  placeholder="05xxxxxxxx"
+                  className="input-glow w-full"
+                />
+              </label>
+              <div className="flex md:items-end">
+                <button type="submit" className="btn-magnetic w-full md:w-auto">
+                  <CalendarCheck2 className="h-4 w-4" />
+                  {isAr ? "متابعة" : "Continue"}
+                </button>
+              </div>
+            </form>
+
+            <p className="mt-3 text-[11px] text-[color:var(--fut-ink-dim)]">
+              {isAr
+                ? "بمتابعتك توافق على سياسة الخصوصية. لن يتم تأكيد الحجز حتى إكمال الخطوات في صفحة الحجز."
+                : "By continuing you accept our privacy policy. Your slot is confirmed after the full booking flow."}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== SPECIALTIES ===== */}
       <section className="py-16 md:py-20">
         <div className="container-app">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
-                {lang === "ar" ? "التخصصات الطبية" : "Medical Specialties"}
+          <div className="mb-10 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
+            <div className="min-w-0">
+              <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
+                {isAr ? "التخصصات" : "Specialties"}
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold">{t("specialties_title")}</h2>
-              <p className="mt-2 max-w-2xl text-muted-foreground">{t("specialties_sub")}</p>
+              <h2 className="mt-2 text-3xl md:text-4xl font-bold text-[color:var(--fut-ink)]">
+                {t("specialties_title")}
+              </h2>
+              <p className="mt-2 max-w-2xl text-[color:var(--fut-ink-muted)]">
+                {t("specialties_sub")}
+              </p>
             </div>
             <Link
               to="/specialties"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--neon-teal)] hover:opacity-80"
             >
-              {t("all_specialties")} →
+              {t("all_specialties")}
+              <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
             </Link>
           </div>
+
           <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {specialties?.slice(0, 12).map((s) => (
               <RevealItem key={s.id}>
                 <Link
                   to="/book"
                   search={{ specialty: s.slug }}
-                  className="bento-card group p-5 block h-full"
+                  className="glass-fut neon-glow-hover group block h-full p-5"
                 >
-                  <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
+                  <div className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--fut-border)] bg-white/[0.04] text-[color:var(--neon-teal)] transition group-hover:border-[var(--neon-teal)]">
                     <Stethoscope className="h-5 w-5" />
                   </div>
-                  <div className="mt-3 font-semibold text-sm">
-                    {lang === "ar" ? s.name_ar : s.name_en}
+                  <div className="mt-3 text-sm font-semibold text-[color:var(--fut-ink)]">
+                    {isAr ? s.name_ar : s.name_en}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                    {lang === "ar" ? s.description_ar : s.description_en}
+                  <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)] line-clamp-2">
+                    {isAr ? s.description_ar : s.description_en}
                   </div>
                 </Link>
               </RevealItem>
@@ -184,44 +363,81 @@ function HomePage() {
         </div>
       </section>
 
-      <CentersStrip />
-
-      <PatientJourney />
-
-      {/* Featured doctors */}
+      {/* ===== WHY US ===== */}
       <section className="py-16 md:py-20">
         <div className="container-app">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
-                {lang === "ar" ? "فريقنا الطبي" : "Our Medical Team"}
+          <div className="mb-10 max-w-2xl">
+            <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
+              {isAr ? "لماذا باعشن؟" : "Why Baeshen"}
+            </div>
+            <h2 className="mt-2 text-3xl md:text-4xl font-bold text-[color:var(--fut-ink)]">
+              {isAr ? "رعاية موثوقة · تجربة كونسيرج" : "Trusted care · concierge experience"}
+            </h2>
+          </div>
+          <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              const c = isAr ? f.ar : f.en;
+              return (
+                <RevealItem key={i} className="glass-fut neon-glow-hover p-6">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-[var(--fut-border-strong)] bg-white/[0.04] text-[color:var(--neon-teal)]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-[color:var(--fut-ink)]">{c.t}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--fut-ink-muted)]">{c.d}</p>
+                </RevealItem>
+              );
+            })}
+          </StaggerReveal>
+        </div>
+      </section>
+
+      {/* ===== FEATURED DOCTORS ===== */}
+      <section className="py-16 md:py-20">
+        <div className="container-app">
+          <div className="mb-10 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:flex-wrap sm:justify-between">
+            <div className="min-w-0">
+              <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
+                {isAr ? "الفريق الطبي" : "Medical team"}
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold">{t("doctors_title")}</h2>
-              <p className="mt-2 max-w-2xl text-muted-foreground">{t("doctors_sub")}</p>
+              <h2 className="mt-2 text-3xl md:text-4xl font-bold text-[color:var(--fut-ink)]">
+                {t("doctors_title")}
+              </h2>
+              <p className="mt-2 max-w-2xl text-[color:var(--fut-ink-muted)]">
+                {t("doctors_sub")}
+              </p>
             </div>
             <Link
               to="/doctors"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--neon-teal)] hover:opacity-80"
             >
-              {t("nav_doctors")} →
+              {t("nav_doctors")}
+              <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
             </Link>
           </div>
+
           <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {doctors?.map((d) => (
-              <RevealItem key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground grid place-items-center text-2xl font-bold shadow-lg shadow-primary/20">
-                  {(lang === "ar" ? d.name_ar : d.name_en).charAt(0)}
+              <RevealItem
+                key={d.id}
+                className="glass-fut neon-glow-hover flex flex-col items-center p-6 text-center"
+              >
+                <div className="grid h-24 w-24 place-items-center rounded-full text-2xl font-bold text-[#04121a] shadow-[var(--fut-glow-teal)]"
+                     style={{ background: "var(--fut-gradient-neon)" }}>
+                  {(isAr ? d.name_ar : d.name_en).charAt(0)}
                 </div>
                 <div className="mt-4">
-                  <div className="font-bold">{lang === "ar" ? d.name_ar : d.name_en}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {lang === "ar" ? d.title_ar : d.title_en}
+                  <div className="font-bold text-[color:var(--fut-ink)]">
+                    {isAr ? d.name_ar : d.name_en}
+                  </div>
+                  <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)]">
+                    {isAr ? d.title_ar : d.title_en}
                   </div>
                 </div>
                 <Link
                   to="/book"
                   search={{ doctor: d.id }}
-                  className="mt-4 w-full block text-center rounded-lg bg-primary text-primary-foreground px-3 py-2 text-xs font-semibold hover:bg-primary/90 transition"
+                  className="btn-magnetic mt-4 w-full !py-2 text-xs"
                 >
                   {t("book_with_doctor")}
                 </Link>
@@ -231,60 +447,88 @@ function HomePage() {
         </div>
       </section>
 
-      <WhyChooseUs />
-
-      <NewsStrip />
-
-      <AwardsMarquee />
-
-      <AppPromo />
-
-      {/* Map/Location */}
-      <section className="py-16 md:py-20 bg-secondary/40">
-        <div className="container-app grid gap-8 md:grid-cols-2 items-center">
+      {/* ===== VISIT / MAP ===== */}
+      <section className="py-16 md:py-20">
+        <div className="container-app grid items-center gap-8 md:grid-cols-2">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
-              {lang === "ar" ? "زُرنا" : "Visit us"}
+            <div className="text-[11px] tracking-[0.35em] uppercase text-[color:var(--neon-teal)]">
+              {isAr ? "زُرنا" : "Visit us"}
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold">
-              {lang === "ar" ? "موقعنا في قلب صبيا" : "In the heart of Sabya"}
+            <h2 className="mt-2 text-3xl md:text-4xl font-bold text-[color:var(--fut-ink)]">
+              {isAr ? "في قلب صبيا" : "In the heart of Sabya"}
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              {lang === "ar" ? SITE.addressAr : SITE.addressEn}
+            <p className="mt-3 text-[color:var(--fut-ink-muted)]">
+              {isAr ? SITE.addressAr : SITE.addressEn}
             </p>
-            <p className="mt-1 text-muted-foreground text-sm">
-              {lang === "ar"
-                ? `الرمز البريدي ${SITE.postalCode}`
-                : `Postal code ${SITE.postalCode}`}
+            <p className="mt-1 text-sm text-[color:var(--fut-ink-dim)]">
+              {isAr ? `الرمز البريدي ${SITE.postalCode}` : `Postal code ${SITE.postalCode}`}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a
                 href={SITE.mapsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition"
+                className="btn-magnetic"
               >
-                {lang === "ar" ? "افتح في الخرائط" : "Open in Maps"}
+                <MapPin className="h-4 w-4" />
+                {isAr ? "افتح في الخرائط" : "Open in Maps"}
               </a>
               <Link
                 to="/contact"
-                className="inline-flex items-center rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:border-primary transition"
+                className="neon-glow-hover inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-[color:var(--fut-ink)]"
               >
-                {lang === "ar" ? "تواصل معنا" : "Contact us"}
+                <Phone className="h-4 w-4" />
+                {isAr ? "تواصل معنا" : "Contact us"}
               </Link>
             </div>
           </div>
-          <div className="aspect-video rounded-2xl overflow-hidden border border-border shadow-lg">
+          <div className="glass-fut aspect-video overflow-hidden !p-0">
             <iframe
               title="map"
-              className="w-full h-full"
+              className="h-full w-full opacity-90"
               loading="lazy"
               src={`https://maps.google.com/maps?q=${SITE.lat},${SITE.lng}&z=15&output=embed`}
             />
           </div>
         </div>
       </section>
+
+      {/* ===== FINAL CTA ===== */}
+      <section className="pb-24 pt-8">
+        <div className="container-app">
+          <div className="glass-fut relative overflow-hidden p-8 md:p-12 text-center">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-70"
+              style={{ background: "var(--fut-gradient-aurora)" }}
+            />
+            <div className="relative">
+              <h2 className="text-2xl md:text-4xl font-bold text-[color:var(--fut-ink)]">
+                {isAr ? "جاهز لتجربة أفضل لرعايتك؟" : "Ready for a better care experience?"}
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-[color:var(--fut-ink-muted)]">
+                {isAr
+                  ? "احجز الآن أو اترك رقمك ونتصل بك خلال دقائق."
+                  : "Book now or leave your number — we'll call you within minutes."}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link to="/book" className="btn-magnetic">
+                  <CalendarCheck2 className="h-4 w-4" />
+                  {isAr ? "احجز الآن" : "Book now"}
+                </Link>
+                <Link
+                  to="/contact"
+                  className="neon-glow-purple inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-[color:var(--fut-ink)]"
+                >
+                  <Phone className="h-4 w-4" />
+                  {isAr ? "اتصل بنا" : "Call us"}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
+
 
