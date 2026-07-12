@@ -88,6 +88,9 @@ export const listPatientsAdvanced = createServerFn({ method: "POST" })
       )
       .order("created_at", { ascending: false });
 
+    // Soft-delete filter: hide is_active=false unless explicitly requested
+    if (!data.includeInactive) q = q.eq("is_active", true);
+
     if (data.branchId) q = q.eq("branch_id", data.branchId);
     if (data.status) q = q.eq("status", data.status);
     if (data.gender) q = q.eq("gender", data.gender);
