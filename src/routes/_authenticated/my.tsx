@@ -496,10 +496,85 @@ function PrescriptionsTab({ patientId }: { patientId: string | null }) {
   );
 }
 
+// ============ Reports controls (shared) ============
+
+type SortKey = "released_at" | "report_date";
+type RangeKey = "all" | "30" | "90";
+
+function ReportsControls({
+  sort,
+  setSort,
+  range,
+  setRange,
+  total,
+  shown,
+}: {
+  sort: SortKey;
+  setSort: (v: SortKey) => void;
+  range: RangeKey;
+  setRange: (v: RangeKey) => void;
+  total: number;
+  shown: number;
+}) {
+  const btn = (active: boolean) =>
+    `rounded-md border px-2.5 py-1 text-xs transition-colors ${
+      active
+        ? "border-primary bg-primary/10 text-primary font-semibold"
+        : "border-border bg-background text-muted-foreground hover:text-foreground"
+    }`;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card/50 p-2.5 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">الفرز:</span>
+        <button type="button" className={btn(sort === "released_at")} onClick={() => setSort("released_at")}>
+          تاريخ الإفراج
+        </button>
+        <button type="button" className={btn(sort === "report_date")} onClick={() => setSort("report_date")}>
+          تاريخ التقرير
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">النطاق:</span>
+        <button type="button" className={btn(range === "30")} onClick={() => setRange("30")}>
+          آخر 30 يوم
+        </button>
+        <button type="button" className={btn(range === "90")} onClick={() => setRange("90")}>
+          آخر 90 يوم
+        </button>
+        <button type="button" className={btn(range === "all")} onClick={() => setRange("all")}>
+          الكل
+        </button>
+      </div>
+      <span className="text-xs text-muted-foreground">
+        عرض {shown} من {total}
+      </span>
+    </div>
+  );
+}
+
+function applyReportFilters<T extends { released_at: string | null; report_date: string }>(
+  rows: T[],
+  sort: SortKey,
+  range: RangeKey,
+): T[] {
+  const cutoffMs =
+    range === "all" ? null : Date.now() - Number(range) * 24 * 60 * 60 * 1000;
+  const filtered = rows.filter((r) => {
+    if (cutoffMs === null) return true;
+    const t = r.released_at ? Date.parse(r.released_at) : NaN;
+    return Number.isFinite(t) && t >= cutoffMs;
+  });
+  const getKey = (r: T) =>
+    sort === "released_at" ? (r.released_at ?? "") : (r.report_date ?? "");
+  return [...filtered].sort((a, b) => (getKey(a) < getKey(b) ? 1 : -1));
+}
+
 // ============ Labs ============
 
 function LabsTab({ patientId }: { patientId: string | null }) {
   const [rows, setRows] = useState<LabReport[] | null>(null);
+  const [sort, setSort] = useState<SortKey>("released_at");
+  const [range, setRange] = useState<RangeKey>("all");
   useEffect(() => {
     if (!patientId) {
       setRows([]);
@@ -511,7 +586,7 @@ function LabsTab({ patientId }: { patientId: string | null }) {
         .select("id, title, test_type, report_date, file_path, summary, status, released_at")
         .eq("patient_id", patientId)
         .not("released_at", "is", null)
-        .order("report_date", { ascending: false });
+        .order("released_at", { ascending: false });
       if (error) return toast.error(error.message);
       setRows((data as LabReport[]) ?? []);
     })();
@@ -522,21 +597,39 @@ function LabsTab({ patientId }: { patientId: string | null }) {
   if (rows.length === 0)
     return <EmptyBlock icon={<FlaskConical className="h-6 w-6" />} text="لا توجد تقارير مختبر بعد." />;
 
+  const view = applyReportFilters(rows, sort, range);
+
   return (
     <div className="grid gap-3">
-      {rows.map((r) => (
-        <ReportRow
-          key={r.id}
-          bucket="lab-reports"
-          icon={<FlaskConical className="h-4 w-4" />}
-          title={r.title}
-          subtitle={r.test_type ?? undefined}
-          date={r.report_date}
-          status={r.status}
-          file_path={r.file_path}
-          note={r.summary ?? undefined}
+      <ReportsControls
+        sort={sort}
+        setSort={setSort}
+        range={range}
+        setRange={setRange}
+        total={rows.length}
+        shown={view.length}
+      />
+      {view.length === 0 ? (
+        <EmptyBlock
+          icon={<FlaskConical className="h-6 w-6" />}
+          text="لا توجد تقارير ضمن النطاق المحدد."
         />
-      ))}
+      ) : (
+        view.map((r) => (
+          <ReportRow
+            key={r.id}
+            bucket="lab-reports"
+            icon={<FlaskConical className="h-4 w-4" />}
+            title={r.title}
+            subtitle={r.test_type ?? undefined}
+            date={r.report_date}
+            released_at={r.released_at}
+            status={r.status}
+            file_path={r.file_path}
+            note={r.summary ?? undefined}
+          />
+        ))
+      )}
     </div>
   );
 }
@@ -545,6 +638,8 @@ function LabsTab({ patientId }: { patientId: string | null }) {
 
 function RadiologyTab({ patientId }: { patientId: string | null }) {
   const [rows, setRows] = useState<RadReport[] | null>(null);
+  const [sort, setSort] = useState<SortKey>("released_at");
+  const [range, setRange] = useState<RangeKey>("all");
   useEffect(() => {
     if (!patientId) {
       setRows([]);
@@ -556,7 +651,7 @@ function RadiologyTab({ patientId }: { patientId: string | null }) {
         .select("id, modality, body_part, report_date, findings, file_path, status, released_at")
         .eq("patient_id", patientId)
         .not("released_at", "is", null)
-        .order("report_date", { ascending: false });
+        .order("released_at", { ascending: false });
       if (error) return toast.error(error.message);
       setRows((data as RadReport[]) ?? []);
     })();
@@ -568,21 +663,36 @@ function RadiologyTab({ patientId }: { patientId: string | null }) {
   if (rows.length === 0)
     return <EmptyBlock icon={<Scan className="h-6 w-6" />} text="لا توجد تقارير أشعة بعد." />;
 
+  const view = applyReportFilters(rows, sort, range);
+
   return (
     <div className="grid gap-3">
-      {rows.map((r) => (
-        <ReportRow
-          key={r.id}
-          bucket="radiology-reports"
-          icon={<Scan className="h-4 w-4" />}
-          title={r.modality}
-          subtitle={r.body_part ?? undefined}
-          date={r.report_date}
-          status={r.status}
-          file_path={r.file_path}
-          note={r.findings ?? undefined}
-        />
-      ))}
+      <ReportsControls
+        sort={sort}
+        setSort={setSort}
+        range={range}
+        setRange={setRange}
+        total={rows.length}
+        shown={view.length}
+      />
+      {view.length === 0 ? (
+        <EmptyBlock icon={<Scan className="h-6 w-6" />} text="لا توجد تقارير ضمن النطاق المحدد." />
+      ) : (
+        view.map((r) => (
+          <ReportRow
+            key={r.id}
+            bucket="radiology-reports"
+            icon={<Scan className="h-4 w-4" />}
+            title={r.modality}
+            subtitle={r.body_part ?? undefined}
+            date={r.report_date}
+            released_at={r.released_at}
+            status={r.status}
+            file_path={r.file_path}
+            note={r.findings ?? undefined}
+          />
+        ))
+      )}
     </div>
   );
 }
@@ -668,6 +778,7 @@ function ReportRow({
   title,
   subtitle,
   date,
+  released_at,
   status,
   file_path,
   note,
@@ -677,17 +788,28 @@ function ReportRow({
   title: string;
   subtitle?: string;
   date: string;
+  released_at?: string | null;
   status: string;
   file_path: string | null;
   note?: string;
 }) {
+  const releasedLabel = released_at
+    ? new Date(released_at).toLocaleDateString("ar-SA-u-ca-gregory", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <StatusChip status={status} label={reportStatusLabel(status)} />
-            <span className="text-xs text-muted-foreground">{date}</span>
+            <span className="text-xs text-muted-foreground">تقرير: {date}</span>
+            {releasedLabel && (
+              <span className="text-xs text-muted-foreground">• أُفرِج: {releasedLabel}</span>
+            )}
           </div>
           <h3 className="mt-2 text-base font-bold inline-flex items-center gap-2">
             <span className="text-primary">{icon}</span>
