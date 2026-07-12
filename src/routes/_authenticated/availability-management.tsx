@@ -128,9 +128,9 @@ function AvailabilityManagementPage() {
 
   const doctorOptions = useMemo(() => {
     const rows = doctorsQ.data ?? [];
-    return rows.map((d: { doctor_id: string; doctor_name: string }) => ({
+    return rows.map((d) => ({
       id: d.doctor_id,
-      name: d.doctor_name,
+      name: d.name_ar || d.name_en || d.doctor_id,
     }));
   }, [doctorsQ.data]);
 
