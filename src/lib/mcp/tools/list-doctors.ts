@@ -68,12 +68,13 @@ export default defineTool({
       ? "explicit"
       : "none";
 
-    if (!effectiveBranchSlug && ctx.isAuthenticated()) {
+    const userId = ctx.isAuthenticated() ? ctx.getUserId() : undefined;
+    if (!effectiveBranchSlug && userId) {
       // Best-effort: profiles may not carry a default_branch_id — ignore errors.
       const { data: profile } = await supabase
         .from("profiles")
         .select("default_branch_id")
-        .eq("id", ctx.getUserId())
+        .eq("id", userId)
         .maybeSingle<{ default_branch_id: string | null }>();
       if (profile?.default_branch_id) {
         const { data: br } = await supabase
