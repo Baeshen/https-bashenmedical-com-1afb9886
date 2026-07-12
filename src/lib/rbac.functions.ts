@@ -278,3 +278,139 @@ export const listAuditActions = createServerFn({ method: "GET" })
     if (error) throw new Error(humanize(error));
     return Array.from(new Set((data ?? []).map((r: any) => r.action))).sort();
   });
+
+/* ---------------- RBAC-focused audit log ---------------- */
+
+const RBAC_TABLES = ["user_roles", "role_permissions", "permissions"] as const;
+
+const rbacAuditFilterSchema = z.object({
+  table: z.enum(["all", ...RBAC_TABLES]).default("all"),
+  actor: z.string().uuid().optional(),
+  target_user: z.string().uuid().optional(),
+  role: z.string().trim().max(64).optional(),
+  permission_key: z.string().trim().max(120).optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+  q: z.string().trim().max(200).optional(),
+  limit: z.number().int().min(1).max(500).default(200),
+});
+
+function extractTargets(row: any): {
+  target_user_id: string | null;
+  role: string | null;
+  permission_key: string | null;
+  branch_id: string | null;
+} {
+  const meta = row.metadata ?? {};
+  const src = meta.new ?? meta.old ?? {};
+  const changes = meta.changes ?? {};
+  const pick = (k: string) =>
+    src?.[k] ?? changes?.[k]?.new ?? changes?.[k]?.old ?? null;
+  return {
+    target_user_id: pick("user_id"),
+    role: pick("role"),
+    permission_key: pick("permission_key") ?? pick("key"),
+    branch_id: pick("branch_id"),
+  };
+}
+
+export const listRbacAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => rbacAuditFilterSchema.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const roles = await getRoles(supabase, userId);
+    if (!roles.some((r) => r === "admin" || r === "super_admin")) {
+      throw new Error("ليست لديك الصلاحية لعرض سجل التدقيق.");
+    }
+
+    const tables =
+      data.table === "all" ? (RBAC_TABLES as unknown as string[]) : [data.table];
+
+    let q = supabase
+      .from("security_audit_log")
+      .select(
+        "id, action, actor, metadata, ip_address, user_agent, created_at, table_name, record_id",
+      )
+      .in("table_name", tables)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.actor) q = q.eq("actor", data.actor);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(humanize(error));
+
+    let filtered = (rows ?? []) as any[];
+    if (data.target_user || data.role || data.permission_key || data.q) {
+      const needle = data.q?.toLowerCase() ?? "";
+      filtered = filtered.filter((r) => {
+        const t = extractTargets(r);
+        if (data.target_user && t.target_user_id !== data.target_user) return false;
+        if (data.role && String(t.role ?? "") !== data.role) return false;
+        if (
+          data.permission_key &&
+          String(t.permission_key ?? "") !== data.permission_key
+        )
+          return false;
+        if (needle) {
+          const hay = JSON.stringify(r.metadata ?? {}).toLowerCase();
+          if (!hay.includes(needle)) return false;
+        }
+        return true;
+      });
+    }
+
+    // Resolve actor + target user profiles
+    const userIds = new Set<string>();
+    for (const r of filtered) {
+      if (r.actor) userIds.add(r.actor);
+      const t = extractTargets(r);
+      if (t.target_user_id) userIds.add(t.target_user_id);
+    }
+    const profileMap = new Map<string, { name: string | null; phone: string | null }>();
+    if (userIds.size) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .in("id", Array.from(userIds));
+      for (const p of (profs ?? []) as any[]) {
+        profileMap.set(p.id, { name: p.full_name ?? null, phone: p.phone ?? null });
+      }
+    }
+
+    return filtered.map((r) => {
+      const t = extractTargets(r);
+      const meta = r.metadata ?? {};
+      const isUpdate = !!meta.changes;
+      const isInsert = !meta.changes && !!meta.new;
+      const isDelete = !meta.changes && !meta.new && !!meta.old;
+      const op = isUpdate ? "update" : isInsert ? "insert" : isDelete ? "delete" : "other";
+      return {
+        id: r.id as string,
+        action: r.action as string,
+        op,
+        table_name: r.table_name as string,
+        record_id: (r.record_id as string | null) ?? null,
+        created_at: r.created_at as string,
+        actor: r.actor as string | null,
+        actor_name: r.actor ? profileMap.get(r.actor)?.name ?? null : null,
+        actor_phone: r.actor ? profileMap.get(r.actor)?.phone ?? null : null,
+        target_user_id: t.target_user_id,
+        target_user_name: t.target_user_id
+          ? profileMap.get(t.target_user_id)?.name ?? null
+          : null,
+        target_user_phone: t.target_user_id
+          ? profileMap.get(t.target_user_id)?.phone ?? null
+          : null,
+        role: t.role,
+        permission_key: t.permission_key,
+        branch_id: t.branch_id,
+        metadata: meta,
+        ip_address: r.ip_address as string | null,
+        user_agent: r.user_agent as string | null,
+      };
+    });
+  });
