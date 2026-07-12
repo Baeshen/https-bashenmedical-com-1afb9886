@@ -9,7 +9,7 @@ export type RunToolResult = {
   isError: boolean;
   durationMs: number;
   text: string;
-  structured: unknown | null;
+  structuredJson: string | null;
 };
 
 /**
