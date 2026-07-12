@@ -354,6 +354,7 @@ function Field({ label, value }: { label: string; value: string }) {
 function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointment[]; activeCount: number }) {
   const qc = useQueryClient();
   const { data: prefs = DEFAULT_REMINDER_PREFS } = useQuery(prefsQuery);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const mut = useMutation({
     mutationFn: () =>
       generateMedicationReminders({
@@ -405,13 +406,14 @@ function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointme
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <button
-            onClick={() => plan && exportPlanToIcs(plan, upcoming, prefs)}
+            onClick={() => plan && setPreviewOpen(true)}
             disabled={!plan}
-            title="تنزيل ملف .ics لاستيراده في Google / Apple / Outlook Calendar"
+            title="معاينة الأحداث قبل التصدير إلى .ics"
             className="inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold bg-white/20 hover:bg-white/30 backdrop-blur disabled:opacity-40"
           >
-            <CalendarPlus className="h-4 w-4" /> تصدير للتقويم
+            <CalendarPlus className="h-4 w-4" /> معاينة وتصدير
           </button>
+
           <button
             onClick={() => mut.mutate()}
             disabled={mut.isPending || activeCount === 0}
