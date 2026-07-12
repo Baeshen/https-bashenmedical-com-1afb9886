@@ -407,6 +407,7 @@ function BookPage() {
                   onSelect={(d) => {
                     setDate(d);
                     setSlot("");
+                    setSlotId("");
                   }}
                   locale={arLocale}
                   dir="rtl"
