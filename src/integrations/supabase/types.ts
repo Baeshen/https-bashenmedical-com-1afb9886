@@ -637,6 +637,57 @@ export type Database = {
           },
         ]
       }
+      complaints: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          department: string | null
+          id: string
+          internal_notes: string | null
+          message: string
+          patient_email: string | null
+          patient_name: string
+          patient_phone: string
+          patient_user_id: string | null
+          reference: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          internal_notes?: string | null
+          message: string
+          patient_email?: string | null
+          patient_name: string
+          patient_phone: string
+          patient_user_id?: string | null
+          reference?: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          internal_notes?: string | null
+          message?: string
+          patient_email?: string | null
+          patient_name?: string
+          patient_phone?: string
+          patient_user_id?: string | null
+          reference?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       corporate_requests: {
         Row: {
           admin_notes: string | null
@@ -3790,6 +3841,19 @@ export type Database = {
           specialty_name_ar: string
           specialty_name_en: string
           status: Database["public"]["Enums"]["appointment_status"]
+        }[]
+      }
+      lookup_complaint: {
+        Args: { _phone: string; _ref: string }
+        Returns: {
+          created_at: string
+          department: string
+          id: string
+          message: string
+          reference: string
+          status: string
+          type: string
+          updated_at: string
         }[]
       }
       mark_notifications_read: { Args: { _ids?: string[] }; Returns: number }
