@@ -33,14 +33,10 @@ export const Route = createFileRoute("/my-orders")({
   component: MyOrdersPage,
 });
 
-type Order = {
-  kind: "appointment" | "pharmacy" | "second_opinion" | "home_care";
-  reference: string;
-  title: string;
-  status: string;
-  created_at: string;
-  scheduled_at: string | null;
-};
+import { parseOrderSummaries, type OrderSummary } from "@/lib/order-types";
+
+type Order = OrderSummary;
+
 
 const KIND_META: Record<Order["kind"], { ar: string; en: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   appointment:    { ar: "موعد طبي",        en: "Appointment",     icon: CalendarCheck, color: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
@@ -104,12 +100,13 @@ function MyOrdersPage() {
 
   const { data: orders, isLoading, isFetching, error } = useQuery({
     queryKey: ["my-orders", queryPhone],
-    queryFn: async () => {
-      if (!queryPhone) return [] as Order[];
+    queryFn: async (): Promise<Order[]> => {
+      if (!queryPhone) return [];
       const { data, error } = await supabase.rpc("track_orders_by_phone", { _phone: queryPhone });
       if (error) throw error;
-      return (data ?? []) as Order[];
+      return parseOrderSummaries(data);
     },
+
     enabled: !!queryPhone,
     staleTime: 15_000,
   });

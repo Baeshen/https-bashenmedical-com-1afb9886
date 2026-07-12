@@ -10,6 +10,12 @@ import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } f
 import { ReminderHistoryByRefModal } from "@/components/ReminderPreferenceHistory";
 import { AppointmentAuditHistory } from "@/components/booking/AppointmentAuditHistory";
 import { OrderTimeline } from "@/components/booking/OrderTimeline";
+import {
+  parseOrderDetail,
+  isFinalStatus,
+  type AppointmentDetail,
+  type OrderStatus,
+} from "@/lib/order-types";
 
 const lookupSearch = z.object({
   ref: z.string().optional(),
@@ -29,27 +35,16 @@ export const Route = createFileRoute("/lookup")({
   component: LookupPage,
 });
 
-type AppointmentRow = {
+/**
+ * الشكل المسطّح المستخدم داخل هذه الصفحة — مبنيّ حصراً من الحقول المُعلنة في
+ * `AppointmentDetail`. أي وصول لحقل غير موجود في metadata أو BaseDetail يفشل ترجمة.
+ */
+type AppointmentRow = AppointmentDetail["metadata"] & {
   id: string;
-  patient_name: string;
-  patient_phone: string;
-  appointment_date: string;
-  appointment_time: string;
-  status: string;
-  reason: string | null;
-  notes: string | null;
-  specialty_id: string | null;
-  doctor_id: string | null;
-  specialty_name_ar: string | null;
-  specialty_name_en: string | null;
-  doctor_name_ar: string | null;
-  doctor_name_en: string | null;
+  status: OrderStatus;
   created_at: string;
-  reminder_24h: boolean | null;
-  reminder_2h: boolean | null;
-  cancel_reason: string | null;
-  cancelled_at: string | null;
 };
+
 
 
 function statusKey(s: string) {
@@ -278,8 +273,8 @@ function LookupPage() {
   };
 
 
-  const FINAL_STATUSES = ["cancelled", "completed", "no_show"] as const;
-  const isFinal = (s?: string | null) => !!s && (FINAL_STATUSES as readonly string[]).includes(s);
+  const isFinal = isFinalStatus;
+
 
   const fetchAppt = async (opts?: { silent?: boolean }): Promise<AppointmentRow | null> => {
     const { data, error } = await supabase.rpc("get_order_by_ref", {
@@ -292,31 +287,16 @@ function LookupPage() {
       return null;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    if (!row) return null;
-    const m = (row.metadata ?? {}) as Record<string, unknown>;
-    const get = <T,>(k: string) => (m[k] as T | undefined) ?? null;
+    const detail = parseOrderDetail(row);
+    if (!detail || detail.kind !== "appointment") return null;
     return {
-      id: row.id,
-      status: row.status,
-      created_at: row.created_at,
-      patient_name: (get<string>("patient_name") ?? "") as string,
-      patient_phone: (get<string>("patient_phone") ?? "") as string,
-      appointment_date: (get<string>("appointment_date") ?? "") as string,
-      appointment_time: (get<string>("appointment_time") ?? "") as string,
-      reason: get<string>("reason"),
-      notes: get<string>("notes"),
-      specialty_id: get<string>("specialty_id"),
-      doctor_id: get<string>("doctor_id"),
-      specialty_name_ar: get<string>("specialty_name_ar"),
-      specialty_name_en: get<string>("specialty_name_en"),
-      doctor_name_ar: get<string>("doctor_name_ar"),
-      doctor_name_en: get<string>("doctor_name_en"),
-      reminder_24h: get<boolean>("reminder_24h"),
-      reminder_2h: get<boolean>("reminder_2h"),
-      cancel_reason: get<string>("cancel_reason"),
-      cancelled_at: get<string>("cancelled_at"),
+      id: detail.id,
+      status: detail.status,
+      created_at: detail.created_at,
+      ...detail.metadata,
     };
   };
+
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
