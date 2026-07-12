@@ -75,16 +75,17 @@ export const Route = createFileRoute("/api/public/book/cancel")({
             "@/integrations/supabase/client.server"
           );
 
-          // Reference is the first 8 hex chars of the uuid (no dashes) — so
-          // the uuid text starts with `XXXXXXXX-` after re-inserting a dash.
-          const uuidPrefix = `${refHex}-`;
+          // Look up by phone (narrow index) then match the reference prefix
+          // in-memory. PostgREST cannot `ilike` a uuid column directly, and a
+          // per-phone lookup is typically 1-few rows so this stays cheap.
           const { data: candidates, error: readErr } = await supabaseAdmin
             .from("appointments")
             .select(
               "id, status, appointment_date, appointment_time, patient_phone",
             )
-            .ilike("id", `${uuidPrefix}%`)
-            .limit(5);
+            .eq("patient_phone", parsed.data.phone)
+            .order("created_at", { ascending: false })
+            .limit(50);
           if (readErr) {
             return json(500, {
               ok: false,
@@ -94,8 +95,7 @@ export const Route = createFileRoute("/api/public/book/cancel")({
           }
 
           const match = (candidates ?? []).find(
-            (a) =>
-              normalizePhone(String(a.patient_phone ?? "")) === phoneNorm,
+            (a) => String(a.id).replace(/-/g, "").toLowerCase().startsWith(refHex),
           );
 
           if (!match) {
