@@ -273,8 +273,8 @@ function LookupPage() {
   };
 
 
-  const FINAL_STATUSES = ["cancelled", "completed", "no_show"] as const;
-  const isFinal = (s?: string | null) => !!s && (FINAL_STATUSES as readonly string[]).includes(s);
+  const isFinal = isFinalStatus;
+
 
   const fetchAppt = async (opts?: { silent?: boolean }): Promise<AppointmentRow | null> => {
     const { data, error } = await supabase.rpc("get_order_by_ref", {
