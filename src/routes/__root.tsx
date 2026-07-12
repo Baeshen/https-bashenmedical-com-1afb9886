@@ -4,9 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -16,8 +18,10 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "sonner";
 import { IntroOverlay } from "@/components/IntroOverlay";
+import { WelcomeSplash } from "@/components/WelcomeSplash";
 import { ChatbotBubble } from "@/components/ChatbotBubble";
 import { MotionToggle } from "@/components/MotionToggle";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 
 function NotFoundComponent() {
@@ -136,14 +140,20 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <IntroOverlay theme="dark" />
+        <WelcomeSplash />
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-1">
-            <Outlet />
+            <AnimatePresence mode="wait" initial={false}>
+              <PageTransition key={pathname}>
+                <Outlet />
+              </PageTransition>
+            </AnimatePresence>
           </main>
           <Footer />
           <Toaster position="top-center" richColors closeButton />
@@ -155,3 +165,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+

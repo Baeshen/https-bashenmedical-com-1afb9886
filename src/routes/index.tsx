@@ -16,6 +16,7 @@ import { CentersStrip } from "@/components/home/CentersStrip";
 import { PatientJourney } from "@/components/home/PatientJourney";
 import { NewsStrip } from "@/components/home/NewsStrip";
 import { AppPromo } from "@/components/home/AppPromo";
+import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
@@ -157,26 +158,27 @@ function HomePage() {
               {t("all_specialties")} →
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {specialties?.slice(0, 12).map((s) => (
-              <Link
-                key={s.id}
-                to="/book"
-                search={{ specialty: s.slug }}
-                className="bento-card group p-5"
-              >
-                <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
-                  <Stethoscope className="h-5 w-5" />
-                </div>
-                <div className="mt-3 font-semibold text-sm">
-                  {lang === "ar" ? s.name_ar : s.name_en}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                  {lang === "ar" ? s.description_ar : s.description_en}
-                </div>
-              </Link>
+              <RevealItem key={s.id}>
+                <Link
+                  to="/book"
+                  search={{ specialty: s.slug }}
+                  className="bento-card group p-5 block h-full"
+                >
+                  <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
+                    <Stethoscope className="h-5 w-5" />
+                  </div>
+                  <div className="mt-3 font-semibold text-sm">
+                    {lang === "ar" ? s.name_ar : s.name_en}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                    {lang === "ar" ? s.description_ar : s.description_en}
+                  </div>
+                </Link>
+              </RevealItem>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
@@ -202,9 +204,9 @@ function HomePage() {
               {t("nav_doctors")} →
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {doctors?.map((d) => (
-              <div key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
+              <RevealItem key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
                 <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground grid place-items-center text-2xl font-bold shadow-lg shadow-primary/20">
                   {(lang === "ar" ? d.name_ar : d.name_en).charAt(0)}
                 </div>
@@ -221,9 +223,9 @@ function HomePage() {
                 >
                   {t("book_with_doctor")}
                 </Link>
-              </div>
+              </RevealItem>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
