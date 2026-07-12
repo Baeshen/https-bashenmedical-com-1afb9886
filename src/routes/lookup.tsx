@@ -288,7 +288,20 @@ function LookupPage() {
       return null;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    const detail = parseOrderDetail(row);
+    let detail;
+    try {
+      detail = parseOrderDetail(row);
+    } catch (e) {
+      if (e instanceof OrderParseError) {
+        if (!opts?.silent) {
+          toast.error("تعذّر عرض تفاصيل الحجز", {
+            description: `بيانات غير متوقعة (${e.kind ?? "؟"}/${e.status ?? "؟"}). يرجى التواصل مع الاستقبال.`,
+          });
+        }
+        return null;
+      }
+      throw e;
+    }
     if (!detail || detail.kind !== "appointment") return null;
     return {
       id: detail.id,
@@ -297,6 +310,7 @@ function LookupPage() {
       ...detail.metadata,
     };
   };
+
 
 
   const submit = async (e?: React.FormEvent) => {
