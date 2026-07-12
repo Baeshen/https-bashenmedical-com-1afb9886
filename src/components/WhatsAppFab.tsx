@@ -1,8 +1,7 @@
-import { SITE } from "@/lib/site";
+import { SITE, whatsappUrl } from "@/lib/site";
 import { trackEvent } from "@/lib/analytics";
 
 export function WhatsAppFab() {
-  const href = `https://wa.me/${SITE.whatsapp}`;
   const handleClick = () => {
     const source =
       typeof window !== "undefined" ? window.location.pathname || "/" : "unknown";
@@ -12,6 +11,10 @@ export function WhatsAppFab() {
       is_home: source === "/",
     });
   };
+  const source =
+    typeof window !== "undefined" ? window.location.pathname || "/" : "/";
+  const msg = `مرحبًا ${SITE.nameAr} 👋\nأرغب بالاستفسار عن خدماتكم.\n(صفحة: ${source})`;
+  const href = whatsappUrl(msg);
   return (
     <a
       href={href}
