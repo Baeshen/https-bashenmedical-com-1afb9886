@@ -197,7 +197,7 @@ def run():
 
     st, body = api("POST", "/api/public/book/create",
                    body={"patient_name": "مريض اختبار", "patient_phone": phone,
-                         "appointment_date": iso_date, "appointment_time": "25:99",
+                         "appointment_date": iso_date, "appointment_time": "aa:bb",
                          "doctor_id": doctor_id})
     expect_status("P4 bad time → 400", st, 400, body)
     expect_msg_contains("P4 Arabic message", body, "وقت")
