@@ -162,21 +162,18 @@ export const cancelMyAppointment = createServerFn({ method: "POST" })
       throw new Error("لا يمكن إلغاء موعد سابق.");
     }
 
-    // 3) Set audit reason (required by log_appointment_change for cancelled)
-    //    then update via user-scoped client — RLS `users cancel own
-    //    appointments` still enforces phone ownership + allowed transitions.
+    // 3) Cancel via update_appointment_status RPC — it sets the audit
+    //    change_reason config (required by log_appointment_change for
+    //    cancelled) and performs the UPDATE. RLS still applies to the
+    //    UPDATE, so the "users cancel own appointments" policy enforces
+    //    phone ownership + allowed transitions.
     const reasonText =
       (data.reason ?? "").trim() || "إلغاء ذاتي من بوابة المريض";
-    await sb.rpc("set_change_reason" as any, { _reason: reasonText } as any);
-    const { error: updErr, data: updated } = await sb
-      .from("appointments")
-      .update({ status: "cancelled" })
-      .eq("id", data.appointmentId)
-      .select("id");
+    const { error: updErr } = await sb.rpc(
+      "update_appointment_status" as any,
+      { _id: data.appointmentId, _status: "cancelled", _reason: reasonText } as any,
+    );
     if (updErr) throw new Error("تعذّر إلغاء الحجز. حاول لاحقًا.");
-    if (!updated || updated.length === 0) {
-      throw new Error("لا تملك صلاحية إلغاء هذا الحجز.");
-    }
 
     // 4) Release the linked slot (best-effort — SECURITY DEFINER RPC)
     await sb.rpc("release_slot", { p_appointment_id: data.appointmentId });
