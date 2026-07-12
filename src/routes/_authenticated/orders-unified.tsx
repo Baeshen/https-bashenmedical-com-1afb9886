@@ -270,6 +270,62 @@ function OrdersUnifiedInner() {
             </button>
           )}
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">من:</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-8 px-2 rounded-lg border border-border bg-background text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">إلى:</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-8 px-2 rounded-lg border border-border bg-background text-xs"
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+              }}
+              className="text-xs text-muted-foreground px-2 h-7 rounded hover:bg-muted"
+            >
+              مسح التاريخ
+            </button>
+          )}
+
+          <div className="flex items-center gap-1.5 ms-auto">
+            <span className="text-xs text-muted-foreground">ترتيب:</span>
+            <button
+              onClick={() => setSortBy("updated_at")}
+              className={`px-2.5 h-7 rounded-full border text-xs transition-colors ${
+                sortBy === "updated_at"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border hover:bg-muted"
+              }`}
+            >
+              آخر تحديث
+            </button>
+            <button
+              onClick={() => setSortBy("created_at")}
+              className={`px-2.5 h-7 rounded-full border text-xs transition-colors ${
+                sortBy === "created_at"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border hover:bg-muted"
+              }`}
+            >
+              الأحدث إنشاءً
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -282,7 +338,9 @@ function OrdersUnifiedInner() {
                 <th className="p-3 text-start font-semibold">المريض</th>
                 <th className="p-3 text-start font-semibold">التفاصيل</th>
                 <th className="p-3 text-start font-semibold">الحالة</th>
-                <th className="p-3 text-start font-semibold whitespace-nowrap">أُنشئ</th>
+                <th className="p-3 text-start font-semibold whitespace-nowrap">
+                  {sortBy === "updated_at" ? "آخر تحديث" : "أُنشئ"}
+                </th>
                 <th className="p-3 text-start font-semibold">إجراءات</th>
               </tr>
             </thead>
