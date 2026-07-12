@@ -112,6 +112,7 @@ import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/pu
 import { Route as ApiPublicBookTrackRouteImport } from './routes/api/public/book/track'
 import { Route as ApiPublicBookMonthAvailabilityRouteImport } from './routes/api/public/book/month-availability'
 import { Route as ApiPublicBookCreateRouteImport } from './routes/api/public/book/create'
+import { Route as ApiPublicBookCancelRouteImport } from './routes/api/public/book/cancel'
 import { Route as ApiPublicBookAvailabilityRouteImport } from './routes/api/public/book/availability'
 
 const TrackRoute = TrackRouteImport.update({
@@ -665,6 +666,11 @@ const ApiPublicBookCreateRoute = ApiPublicBookCreateRouteImport.update({
   path: '/api/public/book/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBookCancelRoute = ApiPublicBookCancelRouteImport.update({
+  id: '/api/public/book/cancel',
+  path: '/api/public/book/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBookAvailabilityRoute =
   ApiPublicBookAvailabilityRouteImport.update({
     id: '/api/public/book/availability',
@@ -772,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
+  '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
@@ -876,6 +883,7 @@ export interface FileRoutesByTo {
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/portal': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
+  '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
@@ -983,6 +991,7 @@ export interface FileRoutesById {
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
+  '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
@@ -1090,6 +1099,7 @@ export interface FileRouteTypes {
     | '/patients/'
     | '/portal/'
     | '/api/public/book/availability'
+    | '/api/public/book/cancel'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
@@ -1194,6 +1204,7 @@ export interface FileRouteTypes {
     | '/patients'
     | '/portal'
     | '/api/public/book/availability'
+    | '/api/public/book/cancel'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
@@ -1300,6 +1311,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/'
     | '/_authenticated/portal/'
     | '/api/public/book/availability'
+    | '/api/public/book/cancel'
     | '/api/public/book/create'
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
@@ -1355,6 +1367,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicBookAvailabilityRoute: typeof ApiPublicBookAvailabilityRoute
+  ApiPublicBookCancelRoute: typeof ApiPublicBookCancelRoute
   ApiPublicBookCreateRoute: typeof ApiPublicBookCreateRoute
   ApiPublicBookMonthAvailabilityRoute: typeof ApiPublicBookMonthAvailabilityRoute
   ApiPublicBookTrackRoute: typeof ApiPublicBookTrackRoute
@@ -2084,6 +2097,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/book/cancel': {
+      id: '/api/public/book/cancel'
+      path: '/api/public/book/cancel'
+      fullPath: '/api/public/book/cancel'
+      preLoaderRoute: typeof ApiPublicBookCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/book/availability': {
       id: '/api/public/book/availability'
       path: '/api/public/book/availability'
@@ -2307,6 +2327,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicBookAvailabilityRoute: ApiPublicBookAvailabilityRoute,
+  ApiPublicBookCancelRoute: ApiPublicBookCancelRoute,
   ApiPublicBookCreateRoute: ApiPublicBookCreateRoute,
   ApiPublicBookMonthAvailabilityRoute: ApiPublicBookMonthAvailabilityRoute,
   ApiPublicBookTrackRoute: ApiPublicBookTrackRoute,

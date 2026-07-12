@@ -127,6 +127,60 @@ export const releaseSlot = createServerFn({ method: "POST" })
   });
 
 // ---------------------------------------------------------------------------
+// Patient: cancel my own appointment (authenticated portal user)
+// ---------------------------------------------------------------------------
+const cancelSchema = z.object({
+  appointmentId: z.string().uuid(),
+  reason: z.string().trim().max(500).optional().nullable(),
+});
+
+export const cancelMyAppointment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => cancelSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase;
+
+    // 1) Read the appointment via RLS-scoped client. If policy hides it,
+    //    result is null and we return a generic "not found / not yours".
+    const { data: appt, error: readErr } = await sb
+      .from("appointments")
+      .select("id, status, appointment_date, appointment_time, patient_phone")
+      .eq("id", data.appointmentId)
+      .maybeSingle();
+    if (readErr) throw new Error("تعذّر قراءة بيانات الموعد.");
+    if (!appt) throw new Error("الموعد غير موجود أو ليس ضمن مواعيدك.");
+
+    // 2) Edge cases with Arabic messages
+    if (appt.status === "cancelled") {
+      throw new Error("الحجز ملغى مسبقًا.");
+    }
+    if (appt.status === "completed" || appt.status === "no_show") {
+      throw new Error("لا يمكن إلغاء موعد منتهٍ.");
+    }
+    const todayIso = new Date().toISOString().slice(0, 10);
+    if (appt.appointment_date < todayIso) {
+      throw new Error("لا يمكن إلغاء موعد سابق.");
+    }
+
+    // 3) Update via user-scoped client — RLS `users cancel own appointments`
+    //    enforces phone ownership + allowed status transitions.
+    const { error: updErr, data: updated } = await sb
+      .from("appointments")
+      .update({ status: "cancelled" })
+      .eq("id", data.appointmentId)
+      .select("id");
+    if (updErr) throw new Error("تعذّر إلغاء الحجز. حاول لاحقًا.");
+    if (!updated || updated.length === 0) {
+      throw new Error("لا تملك صلاحية إلغاء هذا الحجز.");
+    }
+
+    // 4) Release the linked slot (best-effort — SECURITY DEFINER RPC)
+    await sb.rpc("release_slot", { p_appointment_id: data.appointmentId });
+
+    return { ok: true, reason: data.reason ?? null };
+  });
+
+// ---------------------------------------------------------------------------
 // Staff: bulk-generate slots for a doctor on one day
 // ---------------------------------------------------------------------------
 const generateSchema = z.object({

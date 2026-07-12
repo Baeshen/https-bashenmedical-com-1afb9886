@@ -1,0 +1,161 @@
+/**
+ * Public API — POST /api/public/book/cancel
+ *
+ * Patient-side cancellation via booking reference + phone. The reference is
+ * `BAA-XXXXXXXX` where XXXXXXXX is the first 8 hex characters of the
+ * appointment UUID (no dashes) — same shape produced by /create.
+ *
+ * Rules:
+ *   - Validation errors  → HTTP 400 { ok:false, kind:'validation', message }
+ *   - Not found / phone  → HTTP 404 { ok:false, kind:'not_found', message }
+ *   - Already cancelled  → HTTP 409 { ok:false, kind:'state', message }
+ *   - Past appointment   → HTTP 409 { ok:false, kind:'state', message }
+ *   - DB failure         → HTTP 500 { ok:false, kind:'server', message }
+ *   - Success            → HTTP 200 { ok:true }
+ *
+ * Uses supabaseAdmin because anon has no SELECT on appointments, and the
+ * reference→uuid lookup + phone check IS the authorization here. Never
+ * return PII or full uuids.
+ */
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+
+const cancelSchema = z.object({
+  reference: z
+    .string()
+    .trim()
+    .regex(/^BAA-[0-9A-F]{8}$/i, "المرجع غير صالح. الصيغة المتوقعة BAA-XXXXXXXX."),
+  phone: z
+    .string()
+    .trim()
+    .min(6, "رقم الهاتف قصير جدًا")
+    .max(32, "رقم الهاتف طويل جدًا"),
+});
+
+function json(status: number, body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+  });
+}
+
+function normalizePhone(s: string): string {
+  return s.replace(/\D+/g, "");
+}
+
+export const Route = createFileRoute("/api/public/book/cancel")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return json(400, {
+            ok: false,
+            kind: "validation",
+            message: "طلب غير صالح.",
+          });
+        }
+
+        const parsed = cancelSchema.safeParse(body);
+        if (!parsed.success) {
+          return json(400, {
+            ok: false,
+            kind: "validation",
+            message: parsed.error.issues[0]?.message ?? "بيانات غير صالحة",
+          });
+        }
+
+        const refHex = parsed.data.reference.slice(4).toLowerCase();
+        const phoneNorm = normalizePhone(parsed.data.phone);
+
+        try {
+          const { supabaseAdmin } = await import(
+            "@/integrations/supabase/client.server"
+          );
+
+          // Reference is the first 8 hex chars of the uuid (no dashes) — so
+          // the uuid text starts with `XXXXXXXX-` after re-inserting a dash.
+          const uuidPrefix = `${refHex}-`;
+          const { data: candidates, error: readErr } = await supabaseAdmin
+            .from("appointments")
+            .select(
+              "id, status, appointment_date, appointment_time, patient_phone",
+            )
+            .ilike("id", `${uuidPrefix}%`)
+            .limit(5);
+          if (readErr) {
+            return json(500, {
+              ok: false,
+              kind: "server",
+              message: "تعذّر التحقّق من الحجز.",
+            });
+          }
+
+          const match = (candidates ?? []).find(
+            (a) =>
+              normalizePhone(String(a.patient_phone ?? "")) === phoneNorm,
+          );
+
+          if (!match) {
+            return json(404, {
+              ok: false,
+              kind: "not_found",
+              message:
+                "لم يتم العثور على حجز مطابق. تحقّق من المرجع ورقم الجوال.",
+            });
+          }
+
+          if (match.status === "cancelled") {
+            return json(409, {
+              ok: false,
+              kind: "state",
+              message: "الحجز ملغى مسبقًا.",
+            });
+          }
+          if (match.status === "completed" || match.status === "no_show") {
+            return json(409, {
+              ok: false,
+              kind: "state",
+              message: "لا يمكن إلغاء موعد منتهٍ.",
+            });
+          }
+
+          const todayIso = new Date().toISOString().slice(0, 10);
+          if (String(match.appointment_date) < todayIso) {
+            return json(409, {
+              ok: false,
+              kind: "state",
+              message: "لا يمكن إلغاء موعد سابق.",
+            });
+          }
+
+          // Update + release slot atomically enough for our purposes: the
+          // DB row is the authoritative state; the slot release is a
+          // separate SECURITY DEFINER RPC on the same request.
+          const { error: updErr } = await supabaseAdmin
+            .from("appointments")
+            .update({ status: "cancelled" })
+            .eq("id", match.id);
+          if (updErr) {
+            return json(500, {
+              ok: false,
+              kind: "server",
+              message: "تعذّر إلغاء الحجز. حاول لاحقًا.",
+            });
+          }
+          await supabaseAdmin.rpc("release_slot", { p_appointment_id: match.id });
+
+          return json(200, { ok: true });
+        } catch {
+          return json(500, {
+            ok: false,
+            kind: "server",
+            message: "خطأ داخلي غير متوقع.",
+          });
+        }
+      },
+    },
+  },
+});
