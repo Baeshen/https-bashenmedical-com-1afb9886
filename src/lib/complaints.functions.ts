@@ -84,6 +84,11 @@ export const submitMyComplaint = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => submitSchema.parse(raw))
   .handler(async ({ data, context }) => {
+    // Enforce path ownership on attachments — every stored path must live
+    // under the caller's uid folder. Prevents cross-user path forgery.
+    const atts = (data.attachments ?? []).filter(
+      (a) => a.path.startsWith(`${context.userId}/`),
+    );
     const { data: row, error } = await context.supabase
       .from("complaints")
       .insert({
@@ -94,6 +99,7 @@ export const submitMyComplaint = createServerFn({ method: "POST" })
         type: data.type,
         department: data.department || null,
         message: data.message,
+        attachments: atts,
       })
       .select("id, reference")
       .single();
