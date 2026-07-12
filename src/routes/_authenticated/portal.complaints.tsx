@@ -246,7 +246,7 @@ function MyComplaintsPage() {
           <NewComplaintForm
             defaultName={profileQuery.data?.full_name ?? ""}
             defaultPhone={profileQuery.data?.phone ?? ""}
-            defaultEmail={profileQuery.data?.email ?? ""}
+            defaultEmail=""
             submitFn={submitFn}
             onDone={() => {
               setShowForm(false);
