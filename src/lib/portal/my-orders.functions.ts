@@ -251,8 +251,6 @@ export const getMyRecentOrders = createServerFn({ method: "GET" })
       specialty: string | null;
       patient_name: string | null;
     }>) {
-      // نتجاهل الحارس الوهمي أعلاه — فقط سجلات حقيقية للاستشارة
-      if (!raw.patient_name) continue;
       out.push({
         kind: "second_opinion",
         id: raw.id,
