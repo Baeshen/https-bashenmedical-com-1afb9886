@@ -263,10 +263,106 @@ export const listPatientTags = createServerFn({ method: "GET" })
     const sb: any = context.supabase;
     const roles = await getRoles(sb, context.userId);
     ensureStaff(roles);
-    const { data, error } = await sb.from("patients").select("tags").limit(2000);
+    const { data, error } = await sb
+      .from("patients")
+      .select("tags")
+      .eq("is_active", true)
+      .limit(2000);
     if (error) throw new Error(error.message);
     const set = new Set<string>();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data ?? []).forEach((r: any) => (r.tags ?? []).forEach((t: string) => set.add(t)));
     return Array.from(set).sort();
+  });
+
+// -------------------- Soft delete / restore --------------------
+
+const SoftDeleteInput = z.object({
+  patientId: z.string().uuid(),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export const softDeletePatient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => SoftDeleteInput.parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb: any = context.supabase;
+    const roles = await getRoles(sb, context.userId);
+    ensureAdmin(roles);
+
+    const { data: current, error: readErr } = await sb
+      .from("patients")
+      .select("id, is_active, status, full_name_ar")
+      .eq("id", data.patientId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!current) throw new Error("المريض غير موجود.");
+    if (current.is_active === false) {
+      return { ok: true, alreadyInactive: true };
+    }
+
+    const { error } = await sb
+      .from("patients")
+      .update({ is_active: false, status: "archived" })
+      .eq("id", data.patientId);
+    if (error) throw new Error(error.message);
+
+    try {
+      await sb.rpc("log_security_event", {
+        _action: "patient.soft_deleted",
+        _reason: data.reason ?? null,
+        _metadata: {
+          patient_id: data.patientId,
+          patient_name: current.full_name_ar,
+          previous_status: current.status,
+        },
+      });
+    } catch (e) {
+      console.warn("[patients] soft-delete audit failed", e);
+    }
+
+    return { ok: true };
+  });
+
+export const restorePatient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => SoftDeleteInput.parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb: any = context.supabase;
+    const roles = await getRoles(sb, context.userId);
+    ensureAdmin(roles);
+
+    const { data: current, error: readErr } = await sb
+      .from("patients")
+      .select("id, is_active, full_name_ar")
+      .eq("id", data.patientId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!current) throw new Error("المريض غير موجود.");
+    if (current.is_active === true) {
+      return { ok: true, alreadyActive: true };
+    }
+
+    const { error } = await sb
+      .from("patients")
+      .update({ is_active: true, status: "active" })
+      .eq("id", data.patientId);
+    if (error) throw new Error(error.message);
+
+    try {
+      await sb.rpc("log_security_event", {
+        _action: "patient.restored",
+        _reason: data.reason ?? null,
+        _metadata: {
+          patient_id: data.patientId,
+          patient_name: current.full_name_ar,
+        },
+      });
+    } catch (e) {
+      console.warn("[patients] restore audit failed", e);
+    }
+
+    return { ok: true };
   });
