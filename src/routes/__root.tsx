@@ -149,6 +149,7 @@ function RootComponent() {
           <Toaster position="top-center" richColors closeButton />
           <ChatbotBubble />
           <WhatsAppFab />
+          <MotionToggle />
         </div>
       </I18nProvider>
     </QueryClientProvider>
