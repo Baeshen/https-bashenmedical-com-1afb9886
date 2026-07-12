@@ -7,7 +7,7 @@ import {
   ShieldCheck, Package, Truck, UserCog, Clock, Wallet, LineChart as LineIcon,
   BarChart3, Bot, Bell, Settings, ChevronsLeft, ChevronsRight, Search,
   Sparkles, TrendingUp, TrendingDown, Video, Zap, Command, X, Send,
-  ArrowUpRight, ActivitySquare, CheckCircle2, AlertTriangle,
+  ArrowUpRight, ActivitySquare, CheckCircle2, AlertTriangle, ShieldAlert,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, Area, AreaChart, Tooltip, XAxis, BarChart, Bar } from "recharts";
 import { getCommandCenterKpis, type CommandCenterKpis } from "@/lib/command-center/kpis.functions";
@@ -105,6 +105,7 @@ const NAV: NavItem[] = [
   { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string, permission: "notifications.manage" },
   { label: "الصلاحيات", icon: ShieldCheck, to: "/_authenticated/rbac" as string, permission: "rbac.manage" },
   { label: "سجل التدقيق", icon: ClipboardList, to: "/_authenticated/audit-log" as string, permission: "audit.view" },
+  { label: "تدقيق الصلاحيات", icon: ShieldAlert, to: "/_authenticated/rbac-audit" as string, permission: "rbac.manage" },
   { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
 ];
 
