@@ -105,9 +105,6 @@ function weekdayOf(iso: string): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-// Riyadh-local "today"/"now" helpers live in `@/lib/riyadh-date` so cancel.ts
-// and slots.functions.ts share the exact same day boundary as this resolver.
-import { riyadhTodayIso, riyadhNowMinutes } from "@/lib/riyadh-date";
 
 export const Route = createFileRoute("/api/public/book/availability")({
   server: {
