@@ -42,6 +42,7 @@ import { Route as SpecialtiesIndexRouteImport } from './routes/specialties.index
 import { Route as HealthIndexRouteImport } from './routes/health.index'
 import { Route as DoctorsIndexRouteImport } from './routes/doctors.index'
 import { Route as SpecialtiesSlugRouteImport } from './routes/specialties.$slug'
+import { Route as SettingsGithubRouteImport } from './routes/settings.github'
 import { Route as MediaStoriesRouteImport } from './routes/media.stories'
 import { Route as MediaNewsRouteImport } from './routes/media.news'
 import { Route as HealthSearchRouteImport } from './routes/health.search'
@@ -245,6 +246,11 @@ const DoctorsIndexRoute = DoctorsIndexRouteImport.update({
 const SpecialtiesSlugRoute = SpecialtiesSlugRouteImport.update({
   id: '/specialties/$slug',
   path: '/specialties/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsGithubRoute = SettingsGithubRouteImport.update({
+  id: '/settings/github',
+  path: '/settings/github',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MediaStoriesRoute = MediaStoriesRouteImport.update({
@@ -527,6 +533,7 @@ export interface FileRoutesByFullPath {
   '/health/search': typeof HealthSearchRoute
   '/media/news': typeof MediaNewsRoute
   '/media/stories': typeof MediaStoriesRouteWithChildren
+  '/settings/github': typeof SettingsGithubRoute
   '/specialties/$slug': typeof SpecialtiesSlugRoute
   '/doctors/': typeof DoctorsIndexRoute
   '/health/': typeof HealthIndexRoute
@@ -601,6 +608,7 @@ export interface FileRoutesByTo {
   '/health/search': typeof HealthSearchRoute
   '/media/news': typeof MediaNewsRoute
   '/media/stories': typeof MediaStoriesRouteWithChildren
+  '/settings/github': typeof SettingsGithubRoute
   '/specialties/$slug': typeof SpecialtiesSlugRoute
   '/doctors': typeof DoctorsIndexRoute
   '/health': typeof HealthIndexRoute
@@ -677,6 +685,7 @@ export interface FileRoutesById {
   '/health/search': typeof HealthSearchRoute
   '/media/news': typeof MediaNewsRoute
   '/media/stories': typeof MediaStoriesRouteWithChildren
+  '/settings/github': typeof SettingsGithubRoute
   '/specialties/$slug': typeof SpecialtiesSlugRoute
   '/doctors/': typeof DoctorsIndexRoute
   '/health/': typeof HealthIndexRoute
@@ -753,6 +762,7 @@ export interface FileRouteTypes {
     | '/health/search'
     | '/media/news'
     | '/media/stories'
+    | '/settings/github'
     | '/specialties/$slug'
     | '/doctors/'
     | '/health/'
@@ -827,6 +837,7 @@ export interface FileRouteTypes {
     | '/health/search'
     | '/media/news'
     | '/media/stories'
+    | '/settings/github'
     | '/specialties/$slug'
     | '/doctors'
     | '/health'
@@ -902,6 +913,7 @@ export interface FileRouteTypes {
     | '/health/search'
     | '/media/news'
     | '/media/stories'
+    | '/settings/github'
     | '/specialties/$slug'
     | '/doctors/'
     | '/health/'
@@ -951,6 +963,7 @@ export interface RootRouteChildren {
   HealthSearchRoute: typeof HealthSearchRoute
   MediaNewsRoute: typeof MediaNewsRoute
   MediaStoriesRoute: typeof MediaStoriesRouteWithChildren
+  SettingsGithubRoute: typeof SettingsGithubRoute
   SpecialtiesSlugRoute: typeof SpecialtiesSlugRoute
   DoctorsIndexRoute: typeof DoctorsIndexRoute
   HealthIndexRoute: typeof HealthIndexRoute
@@ -1193,6 +1206,13 @@ declare module '@tanstack/react-router' {
       path: '/specialties/$slug'
       fullPath: '/specialties/$slug'
       preLoaderRoute: typeof SpecialtiesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/github': {
+      id: '/settings/github'
+      path: '/settings/github'
+      fullPath: '/settings/github'
+      preLoaderRoute: typeof SettingsGithubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/media/stories': {
@@ -1622,6 +1642,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthSearchRoute: HealthSearchRoute,
   MediaNewsRoute: MediaNewsRoute,
   MediaStoriesRoute: MediaStoriesRouteWithChildren,
+  SettingsGithubRoute: SettingsGithubRoute,
   SpecialtiesSlugRoute: SpecialtiesSlugRoute,
   DoctorsIndexRoute: DoctorsIndexRoute,
   HealthIndexRoute: HealthIndexRoute,
