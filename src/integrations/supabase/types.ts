@@ -3413,6 +3413,15 @@ export type Database = {
         Args: { _branch_id: string }
         Returns: undefined
       }
+      _assert_slot_free: {
+        Args: {
+          _date: string
+          _doctor_id: string
+          _exclude_appt_id?: string
+          _time: string
+        }
+        Returns: undefined
+      }
       _assert_staff: { Args: never; Returns: undefined }
       _emit_appointment_notification: {
         Args: {
