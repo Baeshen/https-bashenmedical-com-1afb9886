@@ -11,8 +11,9 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User } from "lucide-react";
+import { ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User, FileText, ClipboardList, Truck, MessageCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OrderTimeline } from "@/components/booking/OrderTimeline";
 
 const search = z.object({
   phone: z.string(),
@@ -132,6 +133,7 @@ function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; 
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
@@ -155,27 +157,21 @@ function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; 
             <Row icon={<Clock className="h-4 w-4" />} label={isAr ? "الموعد المفضّل" : "Scheduled"} value={fmt(order.scheduled_at, isAr ? "ar" : "en")} />
           )}
           <Row icon={<Phone className="h-4 w-4" />} label={isAr ? "الجوال" : "Phone"} value={phone} />
-          {typeof meta2.address === "string" && meta2.address && (
-            <Row icon={<MapPin className="h-4 w-4" />} label={isAr ? "العنوان" : "Address"} value={meta2.address} />
-          )}
-          {typeof meta2.district === "string" && meta2.district && (
-            <Row icon={<MapPin className="h-4 w-4" />} label={isAr ? "الحي" : "District"} value={meta2.district} />
-          )}
-          {typeof meta2.delivery_type === "string" && (
-            <Row icon={<User className="h-4 w-4" />} label={isAr ? "نوع الاستلام" : "Delivery"} value={meta2.delivery_type} />
-          )}
-          {typeof meta2.email === "string" && meta2.email && (
-            <Row icon={<User className="h-4 w-4" />} label={isAr ? "البريد" : "Email"} value={meta2.email} />
-          )}
-          {typeof meta2.notes === "string" && meta2.notes && (
-            <div className="mt-2 rounded-xl bg-muted/50 p-3 text-sm">
-              <div className="font-semibold mb-1">{isAr ? "ملاحظات" : "Notes"}</div>
-              <p className="text-muted-foreground whitespace-pre-line">{meta2.notes}</p>
-            </div>
-          )}
         </div>
       </div>
 
+      {/* Unified timeline */}
+      <OrderTimeline
+        kind={order.kind}
+        status={order.status}
+        createdAt={order.created_at}
+        scheduledAt={order.scheduled_at}
+      />
+
+      {/* Service-specific inputs & results */}
+      <ServiceDetailsSection kind={order.kind} status={order.status} meta={meta2} isAr={isAr} />
+
+      {/* Actions */}
       <div className="rounded-2xl border border-border bg-card p-6">
         <h3 className="font-bold mb-2">{isAr ? "هل تحتاج تعديلًا؟" : "Need changes?"}</h3>
         <p className="text-sm text-muted-foreground">
@@ -188,6 +184,158 @@ function OrderDetailCard({ order, phone, isAr }: { order: Order; phone: string; 
           <Link to="/my-orders"><Button variant="outline">{isAr ? "كل طلباتي" : "All my orders"}</Button></Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * قسم مدخلات/نتائج الخدمة — يعرض التفاصيل والنتائج المرتبطة بنوع الطلب:
+ *   - صيدلية: نوع التسليم، العنوان، ملاحظات، رابط تتبع (مستقبلًا)
+ *   - رأي طبي ثاني: التخصص، البريد للرد، ملخص الرد عند توفره
+ *   - رعاية منزلية: العنوان، ملاحظات المريض
+ */
+function ServiceDetailsSection({
+  kind,
+  status,
+  meta,
+  isAr,
+}: {
+  kind: Order["kind"];
+  status: string;
+  meta: Record<string, unknown>;
+  isAr: boolean;
+}) {
+  const s = (k: string) => (typeof meta[k] === "string" ? (meta[k] as string) : "");
+
+  if (kind === "pharmacy") {
+    const delivery = s("delivery_type");
+    const address = s("address");
+    const district = s("district");
+    const notes = s("notes");
+    return (
+      <DetailsShell
+        title={isAr ? "تفاصيل طلب الصيدلية" : "Pharmacy details"}
+        icon={<Package className="h-4 w-4" />}
+      >
+        <DetailGrid>
+          {delivery && <Cell icon={<Truck className="h-4 w-4" />} label={isAr ? "طريقة الاستلام" : "Delivery"} value={delivery === "delivery" ? (isAr ? "توصيل للمنزل" : "Home delivery") : (isAr ? "استلام من الفرع" : "Pickup")} />}
+          {address && <Cell icon={<MapPin className="h-4 w-4" />} label={isAr ? "عنوان التوصيل" : "Address"} value={address} />}
+          {district && <Cell icon={<MapPin className="h-4 w-4" />} label={isAr ? "الحي" : "District"} value={district} />}
+        </DetailGrid>
+        {notes && <Notes text={notes} isAr={isAr} />}
+        <ResultBanner
+          isAr={isAr}
+          show={["ready", "delivered", "completed"].includes(status)}
+          okAr="طلبك جاهز — سيتواصل معك فريق الصيدلية لتأكيد التسليم."
+          okEn="Your order is ready — the pharmacy team will contact you to confirm delivery."
+        />
+      </DetailsShell>
+    );
+  }
+
+  if (kind === "second_opinion") {
+    const specialty = s("specialty");
+    const email = s("email");
+    const answer = s("answer") || s("reply");
+    return (
+      <DetailsShell
+        title={isAr ? "تفاصيل الرأي الطبي الثاني" : "Second opinion details"}
+        icon={<ClipboardList className="h-4 w-4" />}
+      >
+        <DetailGrid>
+          {specialty && <Cell icon={<Stethoscope className="h-4 w-4" />} label={isAr ? "التخصص" : "Specialty"} value={specialty} />}
+          {email && <Cell icon={<User className="h-4 w-4" />} label={isAr ? "بريد الرد" : "Reply email"} value={email} />}
+        </DetailGrid>
+        {answer ? (
+          <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+              <MessageCircle className="h-4 w-4" />
+              {isAr ? "رد الطبيب الاستشاري" : "Consultant reply"}
+            </div>
+            <p className="whitespace-pre-line text-sm text-foreground">{answer}</p>
+          </div>
+        ) : (
+          <ResultBanner
+            isAr={isAr}
+            show={status === "in_review"}
+            okAr="طلبك قيد المراجعة من قِبل الاستشاري — سيصلك الرد على البريد المسجّل."
+            okEn="Your request is under review — the reply will arrive at the registered email."
+          />
+        )}
+      </DetailsShell>
+    );
+  }
+
+  if (kind === "home_care") {
+    const address = s("address");
+    const notes = s("notes");
+    return (
+      <DetailsShell
+        title={isAr ? "تفاصيل الرعاية المنزلية" : "Home care details"}
+        icon={<HomeIcon className="h-4 w-4" />}
+      >
+        <DetailGrid>
+          {address && <Cell icon={<MapPin className="h-4 w-4" />} label={isAr ? "عنوان الزيارة" : "Visit address"} value={address} />}
+        </DetailGrid>
+        {notes && <Notes text={notes} isAr={isAr} />}
+        <ResultBanner
+          isAr={isAr}
+          show={["confirmed", "in_progress"].includes(status)}
+          okAr="تم تأكيد الطلب — سيتواصل الفريق الطبي لتنسيق موعد الزيارة."
+          okEn="Confirmed — the medical team will contact you to schedule the visit."
+        />
+      </DetailsShell>
+    );
+  }
+
+  return null;
+}
+
+function DetailsShell({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <span className="text-primary">{icon}</span>
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DetailGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-3 sm:grid-cols-2">{children}</div>;
+}
+
+function Cell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-muted/40 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-semibold text-foreground break-words">{value}</div>
+    </div>
+  );
+}
+
+function Notes({ text, isAr }: { text: string; isAr: boolean }) {
+  return (
+    <div className="mt-3 rounded-xl bg-muted/50 p-3">
+      <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
+        <FileText className="h-3.5 w-3.5" />
+        {isAr ? "ملاحظات" : "Notes"}
+      </div>
+      <p className="text-sm text-muted-foreground whitespace-pre-line">{text}</p>
+    </div>
+  );
+}
+
+function ResultBanner({ show, isAr, okAr, okEn }: { show: boolean; isAr: boolean; okAr: string; okEn: string }) {
+  if (!show) return null;
+  return (
+    <div className="mt-3 rounded-xl border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-800 dark:text-green-300">
+      {isAr ? okAr : okEn}
     </div>
   );
 }
