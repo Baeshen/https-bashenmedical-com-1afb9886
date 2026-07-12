@@ -251,7 +251,7 @@ export const getMyMedicalRecords = createServerFn({ method: "GET" })
 /* -------------------------- getRecordFileUrl -------------------------- */
 
 const FileSchema = z.object({
-  bucket: z.enum(["lab-reports", "radiology-reports", "prescriptions", "patient-files"]),
+  bucket: z.enum(["lab-reports", "radiology-reports", "patient-files"]),
   path: z.string().min(1).max(1024),
 });
 
