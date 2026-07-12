@@ -140,14 +140,20 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <IntroOverlay theme="dark" />
+        <WelcomeSplash />
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-1">
-            <Outlet />
+            <AnimatePresence mode="wait" initial={false}>
+              <PageTransition key={pathname}>
+                <Outlet />
+              </PageTransition>
+            </AnimatePresence>
           </main>
           <Footer />
           <Toaster position="top-center" richColors closeButton />
@@ -159,3 +165,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
