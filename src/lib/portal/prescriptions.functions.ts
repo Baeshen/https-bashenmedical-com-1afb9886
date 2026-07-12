@@ -231,8 +231,8 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
     const facts = {
       patient: patientRes.data.full_name_ar,
       preferences: {
-        wakeHour: data.preferredWakeHour ?? 7,
-        sleepHour: data.preferredSleepHour ?? 23,
+        wakeHour: data.preferredWakeHour ?? prefsRow?.wake_hour ?? 7,
+        sleepHour: data.preferredSleepHour ?? prefsRow?.sleep_hour ?? 23,
       },
       activeMedications: activeMeds,
       allergies: allergyRes.data ?? [],
