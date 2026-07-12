@@ -245,10 +245,6 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
   const statusLabel = STATUS_AR[order.status] ?? order.status;
   const statusCls = STATUS_COLOR[order.status] ?? "bg-muted text-muted-foreground";
 
-  const meta2 = (order.metadata ?? {}) as Record<string, unknown>;
-  const doctor = meta2.doctor_ar as string | undefined;
-  const address = meta2.address as string | undefined;
-
   const detailHref = order.kind === "appointment"
     ? `/lookup?ref=${order.reference}&phone=${encodeURIComponent(phone)}`
     : `/orders/${order.reference}?phone=${encodeURIComponent(phone)}&kind=${order.kind}`;
@@ -272,6 +268,9 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
         </span>
       </div>
 
+      {/* Summary-only fields — sensitive metadata is never returned by
+          `track_orders_by_phone`; full detail requires ref+phone via
+          `get_order_by_ref` on the detail page. */}
       <div className="text-xs text-muted-foreground space-y-1">
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" />
@@ -281,13 +280,6 @@ function OrderCard({ order, phone, isAr }: { order: Order; phone: string; isAr: 
           <div className="flex items-center gap-1.5">
             <CalendarCheck className="h-3.5 w-3.5" />
             <span>{isAr ? "الموعد: " : "Scheduled: "}{fmt(order.scheduled_at, isAr ? "ar" : "en")}</span>
-          </div>
-        )}
-        {doctor && <div>{isAr ? "الطبيب: " : "Doctor: "}{doctor}</div>}
-        {address && (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />
-            <span className="line-clamp-1">{address}</span>
           </div>
         )}
       </div>
