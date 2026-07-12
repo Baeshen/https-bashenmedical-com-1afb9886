@@ -98,6 +98,7 @@ export const getRadiologyAiSummary = createServerFn({ method: "POST" })
       .from("radiology_reports")
       .select("modality, body_part, findings, report_date, status")
       .eq("patient_id", p.data.id)
+      .not("released_at", "is", null)
       .order("report_date", { ascending: false })
       .limit(15);
 
