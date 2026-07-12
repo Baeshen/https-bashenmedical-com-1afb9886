@@ -74,7 +74,7 @@ export const getMyPrescriptions = createServerFn({ method: "GET" })
         .select("id, appointment_date, appointment_time, status, reason, doctor_id, doctors:doctor_id(name_ar, specialties:specialty_id(name_ar))")
         .eq("patient_id", patient.id)
         .gte("appointment_date", new Date().toISOString().slice(0, 10))
-        .in("status", ["pending", "confirmed"])
+        .in("status", ["new", "confirmed"])
         .order("appointment_date", { ascending: true })
         .limit(20),
     ]);
@@ -201,7 +201,7 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
         .select("id, appointment_date, appointment_time, reason, status, doctors:doctor_id(name_ar, specialties:specialty_id(name_ar))")
         .eq("patient_id", pid)
         .gte("appointment_date", today)
-        .in("status", ["pending", "confirmed"])
+        .in("status", ["new", "confirmed"])
         .order("appointment_date", { ascending: true })
         .limit(10),
     ]);
