@@ -1459,6 +1459,65 @@ export type Database = {
           },
         ]
       }
+      patient_immunizations: {
+        Row: {
+          administered_on: string
+          created_at: string
+          dose_number: number | null
+          id: string
+          lot_number: string | null
+          next_due_on: string | null
+          notes: string | null
+          patient_id: string
+          provider_name: string | null
+          recorded_by: string | null
+          route: string | null
+          site: string | null
+          updated_at: string
+          vaccine_name: string
+        }
+        Insert: {
+          administered_on: string
+          created_at?: string
+          dose_number?: number | null
+          id?: string
+          lot_number?: string | null
+          next_due_on?: string | null
+          notes?: string | null
+          patient_id: string
+          provider_name?: string | null
+          recorded_by?: string | null
+          route?: string | null
+          site?: string | null
+          updated_at?: string
+          vaccine_name: string
+        }
+        Update: {
+          administered_on?: string
+          created_at?: string
+          dose_number?: number | null
+          id?: string
+          lot_number?: string | null
+          next_due_on?: string | null
+          notes?: string | null
+          patient_id?: string
+          provider_name?: string | null
+          recorded_by?: string | null
+          route?: string | null
+          site?: string | null
+          updated_at?: string
+          vaccine_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_immunizations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_medical_history: {
         Row: {
           category: Database["public"]["Enums"]["medical_history_category"]
