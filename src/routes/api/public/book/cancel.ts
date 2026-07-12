@@ -39,9 +39,6 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-function normalizePhone(s: string): string {
-  return s.replace(/\D+/g, "");
-}
 
 export const Route = createFileRoute("/api/public/book/cancel")({
   server: {
@@ -68,23 +65,24 @@ export const Route = createFileRoute("/api/public/book/cancel")({
         }
 
         const refHex = parsed.data.reference.slice(4).toLowerCase();
-        const phoneNorm = normalizePhone(parsed.data.phone);
+
 
         try {
           const { supabaseAdmin } = await import(
             "@/integrations/supabase/client.server"
           );
 
-          // Reference is the first 8 hex chars of the uuid (no dashes) — so
-          // the uuid text starts with `XXXXXXXX-` after re-inserting a dash.
-          const uuidPrefix = `${refHex}-`;
+          // Look up by phone (narrow index) then match the reference prefix
+          // in-memory. PostgREST cannot `ilike` a uuid column directly, and a
+          // per-phone lookup is typically 1-few rows so this stays cheap.
           const { data: candidates, error: readErr } = await supabaseAdmin
             .from("appointments")
             .select(
               "id, status, appointment_date, appointment_time, patient_phone",
             )
-            .ilike("id", `${uuidPrefix}%`)
-            .limit(5);
+            .eq("patient_phone", parsed.data.phone)
+            .order("created_at", { ascending: false })
+            .limit(50);
           if (readErr) {
             return json(500, {
               ok: false,
@@ -94,8 +92,7 @@ export const Route = createFileRoute("/api/public/book/cancel")({
           }
 
           const match = (candidates ?? []).find(
-            (a) =>
-              normalizePhone(String(a.patient_phone ?? "")) === phoneNorm,
+            (a) => String(a.id).replace(/-/g, "").toLowerCase().startsWith(refHex),
           );
 
           if (!match) {
@@ -131,14 +128,16 @@ export const Route = createFileRoute("/api/public/book/cancel")({
             });
           }
 
-          // Update + release slot atomically enough for our purposes: the
-          // DB row is the authoritative state; the slot release is a
-          // separate SECURITY DEFINER RPC on the same request.
-          const { error: updErr } = await supabaseAdmin
-            .from("appointments")
-            .update({ status: "cancelled" })
-            .eq("id", match.id);
+          // Route through update_appointment_status so the audit trigger
+          // sees a non-blank reason (required for status='cancelled'). The
+          // slot release is a separate SECURITY DEFINER RPC.
+          const selfReason = "إلغاء ذاتي عبر رابط المتابعة العام";
+          const { error: updErr } = await supabaseAdmin.rpc(
+            "update_appointment_status",
+            { _id: match.id, _status: "cancelled", _reason: selfReason } as any,
+          );
           if (updErr) {
+
             return json(500, {
               ok: false,
               kind: "server",
