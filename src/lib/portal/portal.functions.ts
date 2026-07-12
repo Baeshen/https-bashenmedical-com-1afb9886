@@ -145,33 +145,34 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
     // Recent labs (last 5) — for a compact "recent results" card
     let labs: Array<{
       id: string;
-      test_name: string;
-      value: string | null;
-      unit: string | null;
-      reference_range: string | null;
+      title: string;
+      test_type: string | null;
+      summary: string | null;
       status: string | null;
-      reported_at: string | null;
+      report_date: string | null;
+      file_path: string | null;
     }> = [];
     if (patientId) {
       const labRes = await supabase
         .from("lab_reports")
-        .select("id, test_name, value, unit, reference_range, status, reported_at")
+        .select("id, title, test_type, summary, status, report_date, file_path")
         .eq("patient_id", patientId)
-        .order("reported_at", { ascending: false })
+        .order("report_date", { ascending: false })
         .limit(5);
       labs = (labRes.data ?? []) as typeof labs;
     }
 
-    // Active medications count
+    // Active medications count (status = 'active')
     let activeMedsCount = 0;
     if (patientId) {
       const medsRes = await supabase
         .from("patient_medications")
         .select("id", { count: "exact", head: true })
         .eq("patient_id", patientId)
-        .eq("is_active", true);
+        .eq("status", "active");
       activeMedsCount = medsRes.count ?? 0;
     }
+
 
     return {
       profile: profileRes.data,
