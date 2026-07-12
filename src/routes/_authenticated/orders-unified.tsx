@@ -103,7 +103,7 @@ function fmtDate(iso: string) {
 
 function OrdersUnifiedPage() {
   return (
-    <RequirePermission permission="staff.read">
+    <RequirePermission anyOf={["appointments.read", "audit.view"]}>
       <OrdersUnifiedInner />
     </RequirePermission>
   );
