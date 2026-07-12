@@ -77,13 +77,23 @@ export const getLabFileUrl = createServerFn({ method: "POST" })
       .eq("file_path", data.path)
       .not("released_at", "is", null)
       .limit(1);
-    if (!(owns.data ?? []).length) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
+    const reportId = owns.data?.[0]?.id as string | undefined;
+    if (!reportId) throw new Error("لا تملك صلاحية الوصول لهذا الملف.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: signed, error } = await supabaseAdmin.storage
       .from("lab-reports")
       .createSignedUrl(data.path, 300);
     if (error) throw new Error(error.message);
+
+    const { logAppEvent } = await import("@/lib/audit-log.server");
+    await logAppEvent(supabase, "lab_report_download", {
+      report_id: reportId,
+      patient_id: patientId,
+      file_path: data.path,
+      bucket: "lab-reports",
+    });
+
     return { url: signed.signedUrl, expiresIn: 300 };
   });
 
