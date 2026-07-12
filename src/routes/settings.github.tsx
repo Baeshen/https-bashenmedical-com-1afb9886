@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const REPO_OWNER = "Baeshen";
-const REPO_NAME = "happy-hugger-fluff-9f5e6fc9";
+const REPO_OWNER = "hamid967";
+const REPO_NAME = "https-bashenmedical-com";
 const REPO_FULL = `${REPO_OWNER}/${REPO_NAME}`;
 const REPO_URL = `https://github.com/${REPO_FULL}`;
 const SYNC_BRANCH = "main";
