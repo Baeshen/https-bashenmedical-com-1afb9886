@@ -75,7 +75,7 @@ function ContactPage() {
           {
             icon: MessageCircle,
             l: "WhatsApp",
-            href: `https://wa.me/${SITE.whatsapp}`,
+            href: whatsappUrl(lang === "ar" ? `مرحبًا ${SITE.nameAr}، أرغب في الاستفسار عن خدماتكم.` : `Hello ${SITE.nameEn}, I'd like to inquire about your services.`),
             sub: SITE.mobileDisplay,
           },
           {
