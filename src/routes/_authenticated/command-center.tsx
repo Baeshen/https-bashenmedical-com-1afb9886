@@ -71,33 +71,60 @@ function CenterError({ error, reset }: { error: Error; reset: () => void }) {
    Sidebar navigation config
    ============================================================ */
 
-type NavItem = { label: string; icon: React.ComponentType<{ className?: string }>; to?: string; comingSoon?: boolean };
+type NavItem = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  to?: string;
+  comingSoon?: boolean;
+  /** If set, hide the item when the current user lacks this permission. */
+  permission?: string;
+};
 
 const NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/_authenticated/command-center" as string },
-  { label: "الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string },
-  { label: "الممرضون", icon: HeartPulse, to: "/_authenticated/nurses" as string },
-  { label: "المرضى", icon: Users, to: "/_authenticated/patients-management" as string },
-  { label: "المواعيد", icon: CalendarDays, to: "/_authenticated/appointments-queue" as string },
-  { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string },
+  { label: "الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string, permission: "doctors.manage" },
+  { label: "الممرضون", icon: HeartPulse, to: "/_authenticated/nurses" as string, permission: "nurses.manage" },
+  { label: "المرضى", icon: Users, to: "/_authenticated/patients-management" as string, permission: "patients.view" },
+  { label: "المواعيد", icon: CalendarDays, to: "/_authenticated/appointments-queue" as string, permission: "appointments.view" },
+  { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
   { label: "المختبر", icon: FlaskConical, comingSoon: true },
   { label: "الأشعة", icon: Radiation, comingSoon: true },
-  { label: "الصيدلية", icon: Pill, to: "/_authenticated/pharmacy-management" as string },
-  { label: "السجلات الطبية", icon: ClipboardList, to: "/_authenticated/patients-analytics" as string },
+  { label: "الصيدلية", icon: Pill, to: "/_authenticated/pharmacy-management" as string, permission: "pharmacy.view" },
+  { label: "السجلات الطبية", icon: ClipboardList, to: "/_authenticated/patients-analytics" as string, permission: "patients.view" },
   { label: "الطوارئ", icon: Ambulance, comingSoon: true },
   { label: "الفوترة", icon: CreditCard, comingSoon: true },
   { label: "التأمين", icon: ShieldCheck, comingSoon: true },
-  { label: "المخزون", icon: Package, to: "/_authenticated/inventory-management" as string },
+  { label: "المخزون", icon: Package, to: "/_authenticated/inventory-management" as string, permission: "inventory.manage" },
   { label: "المستلزمات", icon: Truck, comingSoon: true },
-  { label: "الموظفون", icon: UserCog, to: "/_authenticated/hr-management" as string },
-  { label: "الحضور", icon: Clock, to: "/_authenticated/hr-management" as string },
-  { label: "الرواتب", icon: Wallet, to: "/_authenticated/hr-management" as string },
-  { label: "التقارير", icon: LineIcon, comingSoon: true },
-  { label: "التحليلات", icon: BarChart3, to: "/_authenticated/patients-analytics" as string },
+  { label: "الموظفون", icon: UserCog, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "الحضور", icon: Clock, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "الرواتب", icon: Wallet, to: "/_authenticated/hr-management" as string, permission: "hr.manage" },
+  { label: "التقارير", icon: LineIcon, to: "/_authenticated/reports" as string, permission: "reports.view" },
+  { label: "التحليلات", icon: BarChart3, to: "/_authenticated/patients-analytics" as string, permission: "reports.view" },
   { label: "مساعد AI", icon: Bot, comingSoon: true },
-  { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string },
-  { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string },
+  { label: "التنبيهات", icon: Bell, to: "/_authenticated/notifications-queue" as string, permission: "notifications.manage" },
+  { label: "الصلاحيات", icon: ShieldCheck, to: "/_authenticated/rbac" as string, permission: "rbac.manage" },
+  { label: "سجل التدقيق", icon: ClipboardList, to: "/_authenticated/audit-log" as string, permission: "audit.view" },
+  { label: "الإعدادات", icon: Settings, to: "/_authenticated/clinic-settings" as string, permission: "settings.manage" },
 ];
+
+/**
+ * Filters NAV entries the current user is allowed to see.
+ * - Items without a `permission` are always visible.
+ * - super_admin sees everything.
+ */
+function useVisibleNav() {
+  const perms = useMyPermissions();
+  const allowed = new Set(perms.data?.permissions ?? []);
+  const isSuper = !!perms.data?.isSuper;
+  const loading = perms.isLoading;
+  const items = NAV.filter((item) => {
+    if (!item.permission) return true;
+    if (isSuper) return true;
+    return allowed.has(item.permission);
+  });
+  return { items, loading };
+}
 
 /* ============================================================
    Page
