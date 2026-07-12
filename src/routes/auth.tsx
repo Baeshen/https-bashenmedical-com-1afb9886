@@ -15,7 +15,23 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Phone,
+  KeyRound,
+  ArrowRight,
 } from "lucide-react";
+
+// Normalize a Saudi phone input to E.164 (+9665XXXXXXXX).
+// Accepts: 05XXXXXXXX, 5XXXXXXXX, +9665XXXXXXXX, 009665XXXXXXXX
+function normalizeSaPhone(raw: string): string | null {
+  const digits = raw.replace(/[^\d+]/g, "");
+  let n = digits;
+  if (n.startsWith("00")) n = "+" + n.slice(2);
+  if (n.startsWith("+9665") && n.length === 13) return n;
+  if (n.startsWith("9665") && n.length === 12) return "+" + n;
+  if (n.startsWith("05") && n.length === 10) return "+966" + n.slice(1);
+  if (n.startsWith("5") && n.length === 9) return "+966" + n;
+  return null;
+}
 
 const search = z.object({ redirect: z.string().optional() });
 
