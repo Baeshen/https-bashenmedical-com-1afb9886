@@ -198,6 +198,10 @@ function PrescriptionsPage() {
         </div>
       )}
 
+      {/* Reminder log */}
+      <ReminderLogSection />
+
+
       {/* Prescription list */}
       {filtered.length === 0 ? (
         <div className="glass-card p-10 text-center">
