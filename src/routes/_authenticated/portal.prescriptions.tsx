@@ -653,3 +653,106 @@ function LogKpi({ label, value, tone }: { label: string; value: number; tone: "o
     </span>
   );
 }
+
+/* --------------------------- iCal / .ics export --------------------------- */
+
+function pad(n: number) { return n.toString().padStart(2, "0"); }
+function icsEscape(s: string) {
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+function toIcsUtc(d: Date) {
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+}
+function toIcsFloatingLocal(y: number, m: number, d: number, h: number, mi: number) {
+  return `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(mi)}00`;
+}
+
+function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[]) {
+  const lines: string[] = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Bashen Medical//Portal Reminders//AR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${icsEscape("تذكيرات الأدوية والمواعيد")}`,
+  ];
+
+  const now = new Date();
+  const dtstamp = toIcsUtc(now);
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  const d = today.getDate();
+
+  // Recurring daily medication reminders (30 days)
+  plan.slots.forEach((s, idx) => {
+    const [hh, mm] = s.time.split(":").map((v) => parseInt(v, 10));
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return;
+    const start = toIcsFloatingLocal(y, m, d, hh, mm);
+    const endMin = mm + 15;
+    const endH = endMin >= 60 ? hh + 1 : hh;
+    const end = toIcsFloatingLocal(y, m, d, endH % 24, endMin % 60);
+    const uid = `med-${idx}-${hh}${mm}-${now.getTime()}@bashenmedical`;
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      "RRULE:FREQ=DAILY;COUNT=30",
+      `SUMMARY:${icsEscape(`💊 ${s.medication}${s.dosage ? ` — ${s.dosage}` : ""}`)}`,
+      `DESCRIPTION:${icsEscape([s.label, s.note].filter(Boolean).join(" • "))}`,
+      "CATEGORIES:Medication",
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${icsEscape(`تذكير: ${s.medication}`)}`,
+      "TRIGGER:-PT10M",
+      "END:VALARM",
+      "END:VEVENT",
+    );
+  });
+
+  // Upcoming appointments
+  upcoming.forEach((a, idx) => {
+    const [ay, am, ad] = a.date.split("-").map((v) => parseInt(v, 10));
+    if (!ay || !am || !ad) return;
+    const [ah, amn] = (a.time ?? "09:00").split(":").map((v) => parseInt(v, 10));
+    const startH = Number.isNaN(ah) ? 9 : ah;
+    const startM = Number.isNaN(amn) ? 0 : amn;
+    const endTotal = startM + 30;
+    const endH = (startH + Math.floor(endTotal / 60)) % 24;
+    const endM = endTotal % 60;
+    const start = toIcsFloatingLocal(ay, am, ad, startH, startM);
+    const end = toIcsFloatingLocal(ay, am, ad, endH, endM);
+    const uid = `apt-${a.id}-${idx}@bashenmedical`;
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      `SUMMARY:${icsEscape(`🩺 موعد${a.doctor_name ? ` مع د. ${a.doctor_name}` : ""}`)}`,
+      `DESCRIPTION:${icsEscape([a.specialty, a.reason].filter(Boolean).join(" • "))}`,
+      "CATEGORIES:Appointment",
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:موعدك قريباً",
+      "TRIGGER:-PT2H",
+      "END:VALARM",
+      "END:VEVENT",
+    );
+  });
+
+  lines.push("END:VCALENDAR");
+  const content = lines.join("\r\n");
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `bashen-reminders-${y}${pad(m)}${pad(d)}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast.success("تم تنزيل ملف التقويم. افتحه لاستيراده في Google / Apple / Outlook.");
+}
