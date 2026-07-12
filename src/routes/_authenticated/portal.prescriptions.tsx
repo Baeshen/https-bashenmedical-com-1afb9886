@@ -18,6 +18,7 @@ import {
   Calendar,
   CalendarClock,
   Check,
+  CalendarPlus,
   CheckCheck,
   Clock,
   History,
