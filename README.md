@@ -8,10 +8,75 @@
 
 ## التشغيل السريع
 
+المتطلبات: [Bun](https://bun.sh) ≥ 1.1، Node ≥ 20، Git.
+
 ```bash
+# 1) استنساخ المستودع
+git clone https://github.com/hamid967/happy-hugger-fluff-e1a5b380.git
+cd happy-hugger-fluff-e1a5b380
+
+# 2) تثبيت التبعيات
 bun install
+
+# 3) نسخ متغيرات البيئة (ثم عدّلها حسب مشروعك)
+cp .env.example .env.local
+
+# 4) تشغيل خادم التطوير على http://localhost:8080
 bun run dev
 ```
+
+أوامر مفيدة أخرى:
+
+```bash
+bun run build        # بناء إنتاجي
+bun run typecheck    # فحص أنواع TypeScript
+bun run format:check # Prettier
+bun run check:rls    # اختبارات RLS الكاملة (تحتاج أسرار Supabase)
+```
+
+## المزامنة مع GitHub واستراتيجية الفروع
+
+المشروع مربوط بمستودع **[`hamid967/happy-hugger-fluff-e1a5b380`](https://github.com/hamid967/happy-hugger-fluff-e1a5b380)** عبر تكامل Lovable ↔ GitHub الثنائي الاتجاه:
+
+- أي تعديل تجريه في Lovable يُدفع تلقائيًا كـ commit إلى المستودع.
+- أي `push` تدفعه إلى الفرع المتصل يُزامَن فورًا داخل Lovable.
+
+### الفروع
+
+| الفرع        | الغرض                                                                 |
+| ------------ | --------------------------------------------------------------------- |
+| `main`       | الفرع الافتراضي — يعكس الحالة الحيّة في Lovable ويُنشر إلى الإنتاج.    |
+| `feature/*`  | فروع للميزات الجديدة أو الإصلاحات — تُفتح عبر Pull Request إلى `main`. |
+| `fix/*`      | فروع لإصلاحات عاجلة — نفس تدفّق الـ PR.                                |
+
+### تدفّق العمل المُوصى به
+
+1. أنشئ فرعًا محليًا من آخر `main`:
+   ```bash
+   git checkout main && git pull
+   git checkout -b feature/short-description
+   ```
+2. طبّق التعديلات وشغّل الفحوصات محليًا:
+   ```bash
+   bun run typecheck && bun run format:check && bun run check:rls
+   ```
+3. ادفع الفرع وافتح Pull Request إلى `main`:
+   ```bash
+   git push -u origin feature/short-description
+   ```
+4. بعد نجاح CI ومراجعة الـ PR، ادمج إلى `main`. Lovable يلتقط الدمج تلقائيًا.
+
+### تبديل الفرع النشط في Lovable
+
+المزامنة الافتراضية على `main`. لتبديل الفرع المتصل من داخل Lovable:
+
+1. فعّل **GitHub Branch Switching** من **Account Settings → Labs**.
+2. اضغط **+** أسفل يسار الدردشة → **GitHub** → اختر الفرع المطلوب.
+
+### إعادة الربط أو تغيير المستودع
+
+من داخل Lovable: **+** أسفل يسار الدردشة → **GitHub** → **Disconnect** ثم **Connect project** واختر المستودع الجديد. يُدفع كامل المشروع تلقائيًا بعد الربط.
+
 
 ## الفحوصات
 
