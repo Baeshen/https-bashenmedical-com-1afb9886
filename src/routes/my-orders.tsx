@@ -100,11 +100,13 @@ function MyOrdersPage() {
 
   const { data: orders, isLoading, isFetching, error } = useQuery({
     queryKey: ["my-orders", queryPhone],
-    queryFn: async () => {
-      if (!queryPhone) return [] as Order[];
+    queryFn: async (): Promise<Order[]> => {
+      if (!queryPhone) return [];
       const { data, error } = await supabase.rpc("track_orders_by_phone", { _phone: queryPhone });
       if (error) throw error;
-      return (data ?? []) as Order[];
+      return parseOrderSummaries(data);
+    },
+
     },
     enabled: !!queryPhone,
     staleTime: 15_000,
