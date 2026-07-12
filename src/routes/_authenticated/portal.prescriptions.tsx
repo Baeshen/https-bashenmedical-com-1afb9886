@@ -36,11 +36,15 @@ import {
   Phone,
   Pill,
   RefreshCw,
+  Save,
   Search,
   Send,
+  Settings2,
   Smartphone,
   Sparkles,
   Stethoscope,
+  Sunrise,
+  Moon,
   XCircle,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, formatDistanceToNow } from "date-fns";
