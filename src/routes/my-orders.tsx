@@ -107,7 +107,6 @@ function MyOrdersPage() {
       return parseOrderSummaries(data);
     },
 
-    },
     enabled: !!queryPhone,
     staleTime: 15_000,
   });
