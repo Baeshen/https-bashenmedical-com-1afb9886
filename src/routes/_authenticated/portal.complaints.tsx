@@ -680,3 +680,62 @@ function Modal({
     </div>
   );
 }
+
+function AttachmentsList({
+  complaintId,
+  attachments,
+}: {
+  complaintId: string;
+  attachments: Array<{ path: string; name: string; type?: string; size?: number }>;
+}) {
+  const signFn = useServerFn(getMyComplaintAttachmentUrls);
+  const q = useQuery({
+    queryKey: ["portal", "complaint-attachments", complaintId],
+    queryFn: () => signFn({ data: { id: complaintId } }),
+    enabled: attachments.length > 0,
+    staleTime: 5 * 60_000,
+  });
+
+  if (attachments.length === 0) return null;
+
+  const items = q.data ?? attachments.map((a) => ({ ...a, url: null as string | null }));
+
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground mb-1">
+        المرفقات ({attachments.length})
+      </p>
+      <ul className="space-y-1">
+        {items.map((a, i) => (
+          <li
+            key={i}
+            className="flex items-center justify-between gap-2 rounded border border-border bg-muted/30 px-3 py-2 text-xs"
+          >
+            <span className="truncate">{a.name}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {typeof a.size === "number" && (
+                <span className="text-muted-foreground">
+                  {(a.size / 1024).toFixed(0)} KB
+                </span>
+              )}
+              {a.url ? (
+                <a
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  عرض
+                </a>
+              ) : (
+                <span className="text-muted-foreground">
+                  {q.isLoading ? "…" : "غير متاح"}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
