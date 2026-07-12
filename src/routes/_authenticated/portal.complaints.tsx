@@ -15,7 +15,12 @@ import {
   Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { editMyComplaint, listMyComplaints, submitMyComplaint } from "@/lib/complaints.functions";
+import {
+  editMyComplaint,
+  getMyComplaintAttachmentUrls,
+  listMyComplaints,
+  submitMyComplaint,
+} from "@/lib/complaints.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
 
 export const Route = createFileRoute("/_authenticated/portal/complaints")({
