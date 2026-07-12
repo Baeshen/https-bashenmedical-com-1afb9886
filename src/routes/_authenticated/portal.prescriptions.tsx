@@ -17,15 +17,23 @@ import {
   Calendar,
   CalendarClock,
   Check,
+  CheckCheck,
   Clock,
+  History,
   Loader2,
+  Mail,
+  MessageCircle,
+  Phone,
   Pill,
   RefreshCw,
   Search,
+  Send,
+  Smartphone,
   Sparkles,
   Stethoscope,
+  XCircle,
 } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, formatDistanceToNow } from "date-fns";
 import { ar as arLocale } from "date-fns/locale";
 
 const rxQuery = queryOptions({
