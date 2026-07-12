@@ -65,6 +65,7 @@ import { Route as AuthenticatedRatingsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedQuickAddRouteImport } from './routes/_authenticated/quick-add'
 import { Route as AuthenticatedQrCardsRouteImport } from './routes/_authenticated/qr-cards'
 import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
+import { Route as AuthenticatedPharmacyManagementRouteImport } from './routes/_authenticated/pharmacy-management'
 import { Route as AuthenticatedPatientsManagementRouteImport } from './routes/_authenticated/patients-management'
 import { Route as AuthenticatedPatientsAnalyticsRouteImport } from './routes/_authenticated/patients-analytics'
 import { Route as AuthenticatedPatientStoriesAdminRouteImport } from './routes/_authenticated/patient-stories-admin'
@@ -391,6 +392,12 @@ const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPharmacyManagementRoute =
+  AuthenticatedPharmacyManagementRouteImport.update({
+    id: '/pharmacy-management',
+    path: '/pharmacy-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPatientsManagementRoute =
   AuthenticatedPatientsManagementRouteImport.update({
     id: '/patients-management',
@@ -690,6 +697,7 @@ export interface FileRoutesByFullPath {
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/pharmacy-management': typeof AuthenticatedPharmacyManagementRoute
   '/portal': typeof AuthenticatedPortalRouteWithChildren
   '/qr-cards': typeof AuthenticatedQrCardsRoute
   '/quick-add': typeof AuthenticatedQuickAddRoute
@@ -790,6 +798,7 @@ export interface FileRoutesByTo {
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/pharmacy-management': typeof AuthenticatedPharmacyManagementRoute
   '/qr-cards': typeof AuthenticatedQrCardsRoute
   '/quick-add': typeof AuthenticatedQuickAddRoute
   '/ratings': typeof AuthenticatedRatingsRoute
@@ -891,6 +900,7 @@ export interface FileRoutesById {
   '/_authenticated/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/_authenticated/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/_authenticated/patients-management': typeof AuthenticatedPatientsManagementRoute
+  '/_authenticated/pharmacy-management': typeof AuthenticatedPharmacyManagementRoute
   '/_authenticated/portal': typeof AuthenticatedPortalRouteWithChildren
   '/_authenticated/qr-cards': typeof AuthenticatedQrCardsRoute
   '/_authenticated/quick-add': typeof AuthenticatedQuickAddRoute
@@ -993,6 +1003,7 @@ export interface FileRouteTypes {
     | '/patient-stories-admin'
     | '/patients-analytics'
     | '/patients-management'
+    | '/pharmacy-management'
     | '/portal'
     | '/qr-cards'
     | '/quick-add'
@@ -1093,6 +1104,7 @@ export interface FileRouteTypes {
     | '/patient-stories-admin'
     | '/patients-analytics'
     | '/patients-management'
+    | '/pharmacy-management'
     | '/qr-cards'
     | '/quick-add'
     | '/ratings'
@@ -1193,6 +1205,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patient-stories-admin'
     | '/_authenticated/patients-analytics'
     | '/_authenticated/patients-management'
+    | '/_authenticated/pharmacy-management'
     | '/_authenticated/portal'
     | '/_authenticated/qr-cards'
     | '/_authenticated/quick-add'
@@ -1691,6 +1704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pharmacy-management': {
+      id: '/_authenticated/pharmacy-management'
+      path: '/pharmacy-management'
+      fullPath: '/pharmacy-management'
+      preLoaderRoute: typeof AuthenticatedPharmacyManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patients-management': {
       id: '/_authenticated/patients-management'
       path: '/patients-management'
@@ -2049,6 +2069,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientStoriesAdminRoute: typeof AuthenticatedPatientStoriesAdminRoute
   AuthenticatedPatientsAnalyticsRoute: typeof AuthenticatedPatientsAnalyticsRoute
   AuthenticatedPatientsManagementRoute: typeof AuthenticatedPatientsManagementRoute
+  AuthenticatedPharmacyManagementRoute: typeof AuthenticatedPharmacyManagementRoute
   AuthenticatedPortalRoute: typeof AuthenticatedPortalRouteWithChildren
   AuthenticatedQrCardsRoute: typeof AuthenticatedQrCardsRoute
   AuthenticatedQuickAddRoute: typeof AuthenticatedQuickAddRoute
@@ -2082,6 +2103,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientStoriesAdminRoute: AuthenticatedPatientStoriesAdminRoute,
   AuthenticatedPatientsAnalyticsRoute: AuthenticatedPatientsAnalyticsRoute,
   AuthenticatedPatientsManagementRoute: AuthenticatedPatientsManagementRoute,
+  AuthenticatedPharmacyManagementRoute: AuthenticatedPharmacyManagementRoute,
   AuthenticatedPortalRoute: AuthenticatedPortalRouteWithChildren,
   AuthenticatedQrCardsRoute: AuthenticatedQrCardsRoute,
   AuthenticatedQuickAddRoute: AuthenticatedQuickAddRoute,
@@ -2205,3 +2227,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

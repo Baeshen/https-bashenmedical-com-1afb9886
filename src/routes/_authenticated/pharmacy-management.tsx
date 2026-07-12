@@ -41,7 +41,7 @@ import { listBranches } from "@/lib/dashboard.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/_authenticated/pharmacy")({
+export const Route = createFileRoute("/_authenticated/pharmacy-management")({
   head: () => ({
     meta: [
       { title: "الصيدلية | مجمع باعشن الطبي" },
