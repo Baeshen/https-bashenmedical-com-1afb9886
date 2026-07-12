@@ -16,6 +16,7 @@ import { CentersStrip } from "@/components/home/CentersStrip";
 import { PatientJourney } from "@/components/home/PatientJourney";
 import { NewsStrip } from "@/components/home/NewsStrip";
 import { AppPromo } from "@/components/home/AppPromo";
+import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
