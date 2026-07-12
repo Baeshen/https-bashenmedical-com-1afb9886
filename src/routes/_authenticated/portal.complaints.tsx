@@ -36,31 +36,12 @@ export const Route = createFileRoute("/_authenticated/portal/complaints")({
   component: MyComplaintsPage,
 });
 
-const STATUS_AR: Record<string, string> = {
-  submitted: "تم الإرسال",
-  under_review: "تحت المراجعة",
-  waiting_patient: "بانتظار إجراء منك",
-  resolved: "تم الحل",
-  closed: "مغلق",
-};
-const STATUS_COLOR: Record<string, string> = {
-  submitted: "bg-primary/10 text-primary border-primary/30",
-  under_review: "bg-amber-500/10 text-amber-700 border-amber-500/30",
-  waiting_patient: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-  resolved: "bg-green-500/10 text-green-700 border-green-500/30",
-  closed: "bg-muted text-muted-foreground border-border",
-};
 const TYPE_AR: Record<string, string> = {
   complaint: "شكوى",
   suggestion: "اقتراح",
   thanks: "شكر",
   inquiry: "استفسار",
 };
-const STAGES: Array<{ key: string; label: string }> = [
-  { key: "submitted", label: "تم الإرسال" },
-  { key: "under_review", label: "تحت المراجعة" },
-  { key: "resolved", label: "تم الحل" },
-];
 
 function MyComplaintsPage() {
   const qc = useQueryClient();
