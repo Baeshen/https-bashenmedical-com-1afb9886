@@ -366,10 +366,10 @@ export const deletePayrollRun = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function recalcRunTotals(supabase: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: unknown; error: { message: string } | null }> } } } & Record<string, unknown>, runId: string) {
-  const c = supabase as unknown as {
+async function recalcRunTotals(supabase: unknown, runId: string) {
+  const c = supabase as {
     from: (t: string) => {
-      select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: Array<{ base_salary: number; allowances: number; deductions: number; net_pay: number }> | null; error: { message: string } | null }> };
+      select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: Array<{ base_salary: number; allowances: number; deductions: number; net_pay: number }> | null }> };
       update: (p: Record<string, unknown>) => { eq: (k: string, v: string) => Promise<{ error: { message: string } | null }> };
     };
   };
