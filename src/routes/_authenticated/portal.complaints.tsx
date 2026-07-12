@@ -278,6 +278,16 @@ function MyComplaintsPage() {
               onSaved={() => qc.invalidateQueries({ queryKey: ["portal", "my-complaints"] })}
             />
 
+            <AttachmentsList
+              complaintId={selected.id}
+              attachments={
+                Array.isArray((selected as { attachments?: unknown }).attachments)
+                  ? ((selected as { attachments: Array<{ path: string; name: string; type?: string; size?: number }> }).attachments)
+                  : []
+              }
+            />
+
+
             <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
               <div>
                 <p>تاريخ الإرسال</p>
