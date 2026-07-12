@@ -167,39 +167,160 @@ export const generateSlots = createServerFn({ method: "POST" })
     if (end <= start) throw new Error("وقت النهاية يجب أن يكون بعد البداية.");
 
     const step = data.durationMinutes + data.breakMinutes;
-    const rows: Array<{
-      doctor_id: string;
-      branch_id: string | null;
-      slot_date: string;
-      start_time: string;
-      end_time: string;
-      status: "available";
+    const candidates: Array<{
+      start_min: number;
+      end_min: number;
+      row: {
+        doctor_id: string;
+        branch_id: string | null;
+        slot_date: string;
+        start_time: string;
+        end_time: string;
+        status: "available";
+      };
     }> = [];
     for (let t = start; t + data.durationMinutes <= end; t += step) {
-      rows.push({
-        doctor_id: data.doctorId,
-        branch_id: data.branchId ?? null,
-        slot_date: data.date,
-        start_time: toHHMMSS(t),
-        end_time: toHHMMSS(t + data.durationMinutes),
-        status: "available",
+      candidates.push({
+        start_min: t,
+        end_min: t + data.durationMinutes,
+        row: {
+          doctor_id: data.doctorId,
+          branch_id: data.branchId ?? null,
+          slot_date: data.date,
+          start_time: toHHMMSS(t),
+          end_time: toHHMMSS(t + data.durationMinutes),
+          status: "available",
+        },
       });
     }
-    if (rows.length === 0) throw new Error("لا توجد فترات ضمن هذا النطاق.");
+    if (candidates.length === 0) throw new Error("لا توجد فترات ضمن هذا النطاق.");
 
-    // Insert; ignore duplicates on (doctor_id, slot_date, start_time)
+    // Overlap detection: fetch existing slots for the same doctor/date and
+    // reject any candidate whose [start,end) intersects an existing slot
+    // regardless of status (available/booked/blocked).
+    const { data: existing, error: fetchErr } = await context.supabase
+      .from("availability_slots")
+      .select("start_time, end_time, status")
+      .eq("doctor_id", data.doctorId)
+      .eq("slot_date", data.date);
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    const existingRanges = (existing ?? []).map((r) => ({
+      start: toMinutes(String(r.start_time).slice(0, 5)),
+      end: toMinutes(String(r.end_time).slice(0, 5)),
+      status: r.status as string,
+    }));
+
+    const rows: typeof candidates[number]["row"][] = [];
+    const conflicts: Array<{ start: string; end: string; withStatus: string }> = [];
+    for (const c of candidates) {
+      const clash = existingRanges.find(
+        (e) => c.start_min < e.end && c.end_min > e.start,
+      );
+      if (clash) {
+        conflicts.push({
+          start: c.row.start_time.slice(0, 5),
+          end: c.row.end_time.slice(0, 5),
+          withStatus: clash.status,
+        });
+      } else {
+        rows.push(c.row);
+      }
+    }
+
+    if (rows.length === 0) {
+      return {
+        requested: candidates.length,
+        created: 0,
+        skipped: conflicts.length,
+        conflicts,
+      };
+    }
+
     const { data: inserted, error } = await context.supabase
       .from("availability_slots")
-      .upsert(rows, {
-        onConflict: "doctor_id,slot_date,start_time",
-        ignoreDuplicates: true,
-      })
+      .insert(rows)
       .select("id");
 
     if (error) throw new Error(error.message);
     return {
-      requested: rows.length,
+      requested: candidates.length,
       created: inserted?.length ?? 0,
-      skipped: rows.length - (inserted?.length ?? 0),
+      skipped: conflicts.length,
+      conflicts,
     };
+  });
+
+// ---------------------------------------------------------------------------
+// Staff: list slots for management view (all statuses)
+// ---------------------------------------------------------------------------
+export const listSlotsAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) =>
+    z
+      .object({
+        doctorId: z.string().uuid(),
+        fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const roleChecks = await Promise.all(
+      (["admin", "reception", "doctor"] as const).map((r) =>
+        context.supabase.rpc("has_role", { _user_id: context.userId, _role: r as any }),
+      ),
+    );
+    if (!roleChecks.some((r) => r.data === true)) {
+      throw new Error("غير مصرّح بعرض فترات المواعيد.");
+    }
+    let q = context.supabase
+      .from("availability_slots")
+      .select("id, doctor_id, branch_id, slot_date, start_time, end_time, status, appointment_id")
+      .eq("doctor_id", data.doctorId)
+      .gte("slot_date", data.fromDate)
+      .order("slot_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .limit(1000);
+    if (data.toDate) q = q.lte("slot_date", data.toDate);
+    else q = q.lte("slot_date", data.fromDate);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { slots: rows ?? [] };
+  });
+
+// ---------------------------------------------------------------------------
+// Staff: delete a slot (only if not booked)
+// ---------------------------------------------------------------------------
+export const deleteSlot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) =>
+    z.object({ slotId: z.string().uuid() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const roleChecks = await Promise.all(
+      (["admin", "reception", "doctor"] as const).map((r) =>
+        context.supabase.rpc("has_role", { _user_id: context.userId, _role: r as any }),
+      ),
+    );
+    if (!roleChecks.some((r) => r.data === true)) {
+      throw new Error("غير مصرّح بحذف الفترات.");
+    }
+    // Guard: reject deletion of booked slots
+    const { data: slot, error: fetchErr } = await context.supabase
+      .from("availability_slots")
+      .select("id, status")
+      .eq("id", data.slotId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!slot) throw new Error("الفترة غير موجودة.");
+    if (slot.status === "booked") {
+      throw new Error("لا يمكن حذف فترة محجوزة، ألغِ الموعد أوّلاً.");
+    }
+    const { error } = await context.supabase
+      .from("availability_slots")
+      .delete()
+      .eq("id", data.slotId);
+    if (error) throw new Error(error.message);
+    return { deleted: true };
   });

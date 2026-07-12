@@ -83,6 +83,7 @@ import { Route as AuthenticatedCorporateAdminRouteImport } from './routes/_authe
 import { Route as AuthenticatedCommandCenterRouteImport } from './routes/_authenticated/command-center'
 import { Route as AuthenticatedClinicSettingsRouteImport } from './routes/_authenticated/clinic-settings'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedAvailabilityManagementRouteImport } from './routes/_authenticated/availability-management'
 import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticated/audit-log'
 import { Route as AuthenticatedAuditExportRouteImport } from './routes/_authenticated/audit-export'
 import { Route as AuthenticatedAppointmentsQueueRouteImport } from './routes/_authenticated/appointments-queue'
@@ -497,6 +498,12 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAvailabilityManagementRoute =
+  AuthenticatedAvailabilityManagementRouteImport.update({
+    id: '/availability-management',
+    path: '/availability-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAuditLogRoute = AuthenticatedAuditLogRouteImport.update({
   id: '/audit-log',
   path: '/audit-log',
@@ -703,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/audit-export': typeof AuthenticatedAuditExportRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
+  '/availability-management': typeof AuthenticatedAvailabilityManagementRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/command-center': typeof AuthenticatedCommandCenterRoute
@@ -807,6 +815,7 @@ export interface FileRoutesByTo {
   '/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/audit-export': typeof AuthenticatedAuditExportRoute
   '/audit-log': typeof AuthenticatedAuditLogRoute
+  '/availability-management': typeof AuthenticatedAvailabilityManagementRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/command-center': typeof AuthenticatedCommandCenterRoute
@@ -912,6 +921,7 @@ export interface FileRoutesById {
   '/_authenticated/appointments-queue': typeof AuthenticatedAppointmentsQueueRoute
   '/_authenticated/audit-export': typeof AuthenticatedAuditExportRoute
   '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
+  '/_authenticated/availability-management': typeof AuthenticatedAvailabilityManagementRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/_authenticated/command-center': typeof AuthenticatedCommandCenterRoute
@@ -1018,6 +1028,7 @@ export interface FileRouteTypes {
     | '/appointments-queue'
     | '/audit-export'
     | '/audit-log'
+    | '/availability-management'
     | '/calendar'
     | '/clinic-settings'
     | '/command-center'
@@ -1122,6 +1133,7 @@ export interface FileRouteTypes {
     | '/appointments-queue'
     | '/audit-export'
     | '/audit-log'
+    | '/availability-management'
     | '/calendar'
     | '/clinic-settings'
     | '/command-center'
@@ -1226,6 +1238,7 @@ export interface FileRouteTypes {
     | '/_authenticated/appointments-queue'
     | '/_authenticated/audit-export'
     | '/_authenticated/audit-log'
+    | '/_authenticated/availability-management'
     | '/_authenticated/calendar'
     | '/_authenticated/clinic-settings'
     | '/_authenticated/command-center'
@@ -1868,6 +1881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/availability-management': {
+      id: '/_authenticated/availability-management'
+      path: '/availability-management'
+      fullPath: '/availability-management'
+      preLoaderRoute: typeof AuthenticatedAvailabilityManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audit-log': {
       id: '/_authenticated/audit-log'
       path: '/audit-log'
@@ -2114,6 +2134,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppointmentsQueueRoute: typeof AuthenticatedAppointmentsQueueRoute
   AuthenticatedAuditExportRoute: typeof AuthenticatedAuditExportRoute
   AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
+  AuthenticatedAvailabilityManagementRoute: typeof AuthenticatedAvailabilityManagementRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedClinicSettingsRoute: typeof AuthenticatedClinicSettingsRoute
   AuthenticatedCommandCenterRoute: typeof AuthenticatedCommandCenterRoute
@@ -2151,6 +2172,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppointmentsQueueRoute: AuthenticatedAppointmentsQueueRoute,
   AuthenticatedAuditExportRoute: AuthenticatedAuditExportRoute,
   AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
+  AuthenticatedAvailabilityManagementRoute:
+    AuthenticatedAvailabilityManagementRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedClinicSettingsRoute: AuthenticatedClinicSettingsRoute,
   AuthenticatedCommandCenterRoute: AuthenticatedCommandCenterRoute,
