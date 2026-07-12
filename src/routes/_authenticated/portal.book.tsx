@@ -257,6 +257,7 @@ function BookPage() {
               onClick={() => {
                 setConfirmed(null);
                 setSlot("");
+                setSlotId("");
                 setDate(undefined);
               }}
               className="inline-flex items-center gap-2 rounded-full px-5 h-10 text-sm font-semibold text-white"
