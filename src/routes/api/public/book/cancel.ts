@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/book/cancel")({
         }
 
         const refHex = parsed.data.reference.slice(4).toLowerCase();
-        const phoneNorm = normalizePhone(parsed.data.phone);
+
 
         try {
           const { supabaseAdmin } = await import(
