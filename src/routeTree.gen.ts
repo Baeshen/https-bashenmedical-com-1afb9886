@@ -75,6 +75,7 @@ import { Route as AuthenticatedMyRouteImport } from './routes/_authenticated/my'
 import { Route as AuthenticatedMessageTemplatesRouteImport } from './routes/_authenticated/message-templates'
 import { Route as AuthenticatedMcpStatusRouteImport } from './routes/_authenticated/mcp-status'
 import { Route as AuthenticatedInventoryManagementRouteImport } from './routes/_authenticated/inventory-management'
+import { Route as AuthenticatedHrManagementRouteImport } from './routes/_authenticated/hr-management'
 import { Route as AuthenticatedDoctorsManagementRouteImport } from './routes/_authenticated/doctors-management'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCorporateAdminRouteImport } from './routes/_authenticated/corporate-admin'
@@ -450,6 +451,12 @@ const AuthenticatedInventoryManagementRoute =
     path: '/inventory-management',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHrManagementRoute =
+  AuthenticatedHrManagementRouteImport.update({
+    id: '/hr-management',
+    path: '/hr-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDoctorsManagementRoute =
   AuthenticatedDoctorsManagementRouteImport.update({
     id: '/doctors-management',
@@ -696,6 +703,7 @@ export interface FileRoutesByFullPath {
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/hr-management': typeof AuthenticatedHrManagementRoute
   '/inventory-management': typeof AuthenticatedInventoryManagementRoute
   '/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/message-templates': typeof AuthenticatedMessageTemplatesRoute
@@ -798,6 +806,7 @@ export interface FileRoutesByTo {
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/hr-management': typeof AuthenticatedHrManagementRoute
   '/inventory-management': typeof AuthenticatedInventoryManagementRoute
   '/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/message-templates': typeof AuthenticatedMessageTemplatesRoute
@@ -901,6 +910,7 @@ export interface FileRoutesById {
   '/_authenticated/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/_authenticated/hr-management': typeof AuthenticatedHrManagementRoute
   '/_authenticated/inventory-management': typeof AuthenticatedInventoryManagementRoute
   '/_authenticated/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/_authenticated/message-templates': typeof AuthenticatedMessageTemplatesRoute
@@ -1005,6 +1015,7 @@ export interface FileRouteTypes {
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
+    | '/hr-management'
     | '/inventory-management'
     | '/mcp-status'
     | '/message-templates'
@@ -1107,6 +1118,7 @@ export interface FileRouteTypes {
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
+    | '/hr-management'
     | '/inventory-management'
     | '/mcp-status'
     | '/message-templates'
@@ -1209,6 +1221,7 @@ export interface FileRouteTypes {
     | '/_authenticated/corporate-admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctors-management'
+    | '/_authenticated/hr-management'
     | '/_authenticated/inventory-management'
     | '/_authenticated/mcp-status'
     | '/_authenticated/message-templates'
@@ -1787,6 +1800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hr-management': {
+      id: '/_authenticated/hr-management'
+      path: '/hr-management'
+      fullPath: '/hr-management'
+      preLoaderRoute: typeof AuthenticatedHrManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/doctors-management': {
       id: '/_authenticated/doctors-management'
       path: '/doctors-management'
@@ -2081,6 +2101,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCorporateAdminRoute: typeof AuthenticatedCorporateAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorsManagementRoute: typeof AuthenticatedDoctorsManagementRoute
+  AuthenticatedHrManagementRoute: typeof AuthenticatedHrManagementRoute
   AuthenticatedInventoryManagementRoute: typeof AuthenticatedInventoryManagementRoute
   AuthenticatedMcpStatusRoute: typeof AuthenticatedMcpStatusRoute
   AuthenticatedMessageTemplatesRoute: typeof AuthenticatedMessageTemplatesRoute
@@ -2116,6 +2137,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCorporateAdminRoute: AuthenticatedCorporateAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorsManagementRoute: AuthenticatedDoctorsManagementRoute,
+  AuthenticatedHrManagementRoute: AuthenticatedHrManagementRoute,
   AuthenticatedInventoryManagementRoute: AuthenticatedInventoryManagementRoute,
   AuthenticatedMcpStatusRoute: AuthenticatedMcpStatusRoute,
   AuthenticatedMessageTemplatesRoute: AuthenticatedMessageTemplatesRoute,
