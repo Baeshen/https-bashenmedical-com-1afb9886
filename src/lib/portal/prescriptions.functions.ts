@@ -43,7 +43,7 @@ export type UpcomingAppointment = {
   time: string | null;
   doctor_name: string | null;
   specialty: string | null;
-  status: string;
+  status: AppointmentStatus;
   reason: string | null;
 };
 
