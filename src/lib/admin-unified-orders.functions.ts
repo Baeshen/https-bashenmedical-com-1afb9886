@@ -89,7 +89,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
     const supabase = context.supabase;
 
     const build = (table: string, columns: string, searchOr?: string) => {
-      let sel = supabase
+      let sel: any = (supabase as any)
         .from(table)
         .select(columns)
         .order(sortCol, { ascending: false })
