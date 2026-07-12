@@ -266,6 +266,14 @@ function AdminDashboard() {
           )}
           {(roles.includes("admin") || roles.includes("reception")) && (
             <Link
+              to="/orders-unified"
+              className="rounded-md border border-primary bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10"
+            >
+              الطلبات الموحّدة
+            </Link>
+          )}
+          {(roles.includes("admin") || roles.includes("reception")) && (
+            <Link
               to="/reports"
               className="rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
             >
