@@ -728,7 +728,7 @@ function toIcsFloatingLocal(y: number, m: number, d: number, h: number, mi: numb
   return `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(mi)}00`;
 }
 
-function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[]) {
+function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[], prefs: ReminderPreferences) {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
