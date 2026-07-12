@@ -225,13 +225,18 @@ def run():
 
     # ── POST /track ───────────────────────────────────────────────────────
     print("\n== track ==")
+    last4 = phone[-4:]
     st, body = api("POST", "/api/public/book/track",
-                   body={"reference": ref, "phone": phone})
+                   body={"reference": ref, "phone_last4": last4})
     expect_status("T1 valid track → 200", st, 200, body)
 
     st, body = api("POST", "/api/public/book/track",
-                   body={"reference": "BAA-ZZZZZZZZ", "phone": phone})
+                   body={"reference": "BAA-ZZZZZZZZ", "phone_last4": last4})
     expect_status("T2 bad ref format → 400", st, 400, body)
+
+    st, body = api("POST", "/api/public/book/track",
+                   body={"reference": ref, "phone_last4": "0000"})
+    expect_status("T3 wrong last4 → 404", st, 404, body)
 
     # ── POST /cancel ─────────────────────────────────────────────────────
     print("\n== cancel ==")
