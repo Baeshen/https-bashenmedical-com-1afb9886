@@ -3,7 +3,22 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
+
+export type AppointmentStatus = Database["public"]["Enums"]["appointment_status"];
+const APPOINTMENT_STATUSES: readonly AppointmentStatus[] = [
+  "new",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "no_show",
+] as const;
+function normalizeAppointmentStatus(value: unknown): AppointmentStatus {
+  return APPOINTMENT_STATUSES.includes(value as AppointmentStatus)
+    ? (value as AppointmentStatus)
+    : "new";
+}
 
 export type PrescriptionItem = {
   id: string;
@@ -28,7 +43,7 @@ export type UpcomingAppointment = {
   time: string | null;
   doctor_name: string | null;
   specialty: string | null;
-  status: string;
+  status: AppointmentStatus;
   reason: string | null;
 };
 
@@ -136,7 +151,7 @@ export const getMyPrescriptions = createServerFn({ method: "GET" })
         time: (a.appointment_time as string | null) ?? null,
         doctor_name: (doc?.name_ar as string | null) ?? null,
         specialty: (doc?.specialties?.name_ar as string | null) ?? null,
-        status: (a.status as string) ?? "pending",
+        status: normalizeAppointmentStatus(a.status),
         reason: (a.reason as string | null) ?? null,
       };
     });
