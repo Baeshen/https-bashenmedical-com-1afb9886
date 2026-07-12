@@ -1980,7 +1980,7 @@ function RemindersDeliveryTab({
           limit: 300,
         },
       }),
-    refetchInterval: 60_000,
+    refetchInterval: visibilityAwareInterval(90_000, 5 * 60_000),
     placeholderData: (prev) => prev,
   });
 
