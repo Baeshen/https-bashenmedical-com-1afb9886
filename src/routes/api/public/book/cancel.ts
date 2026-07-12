@@ -137,7 +137,7 @@ export const Route = createFileRoute("/api/public/book/cancel")({
             { _id: match.id, _status: "cancelled", _reason: selfReason } as any,
           );
           if (updErr) {
-            console.error("[cancel] update error", updErr);
+
             return json(500, {
               ok: false,
               kind: "server",
