@@ -18,8 +18,11 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  Printer,
+  QrCode,
 } from "lucide-react";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
+import { StatusTimeline } from "@/components/booking/StatusTimeline";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
