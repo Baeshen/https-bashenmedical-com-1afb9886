@@ -609,7 +609,7 @@ function RxPanel({ branchId }: { branchId: string | null }) {
   });
 
   const review = useMutation({
-    mutationFn: (v: Parameters<typeof reviewFn>[0]["data"]) => reviewFn({ data: v }),
+    mutationFn: (v: { id: string; decision: "approved" | "rejected" | "needs_info"; notes?: string | null; item_id?: string | null; quantity?: number | null }) => reviewFn({ data: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pharmacy", "rx"] });
       qc.invalidateQueries({ queryKey: ["pharmacy", "inv"] });
