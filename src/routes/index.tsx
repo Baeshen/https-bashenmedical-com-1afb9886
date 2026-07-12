@@ -133,6 +133,10 @@ function HomePage() {
 
       <QuickBar />
 
+      <ServicesBento />
+
+
+
       <StatsBar />
 
       {/* Specialties grid */}
