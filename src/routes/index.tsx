@@ -158,26 +158,27 @@ function HomePage() {
               {t("all_specialties")} →
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {specialties?.slice(0, 12).map((s) => (
-              <Link
-                key={s.id}
-                to="/book"
-                search={{ specialty: s.slug }}
-                className="bento-card group p-5"
-              >
-                <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
-                  <Stethoscope className="h-5 w-5" />
-                </div>
-                <div className="mt-3 font-semibold text-sm">
-                  {lang === "ar" ? s.name_ar : s.name_en}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                  {lang === "ar" ? s.description_ar : s.description_en}
-                </div>
-              </Link>
+              <RevealItem key={s.id}>
+                <Link
+                  to="/book"
+                  search={{ specialty: s.slug }}
+                  className="bento-card group p-5 block h-full"
+                >
+                  <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
+                    <Stethoscope className="h-5 w-5" />
+                  </div>
+                  <div className="mt-3 font-semibold text-sm">
+                    {lang === "ar" ? s.name_ar : s.name_en}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                    {lang === "ar" ? s.description_ar : s.description_en}
+                  </div>
+                </Link>
+              </RevealItem>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
