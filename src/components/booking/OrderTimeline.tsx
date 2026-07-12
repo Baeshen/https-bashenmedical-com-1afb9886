@@ -1,14 +1,74 @@
 /**
- * OrderTimeline — Timeline موحّدة لجميع أنواع الطلبات (صيدلية / رأي طبي ثاني /
- * رعاية منزلية / موعد). تشتق الخطوات من نوع الطلب وحالته.
+ * OrderTimeline — Timeline موحّدة لجميع أنواع الطلبات
+ * (موعد / صيدلية / رأي طبي ثاني / رعاية منزلية).
+ *
+ * منطق المراحل:
+ *  - لكل نوع طلب سلسلة خطوات مرتبة، وكل خطوة تحمل مجموعة statuses تُعتبر عندها "مبلوغة".
+ *  - نُحدّد أعلى خطوة بلغتها الحالة الحالية = current.
+ *  - إذا كانت الحالة ضمن `terminalStates` للنوع → جميع الخطوات done.
+ *  - إذا كانت الحالة ضمن `cancelledStates` → عرض مسار مختصر (استلام → إلغاء).
+ *  - إذا كانت الحالة ضمن `abortedStates` (مثل no_show للموعد) → المسار الطبيعي مع
+ *    وسم المرحلة الأخيرة كـ cancelled بدلاً من done.
  */
 import { useI18n } from "@/lib/i18n";
 
-type OrderKind = "appointment" | "pharmacy" | "second_opinion" | "home_care";
+export type OrderKind = "appointment" | "pharmacy" | "second_opinion" | "home_care";
 type StepState = "done" | "current" | "pending" | "cancelled";
 type Step = { key: string; label: string; date: string | null; state: StepState };
 
-function fmt(iso: string | null, lang: "ar" | "en") {
+type FlowStep = { key: string; ar: string; en: string; reachedAt: string[] };
+type Flow = {
+  steps: FlowStep[];
+  terminalStates: string[]; // مسار مكتمل بنجاح — كل الخطوات done
+  cancelledStates: string[]; // مسار ملغى — استلام + إلغاء فقط
+  abortedStates?: string[]; // انتهى دون اكتمال (مثل no_show) — آخر خطوة cancelled
+};
+
+const FLOWS: Record<OrderKind, Flow> = {
+  appointment: {
+    steps: [
+      { key: "received",  ar: "تم استلام الحجز", en: "Booking received", reachedAt: ["new", "confirmed", "completed", "no_show"] },
+      { key: "confirmed", ar: "تأكيد الموعد",    en: "Confirmed",        reachedAt: ["confirmed", "completed", "no_show"] },
+      { key: "visit",     ar: "موعد الزيارة",     en: "Visit",            reachedAt: ["completed", "no_show"] },
+      { key: "completed", ar: "اكتمال الزيارة",   en: "Completed",        reachedAt: ["completed"] },
+    ],
+    terminalStates: ["completed"],
+    cancelledStates: ["cancelled", "canceled"],
+    abortedStates: ["no_show"],
+  },
+  pharmacy: {
+    steps: [
+      { key: "received",   ar: "تم استلام الطلب", en: "Order received", reachedAt: ["new", "processing", "ready", "delivered", "completed"] },
+      { key: "processing", ar: "قيد التجهيز",      en: "Processing",     reachedAt: ["processing", "ready", "delivered", "completed"] },
+      { key: "ready",      ar: "جاهز للتسليم",     en: "Ready",          reachedAt: ["ready", "delivered", "completed"] },
+      { key: "delivered",  ar: "تم التسليم",        en: "Delivered",      reachedAt: ["delivered", "completed"] },
+    ],
+    terminalStates: ["delivered", "completed"],
+    cancelledStates: ["cancelled", "canceled", "rejected"],
+  },
+  second_opinion: {
+    steps: [
+      { key: "received",  ar: "تم استلام الطلب",  en: "Request received", reachedAt: ["new", "in_review", "answered", "closed", "completed"] },
+      { key: "in_review", ar: "قيد المراجعة",     en: "Under review",     reachedAt: ["in_review", "answered", "closed", "completed"] },
+      { key: "answered",  ar: "تم إعداد الرأي",   en: "Opinion ready",    reachedAt: ["answered", "closed", "completed"] },
+      { key: "closed",    ar: "تم إغلاق الطلب",    en: "Closed",           reachedAt: ["closed", "completed"] },
+    ],
+    terminalStates: ["closed", "completed", "answered"],
+    cancelledStates: ["cancelled", "canceled", "rejected"],
+  },
+  home_care: {
+    steps: [
+      { key: "received",    ar: "تم استلام الطلب", en: "Request received", reachedAt: ["new", "confirmed", "in_progress", "completed"] },
+      { key: "confirmed",   ar: "تم التأكيد",       en: "Confirmed",        reachedAt: ["confirmed", "in_progress", "completed"] },
+      { key: "in_progress", ar: "قيد التنفيذ",      en: "In progress",      reachedAt: ["in_progress", "completed"] },
+      { key: "completed",   ar: "اكتملت الخدمة",    en: "Completed",        reachedAt: ["completed"] },
+    ],
+    terminalStates: ["completed"],
+    cancelledStates: ["cancelled", "canceled", "rejected"],
+  },
+};
+
+function fmt(iso: string | null | undefined, lang: "ar" | "en") {
   if (!iso) return null;
   try {
     return new Date(iso).toLocaleString(lang === "ar" ? "ar-SA" : "en-US", {
@@ -19,42 +79,6 @@ function fmt(iso: string | null, lang: "ar" | "en") {
     return iso;
   }
 }
-
-/**
- * تعريف مراحل كل نوع طلب مع الحالة التي تُعتبر عندها كل خطوة "مكتملة".
- * الترتيب مهم — الخطوة قبل الحالة الحالية = done، وبعدها = pending.
- */
-const FLOWS: Record<
-  OrderKind,
-  { key: string; ar: string; en: string; reachedAt: string[] }[]
-> = {
-  appointment: [
-    { key: "received",  ar: "تم استلام الحجز", en: "Booking received", reachedAt: ["new", "confirmed", "completed", "no_show"] },
-    { key: "confirmed", ar: "تأكيد الموعد",    en: "Confirmed",        reachedAt: ["confirmed", "completed", "no_show"] },
-    { key: "visit",     ar: "موعد الزيارة",     en: "Visit",            reachedAt: ["completed", "no_show"] },
-    { key: "completed", ar: "اكتمال الزيارة",   en: "Completed",        reachedAt: ["completed"] },
-  ],
-  pharmacy: [
-    { key: "received",   ar: "تم استلام الطلب",  en: "Order received",  reachedAt: ["new", "processing", "ready", "delivered", "completed"] },
-    { key: "processing", ar: "قيد التجهيز",       en: "Processing",      reachedAt: ["processing", "ready", "delivered", "completed"] },
-    { key: "ready",      ar: "جاهز للتسليم",      en: "Ready",           reachedAt: ["ready", "delivered", "completed"] },
-    { key: "delivered",  ar: "تم التسليم",         en: "Delivered",       reachedAt: ["delivered", "completed"] },
-  ],
-  second_opinion: [
-    { key: "received",  ar: "تم استلام الطلب",   en: "Request received", reachedAt: ["new", "in_review", "answered", "closed", "completed"] },
-    { key: "in_review", ar: "قيد المراجعة",      en: "Under review",     reachedAt: ["in_review", "answered", "closed", "completed"] },
-    { key: "answered",  ar: "تم إعداد الرأي",    en: "Opinion ready",    reachedAt: ["answered", "closed", "completed"] },
-    { key: "closed",    ar: "تم إغلاق الطلب",     en: "Closed",           reachedAt: ["closed", "completed"] },
-  ],
-  home_care: [
-    { key: "received",    ar: "تم استلام الطلب",  en: "Request received", reachedAt: ["new", "confirmed", "in_progress", "completed"] },
-    { key: "confirmed",   ar: "تم التأكيد",        en: "Confirmed",        reachedAt: ["confirmed", "in_progress", "completed"] },
-    { key: "in_progress", ar: "قيد التنفيذ",       en: "In progress",      reachedAt: ["in_progress", "completed"] },
-    { key: "completed",   ar: "اكتملت الخدمة",     en: "Completed",        reachedAt: ["completed"] },
-  ],
-};
-
-const CANCELLED_STATES = new Set(["cancelled", "rejected", "canceled"]);
 
 export function OrderTimeline({
   kind,
@@ -71,32 +95,47 @@ export function OrderTimeline({
   const isAr = lang === "ar";
   const flow = FLOWS[kind];
 
+  const dateForStep = (key: string): string | null => {
+    if (key === "received") return fmt(createdAt, lang);
+    if (key === "visit" || key === "in_progress") return fmt(scheduledAt ?? null, lang);
+    return null;
+  };
+
   const steps: Step[] = (() => {
-    if (CANCELLED_STATES.has(status)) {
+    // مسار ملغى — استلام + إلغاء
+    if (flow.cancelledStates.includes(status)) {
       return [
-        { key: "received", label: isAr ? "تم استلام الطلب" : "Received", date: fmt(createdAt, lang), state: "done" },
+        { key: "received",  label: isAr ? "تم استلام الطلب" : "Received", date: fmt(createdAt, lang), state: "done" },
         { key: "cancelled", label: isAr ? "تم إلغاء الطلب" : "Cancelled", date: null, state: "cancelled" },
       ];
     }
-    // Find the index of the last step reached by current status
-    let currentIdx = 0;
-    for (let i = 0; i < flow.length; i++) {
-      if (flow[i].reachedAt.includes(status)) currentIdx = i;
+
+    const isTerminal = flow.terminalStates.includes(status);
+    const isAborted = flow.abortedStates?.includes(status) ?? false;
+
+    // أعلى خطوة بلغتها الحالة الحالية
+    let reachedIdx = 0;
+    for (let i = 0; i < flow.steps.length; i++) {
+      if (flow.steps[i].reachedAt.includes(status)) reachedIdx = i;
     }
-    return flow.map((s, i) => {
+
+    return flow.steps.map((s, i) => {
       let state: StepState;
-      if (i < currentIdx) state = "done";
-      else if (i === currentIdx) state = s.reachedAt.includes(status) ? (i === flow.length - 1 && status === flow[flow.length - 1].reachedAt.slice(-1)[0] ? "done" : "current") : "current";
-      else state = "pending";
-      // first step is always done once the record exists
-      if (i === 0) state = "done";
-      const date =
-        i === 0
-          ? fmt(createdAt, lang)
-          : s.key === "visit" || s.key === "in_progress"
-          ? fmt(scheduledAt ?? null, lang)
-          : null;
-      return { key: s.key, label: isAr ? s.ar : s.en, date, state };
+      if (isTerminal) {
+        state = "done";
+      } else if (isAborted && i === flow.steps.length - 1) {
+        state = "cancelled";
+      } else if (i < reachedIdx) {
+        state = "done";
+      } else if (i === reachedIdx) {
+        state = i === 0 ? "done" : "current";
+      } else {
+        state = "pending";
+      }
+      // الخطوة الأولى دائمًا "done" ما دام السجل موجودًا
+      if (i === 0 && state !== "cancelled") state = "done";
+
+      return { key: s.key, label: isAr ? s.ar : s.en, date: dateForStep(s.key), state };
     });
   })();
 

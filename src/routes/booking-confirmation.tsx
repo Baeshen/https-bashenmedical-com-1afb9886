@@ -22,7 +22,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
-import { StatusTimeline } from "@/components/booking/StatusTimeline";
+import { OrderTimeline } from "@/components/booking/OrderTimeline";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
@@ -237,12 +237,13 @@ function BookingConfirmationPage() {
             </div>
 
             {/* Timeline of booking stages */}
-            <StatusTimeline
+            <OrderTimeline
+              kind="appointment"
               status={appt.status}
               createdAt={appt.created_at}
-              apptDate={appt.appointment_date}
-              apptTime={appt.appointment_time}
+              scheduledAt={`${appt.appointment_date}T${appt.appointment_time}`}
             />
+
 
             {/* QR + quick actions row */}
             <div className="rounded-2xl border border-border bg-card p-6 flex flex-col sm:flex-row items-center gap-6 print:break-inside-avoid">
