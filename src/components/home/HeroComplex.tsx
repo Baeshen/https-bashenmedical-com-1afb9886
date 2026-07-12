@@ -9,6 +9,7 @@ import heroMobileAvif from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;8
 import heroMobileWebp from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;800;960&format=webp&as=srcset";
 import heroMobileJpg from "@/assets/baeshen-hero-complex-mobile.jpg?w=800&format=jpg";
 import { CalendarCheck, Phone } from "lucide-react";
+import { MedicalMotifs } from "./MedicalMotifs";
 
 const DESKTOP_SIZES = "100vw";
 const MOBILE_SIZES = "100vw";
@@ -50,6 +51,9 @@ export function HeroComplex() {
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a2540]/70 via-[#0f766e]/35 to-[#06b6d4]/25" />
       <div className={`absolute inset-0 ${isAr ? "bg-gradient-to-l" : "bg-gradient-to-r"} from-[#0a2540]/85 via-[#0a2540]/40 to-transparent`} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(6,12,25,0.55)_100%)]" />
+
+      {/* Floating medical motifs (DNA / ECG / cross) */}
+      <MedicalMotifs />
 
       {/* Content */}
       <div className="container-app relative z-10 py-20 md:py-28">
