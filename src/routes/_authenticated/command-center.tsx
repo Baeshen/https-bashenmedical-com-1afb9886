@@ -768,11 +768,12 @@ function FloatingAiAssistant({ open, onOpenChange }: { open: boolean; onOpenChan
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState("");
+  const { items: visibleNav } = useVisibleNav();
   const filtered = useMemo(() => {
     const t = q.trim();
-    if (!t) return NAV.slice(0, 8);
-    return NAV.filter((n) => n.label.toLowerCase().includes(t.toLowerCase())).slice(0, 8);
-  }, [q]);
+    if (!t) return visibleNav.slice(0, 8);
+    return visibleNav.filter((n) => n.label.toLowerCase().includes(t.toLowerCase())).slice(0, 8);
+  }, [q, visibleNav]);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 grid place-items-start justify-center bg-black/60 backdrop-blur-sm p-4 pt-24" onClick={onClose}>
