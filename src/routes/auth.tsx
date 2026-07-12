@@ -15,7 +15,23 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Phone,
+  KeyRound,
+  ArrowRight,
 } from "lucide-react";
+
+// Normalize a Saudi phone input to E.164 (+9665XXXXXXXX).
+// Accepts: 05XXXXXXXX, 5XXXXXXXX, +9665XXXXXXXX, 009665XXXXXXXX
+function normalizeSaPhone(raw: string): string | null {
+  const digits = raw.replace(/[^\d+]/g, "");
+  let n = digits;
+  if (n.startsWith("00")) n = "+" + n.slice(2);
+  if (n.startsWith("+9665") && n.length === 13) return n;
+  if (n.startsWith("9665") && n.length === 12) return "+" + n;
+  if (n.startsWith("05") && n.length === 10) return "+966" + n.slice(1);
+  if (n.startsWith("5") && n.length === 9) return "+966" + n;
+  return null;
+}
 
 const search = z.object({ redirect: z.string().optional() });
 
@@ -70,6 +86,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [channel, setChannel] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -77,6 +94,18 @@ function AuthPage() {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<null | "google" | "apple">(null);
+  // Phone/OTP state
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpStep, setOtpStep] = useState<"enter" | "verify">("enter");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const t = setTimeout(() => setOtpCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpCooldown]);
 
   function safeRedirectTarget(): string | null {
     if (!redirect) return null;
@@ -165,6 +194,75 @@ function AuthPage() {
     } catch (err: any) {
       toast.error(err?.message ?? "حدث خطأ في تسجيل الدخول");
       setOauthLoading(null);
+    }
+  }
+
+  async function handleSendOtp(e?: React.FormEvent) {
+    e?.preventDefault();
+    const e164 = normalizeSaPhone(phone);
+    if (!e164) {
+      toast.error("رقم الجوال غير صحيح. أدخل رقمًا سعوديًا (مثال: 05XXXXXXXX)");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: e164,
+        options: { channel: "sms" },
+      });
+      if (error) {
+        safeLog({ action: "login_failed", metadata: { via: "phone", error: error.message } });
+        throw error;
+      }
+      setOtpStep("verify");
+      setOtpCooldown(45);
+      toast.success("أُرسل رمز التحقق إلى جوالك");
+    } catch (err: any) {
+      const msg = err?.message ?? "تعذر إرسال الرمز";
+      toast.error(
+        /provider|sms|not.*configured|unsupported/i.test(msg)
+          ? "خدمة الرسائل غير مفعّلة. اتصل بمسؤول النظام لتفعيل مزود SMS."
+          : msg,
+      );
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    const e164 = normalizeSaPhone(phone);
+    if (!e164) return;
+    if (otp.trim().length < 4) {
+      toast.error("أدخل رمز التحقق كاملًا");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: e164,
+        token: otp.trim(),
+        type: "sms",
+      });
+      if (error) {
+        safeLog({ action: "login_failed", metadata: { via: "phone", error: error.message } });
+        throw error;
+      }
+      safeLog({ action: "login_success", user_id: data.user?.id ?? null, metadata: { via: "phone" } });
+      // Best-effort: keep the phone in profiles so admin views find them.
+      if (data.user?.id) {
+        supabase
+          .from("profiles")
+          .update({ phone: e164 })
+          .eq("id", data.user.id)
+          .then(() => {}, () => {});
+      }
+      toast.success("تم تسجيل الدخول بنجاح");
+      // onAuthStateChange handles navigation.
+    } catch (err: any) {
+      toast.error(err?.message ?? "رمز غير صحيح أو منتهي الصلاحية");
+    } finally {
+      setOtpLoading(false);
     }
   }
 
@@ -306,94 +404,230 @@ function AuthPage() {
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 h-px bg-[color:var(--portal-border)]" />
             <span className="text-[11px] uppercase tracking-wider text-[color:var(--portal-ink-3)]">
-              أو استخدم بريدك
+              {channel === "email" ? "أو استخدم بريدك" : "أو استخدم جوالك"}
             </span>
             <div className="flex-1 h-px bg-[color:var(--portal-border)]" />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {mode === "signup" && (
-              <Field
-                icon={<UserIcon className="h-4 w-4" />}
-                label="الاسم الكامل"
-                type="text"
-                value={fullName}
-                onChange={setFullName}
-                required
-              />
-            )}
-            <Field
-              icon={<Mail className="h-4 w-4" />}
-              label="البريد الإلكتروني أو الهوية الوطنية"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              required
-              dir="ltr"
-            />
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
-                كلمة المرور
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
-                  <Lock className="h-4 w-4" />
-                </span>
-                <input
-                  type={showPass ? "text" : "password"}
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  dir="ltr"
-                  className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-10 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((v) => !v)}
-                  className="absolute inset-y-0 end-2 grid place-items-center text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)] w-8"
-                  aria-label={showPass ? "إخفاء" : "إظهار"}
-                >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {mode === "signin" && (
-              <div className="flex items-center justify-between text-xs">
-                <label className="inline-flex items-center gap-2 text-[color:var(--portal-ink-2)] select-none">
-                  <input
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="rounded border-[color:var(--portal-border)] text-[color:var(--portal-primary)] focus:ring-[color:var(--portal-primary)]/30"
-                  />
-                  تذكرني
-                </label>
-                <button
-                  type="button"
-                  onClick={() => toast.info("إعادة تعيين كلمة المرور — قريبًا")}
-                  className="font-semibold text-[color:var(--portal-primary)] hover:underline"
-                >
-                  نسيت كلمة المرور؟
-                </button>
-              </div>
-            )}
-
+          {/* Channel tabs: Email vs Phone/OTP */}
+          <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-[color:var(--portal-border)] bg-white/60 p-1">
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
-              style={{ background: "var(--portal-gradient)" }}
+              type="button"
+              onClick={() => setChannel("email")}
+              className={`h-9 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
+                channel === "email"
+                  ? "bg-white shadow text-[color:var(--portal-ink)]"
+                  : "text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-ink)]"
+              }`}
             >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {mode === "signin" ? "دخول" : "إنشاء حساب"}
+              <Mail className="h-3.5 w-3.5" /> البريد
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => {
+                setChannel("phone");
+                setOtpStep("enter");
+              }}
+              className={`h-9 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
+                channel === "phone"
+                  ? "bg-white shadow text-[color:var(--portal-ink)]"
+                  : "text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-ink)]"
+              }`}
+            >
+              <Phone className="h-3.5 w-3.5" /> الجوال + OTP
+            </button>
+          </div>
+
+          {channel === "email" ? (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {mode === "signup" && (
+                <Field
+                  icon={<UserIcon className="h-4 w-4" />}
+                  label="الاسم الكامل"
+                  type="text"
+                  value={fullName}
+                  onChange={setFullName}
+                  required
+                />
+              )}
+              <Field
+                icon={<Mail className="h-4 w-4" />}
+                label="البريد الإلكتروني أو الهوية الوطنية"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                required
+                dir="ltr"
+              />
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+                  كلمة المرور
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                    <Lock className="h-4 w-4" />
+                  </span>
+                  <input
+                    type={showPass ? "text" : "password"}
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    dir="ltr"
+                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-10 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass((v) => !v)}
+                    className="absolute inset-y-0 end-2 grid place-items-center text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)] w-8"
+                    aria-label={showPass ? "إخفاء" : "إظهار"}
+                  >
+                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {mode === "signin" && (
+                <div className="flex items-center justify-between text-xs">
+                  <label className="inline-flex items-center gap-2 text-[color:var(--portal-ink-2)] select-none">
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="rounded border-[color:var(--portal-border)] text-[color:var(--portal-primary)] focus:ring-[color:var(--portal-primary)]/30"
+                    />
+                    تذكرني
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => toast.info("إعادة تعيين كلمة المرور — قريبًا")}
+                    className="font-semibold text-[color:var(--portal-primary)] hover:underline"
+                  >
+                    نسيت كلمة المرور؟
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
+                style={{ background: "var(--portal-gradient)" }}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {mode === "signin" ? "دخول" : "إنشاء حساب"}
+              </button>
+            </form>
+          ) : otpStep === "enter" ? (
+            <form onSubmit={handleSendOtp} className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+                  رقم الجوال
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="05XXXXXXXX"
+                    dir="ltr"
+                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-3 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-[color:var(--portal-ink-3)]">
+                  سنرسل رمز تحقق (OTP) صالحًا لدقائق قليلة.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={otpLoading}
+                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
+                style={{ background: "var(--portal-gradient)" }}
+              >
+                {otpLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4" />
+                )}
+                إرسال رمز التحقق
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-3">
+              <div className="rounded-2xl border border-[color:var(--portal-border)] bg-[color:var(--portal-gradient-soft)] p-3 text-xs text-[color:var(--portal-ink-2)] flex items-center justify-between">
+                <span>
+                  الرمز أُرسل إلى <span dir="ltr" className="font-semibold">{normalizeSaPhone(phone) ?? phone}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtp("");
+                    setOtpStep("enter");
+                  }}
+                  className="text-[color:var(--portal-primary)] font-semibold hover:underline"
+                >
+                  تغيير
+                </button>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+                  رمز التحقق
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                    <KeyRound className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={8}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="——————"
+                    dir="ltr"
+                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-3 text-center tracking-[0.4em] text-lg font-semibold outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={otpLoading}
+                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
+                style={{ background: "var(--portal-gradient)" }}
+              >
+                {otpLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                تحقق ودخول
+              </button>
+
+              <button
+                type="button"
+                disabled={otpCooldown > 0 || otpLoading}
+                onClick={() => handleSendOtp()}
+                className="w-full text-xs text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)] disabled:opacity-60"
+              >
+                {otpCooldown > 0 ? `إعادة الإرسال خلال ${otpCooldown} ثانية` : "لم يصلك الرمز؟ إعادة الإرسال"}
+              </button>
+            </form>
+          )}
 
           <div className="mt-5 text-center text-sm text-[color:var(--portal-ink-3)]">
             {mode === "signin" ? (
