@@ -538,11 +538,11 @@ function BookPage() {
             <Button
               size="lg"
               onClick={handleConfirm}
-              disabled={createMut.isPending}
+              disabled={bookMut.isPending}
               className="rounded-full text-white font-semibold px-6"
               style={{ background: "var(--portal-gradient)" }}
             >
-              {createMut.isPending ? (
+              {bookMut.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" /> جارٍ الحفظ...
                 </>
