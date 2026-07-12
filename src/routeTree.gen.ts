@@ -118,6 +118,7 @@ import { Route as ApiPublicBookCreateRouteImport } from './routes/api/public/boo
 import { Route as ApiPublicBookCancelRouteImport } from './routes/api/public/book/cancel'
 import { Route as ApiPublicBookAvailabilityRouteImport } from './routes/api/public/book/availability'
 import { Route as AuthenticatedOrdersUnifiedKindIdRouteImport } from './routes/_authenticated/orders-unified.$kind.$id'
+import { Route as AuthenticatedPortalOrdersKindIdRouteImport } from './routes/_authenticated/portal.orders.$kind.$id'
 
 const TrackRoute = TrackRouteImport.update({
   id: '/track',
@@ -705,6 +706,12 @@ const AuthenticatedOrdersUnifiedKindIdRoute =
     path: '/$kind/$id',
     getParentRoute: () => AuthenticatedOrdersUnifiedRoute,
   } as any)
+const AuthenticatedPortalOrdersKindIdRoute =
+  AuthenticatedPortalOrdersKindIdRouteImport.update({
+    id: '/orders/$kind/$id',
+    path: '/orders/$kind/$id',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -815,6 +822,7 @@ export interface FileRoutesByFullPath {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -924,6 +932,7 @@ export interface FileRoutesByTo {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1036,6 +1045,7 @@ export interface FileRoutesById {
   '/api/public/book/month-availability': typeof ApiPublicBookMonthAvailabilityRoute
   '/api/public/book/track': typeof ApiPublicBookTrackRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
+  '/_authenticated/portal/orders/$kind/$id': typeof AuthenticatedPortalOrdersKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1148,6 +1158,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/portal/orders/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1257,6 +1268,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/portal/orders/$kind/$id'
   id:
     | '__root__'
     | '/'
@@ -1368,6 +1380,7 @@ export interface FileRouteTypes {
     | '/api/public/book/month-availability'
     | '/api/public/book/track'
     | '/api/public/hooks/send-reminders'
+    | '/_authenticated/portal/orders/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2191,6 +2204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersUnifiedKindIdRouteImport
       parentRoute: typeof AuthenticatedOrdersUnifiedRoute
     }
+    '/_authenticated/portal/orders/$kind/$id': {
+      id: '/_authenticated/portal/orders/$kind/$id'
+      path: '/orders/$kind/$id'
+      fullPath: '/portal/orders/$kind/$id'
+      preLoaderRoute: typeof AuthenticatedPortalOrdersKindIdRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
   }
 }
 
@@ -2224,6 +2244,7 @@ interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalRecordsRoute: typeof AuthenticatedPortalRecordsRoute
   AuthenticatedPortalSettingsRoute: typeof AuthenticatedPortalSettingsRoute
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
+  AuthenticatedPortalOrdersKindIdRoute: typeof AuthenticatedPortalOrdersKindIdRoute
 }
 
 const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
@@ -2241,6 +2262,7 @@ const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
   AuthenticatedPortalRecordsRoute: AuthenticatedPortalRecordsRoute,
   AuthenticatedPortalSettingsRoute: AuthenticatedPortalSettingsRoute,
   AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
+  AuthenticatedPortalOrdersKindIdRoute: AuthenticatedPortalOrdersKindIdRoute,
 }
 
 const AuthenticatedPortalRouteWithChildren =
