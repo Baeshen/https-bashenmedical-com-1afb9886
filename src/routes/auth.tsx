@@ -197,6 +197,75 @@ function AuthPage() {
     }
   }
 
+  async function handleSendOtp(e?: React.FormEvent) {
+    e?.preventDefault();
+    const e164 = normalizeSaPhone(phone);
+    if (!e164) {
+      toast.error("رقم الجوال غير صحيح. أدخل رقمًا سعوديًا (مثال: 05XXXXXXXX)");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: e164,
+        options: { channel: "sms" },
+      });
+      if (error) {
+        safeLog({ action: "login_failed", metadata: { via: "phone", error: error.message } });
+        throw error;
+      }
+      setOtpStep("verify");
+      setOtpCooldown(45);
+      toast.success("أُرسل رمز التحقق إلى جوالك");
+    } catch (err: any) {
+      const msg = err?.message ?? "تعذر إرسال الرمز";
+      toast.error(
+        /provider|sms|not.*configured|unsupported/i.test(msg)
+          ? "خدمة الرسائل غير مفعّلة. اتصل بمسؤول النظام لتفعيل مزود SMS."
+          : msg,
+      );
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    const e164 = normalizeSaPhone(phone);
+    if (!e164) return;
+    if (otp.trim().length < 4) {
+      toast.error("أدخل رمز التحقق كاملًا");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: e164,
+        token: otp.trim(),
+        type: "sms",
+      });
+      if (error) {
+        safeLog({ action: "login_failed", metadata: { via: "phone", error: error.message } });
+        throw error;
+      }
+      safeLog({ action: "login_success", user_id: data.user?.id ?? null, metadata: { via: "phone" } });
+      // Best-effort: keep the phone in profiles so admin views find them.
+      if (data.user?.id) {
+        supabase
+          .from("profiles")
+          .update({ phone: e164 })
+          .eq("id", data.user.id)
+          .then(() => {}, () => {});
+      }
+      toast.success("تم تسجيل الدخول بنجاح");
+      // onAuthStateChange handles navigation.
+    } catch (err: any) {
+      toast.error(err?.message ?? "رمز غير صحيح أو منتهي الصلاحية");
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
   return (
     <div dir="rtl" className="portal-root portal-gradient-bg min-h-dvh flex items-center justify-center p-4 md:p-6 relative overflow-hidden">
       {/* Decorative floating medical motifs */}
