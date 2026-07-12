@@ -80,6 +80,7 @@ import { Route as AuthenticatedHrManagementRouteImport } from './routes/_authent
 import { Route as AuthenticatedDoctorsManagementRouteImport } from './routes/_authenticated/doctors-management'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCorporateAdminRouteImport } from './routes/_authenticated/corporate-admin'
+import { Route as AuthenticatedComplaintsAdminRouteImport } from './routes/_authenticated/complaints-admin'
 import { Route as AuthenticatedCommandCenterRouteImport } from './routes/_authenticated/command-center'
 import { Route as AuthenticatedClinicSettingsRouteImport } from './routes/_authenticated/clinic-settings'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -482,6 +483,12 @@ const AuthenticatedCorporateAdminRoute =
     path: '/corporate-admin',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComplaintsAdminRoute =
+  AuthenticatedComplaintsAdminRouteImport.update({
+    id: '/complaints-admin',
+    path: '/complaints-admin',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCommandCenterRoute =
   AuthenticatedCommandCenterRouteImport.update({
     id: '/command-center',
@@ -720,6 +727,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/command-center': typeof AuthenticatedCommandCenterRoute
+  '/complaints-admin': typeof AuthenticatedComplaintsAdminRoute
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
@@ -826,6 +834,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/command-center': typeof AuthenticatedCommandCenterRoute
+  '/complaints-admin': typeof AuthenticatedComplaintsAdminRoute
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
@@ -933,6 +942,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/clinic-settings': typeof AuthenticatedClinicSettingsRoute
   '/_authenticated/command-center': typeof AuthenticatedCommandCenterRoute
+  '/_authenticated/complaints-admin': typeof AuthenticatedComplaintsAdminRoute
   '/_authenticated/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctors-management': typeof AuthenticatedDoctorsManagementRoute
@@ -1041,6 +1051,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/clinic-settings'
     | '/command-center'
+    | '/complaints-admin'
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
@@ -1147,6 +1158,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/clinic-settings'
     | '/command-center'
+    | '/complaints-admin'
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
@@ -1253,6 +1265,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/clinic-settings'
     | '/_authenticated/command-center'
+    | '/_authenticated/complaints-admin'
     | '/_authenticated/corporate-admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctors-management'
@@ -1873,6 +1886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCorporateAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/complaints-admin': {
+      id: '/_authenticated/complaints-admin'
+      path: '/complaints-admin'
+      fullPath: '/complaints-admin'
+      preLoaderRoute: typeof AuthenticatedComplaintsAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/command-center': {
       id: '/_authenticated/command-center'
       path: '/command-center'
@@ -2158,6 +2178,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedClinicSettingsRoute: typeof AuthenticatedClinicSettingsRoute
   AuthenticatedCommandCenterRoute: typeof AuthenticatedCommandCenterRoute
+  AuthenticatedComplaintsAdminRoute: typeof AuthenticatedComplaintsAdminRoute
   AuthenticatedCorporateAdminRoute: typeof AuthenticatedCorporateAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorsManagementRoute: typeof AuthenticatedDoctorsManagementRoute
@@ -2197,6 +2218,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedClinicSettingsRoute: AuthenticatedClinicSettingsRoute,
   AuthenticatedCommandCenterRoute: AuthenticatedCommandCenterRoute,
+  AuthenticatedComplaintsAdminRoute: AuthenticatedComplaintsAdminRoute,
   AuthenticatedCorporateAdminRoute: AuthenticatedCorporateAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorsManagementRoute: AuthenticatedDoctorsManagementRoute,
