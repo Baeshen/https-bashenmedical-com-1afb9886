@@ -1186,3 +1186,252 @@ function PrefNumber({
   );
 }
 
+/* --------------------------- Export preview modal --------------------------- */
+
+function ExportPreviewModal({
+  plan,
+  upcoming,
+  prefs,
+  onClose,
+}: {
+  plan: ReminderPlan;
+  upcoming: UpcomingAppointment[];
+  prefs: ReminderPreferences;
+  onClose: () => void;
+}) {
+  const tzid = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
+  }, []);
+
+  const [slotSel, setSlotSel] = useState<Set<number>>(
+    () => new Set(plan.slots.map((_, i) => i)),
+  );
+  const [aptSel, setAptSel] = useState<Set<string>>(
+    () => new Set(upcoming.map((a) => a.id)),
+  );
+
+  const toggleSlot = (i: number) => {
+    setSlotSel((s) => {
+      const n = new Set(s);
+      if (n.has(i)) n.delete(i); else n.add(i);
+      return n;
+    });
+  };
+  const toggleApt = (id: string) => {
+    setAptSel((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+  const allSlots = () => setSlotSel(new Set(plan.slots.map((_, i) => i)));
+  const noSlots = () => setSlotSel(new Set());
+  const allApts = () => setAptSel(new Set(upcoming.map((a) => a.id)));
+  const noApts = () => setAptSel(new Set());
+
+  const selectedSlots = plan.slots.filter((_, i) => slotSel.has(i));
+  const selectedAppts = upcoming.filter((a) => aptSel.has(a.id));
+  const totalEvents = selectedSlots.length + selectedAppts.length;
+
+  const groupedSlots = useMemo(() => {
+    const map = new Map<string, { idx: number; slot: ReminderPlan["slots"][number] }[]>();
+    plan.slots.forEach((s, idx) => {
+      const key = s.time.slice(0, 5);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push({ idx, slot: s });
+    });
+    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  }, [plan]);
+
+  const handleExport = () => {
+    if (totalEvents === 0) {
+      toast.error("لا يوجد أحداث محددة للتصدير.");
+      return;
+    }
+    const filteredPlan: ReminderPlan = { ...plan, slots: selectedSlots };
+    exportPlanToIcs(filteredPlan, selectedAppts, prefs);
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] grid place-items-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={onClose}
+      dir="rtl"
+    >
+      <div
+        className="w-full max-w-2xl max-h-[85vh] rounded-3xl bg-white shadow-2xl flex flex-col overflow-hidden text-[color:var(--portal-ink)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="p-5 border-b border-slate-100 flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs font-semibold text-[color:var(--portal-ink-2)] tracking-wider">EXPORT PREVIEW</div>
+            <h3 className="text-lg font-bold mt-0.5">معاينة الأحداث قبل التصدير</h3>
+            <p className="text-xs text-[color:var(--portal-ink-2)] mt-1">
+              راجع الأدوية والمواعيد المحددة، ثم أكّد لتنزيل ملف .ics.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-9 w-9 rounded-full grid place-items-center hover:bg-slate-100 text-slate-500"
+            aria-label="إغلاق"
+          >
+            <XCircle className="h-5 w-5" />
+          </button>
+        </header>
+
+        <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-wrap gap-2 text-[11px]">
+          <FilterPill icon={<Clock className="h-3 w-3" />} label={`المنطقة: ${tzid}`} />
+          <FilterPill icon={<Pill className="h-3 w-3" />} label={`تنبيه الدواء: ${prefs.medication_lead_minutes} د`} />
+          <FilterPill icon={<CalendarClock className="h-3 w-3" />} label={`تنبيه الموعد: ${prefs.appointment_lead_minutes} د`} />
+          <FilterPill icon={<CalendarPlus className="h-3 w-3" />} label={`تكرار: ${prefs.daily_repeat_days} يوم`} />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* Medication slots */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold inline-flex items-center gap-2">
+                <Pill className="h-4 w-4 text-violet-600" />
+                جرعات الأدوية
+                <span className="text-xs font-normal text-[color:var(--portal-ink-2)]">
+                  ({slotSel.size} / {plan.slots.length})
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <button onClick={allSlots} className="rounded-full px-2.5 h-7 bg-slate-100 hover:bg-slate-200 font-semibold">
+                  تحديد الكل
+                </button>
+                <button onClick={noSlots} className="rounded-full px-2.5 h-7 bg-slate-100 hover:bg-slate-200 font-semibold">
+                  إلغاء الكل
+                </button>
+              </div>
+            </div>
+
+            {plan.slots.length === 0 ? (
+              <p className="text-xs text-[color:var(--portal-ink-2)] py-4">لا توجد جرعات في هذه الخطة.</p>
+            ) : (
+              <ul className="space-y-2">
+                {groupedSlots.map(([time, items]) => (
+                  <li key={time} className="rounded-2xl bg-slate-50/60 p-3">
+                    <div className="text-xs font-bold text-[color:var(--portal-ink-2)] mb-2 tabular-nums">
+                      {time}
+                    </div>
+                    <ul className="space-y-1.5">
+                      {items.map(({ idx, slot }) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-slate-100"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={slotSel.has(idx)}
+                            onChange={() => toggleSlot(idx)}
+                            className="mt-1 h-4 w-4 accent-[color:var(--portal-accent)]"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold truncate">
+                              {slot.medication}
+                              {slot.dosage && <span className="text-xs font-normal text-[color:var(--portal-ink-2)]"> — {slot.dosage}</span>}
+                            </div>
+                            <div className="text-[11px] text-[color:var(--portal-ink-2)] mt-0.5">
+                              {[slot.label, slot.note].filter(Boolean).join(" • ")}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Appointments */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold inline-flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-sky-600" />
+                المواعيد القادمة
+                <span className="text-xs font-normal text-[color:var(--portal-ink-2)]">
+                  ({aptSel.size} / {upcoming.length})
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <button onClick={allApts} className="rounded-full px-2.5 h-7 bg-slate-100 hover:bg-slate-200 font-semibold">
+                  تحديد الكل
+                </button>
+                <button onClick={noApts} className="rounded-full px-2.5 h-7 bg-slate-100 hover:bg-slate-200 font-semibold">
+                  إلغاء الكل
+                </button>
+              </div>
+            </div>
+
+            {upcoming.length === 0 ? (
+              <p className="text-xs text-[color:var(--portal-ink-2)] py-4">لا توجد مواعيد قادمة.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {upcoming.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-start gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-slate-100"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={aptSel.has(a.id)}
+                      onChange={() => toggleApt(a.id)}
+                      className="mt-1 h-4 w-4 accent-[color:var(--portal-accent)]"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold">
+                        {format(parseISO(a.date), "PPP", { locale: arLocale })}
+                        {a.time && <span className="tabular-nums"> • {a.time.slice(0, 5)}</span>}
+                      </div>
+                      <div className="text-[11px] text-[color:var(--portal-ink-2)] mt-0.5">
+                        {[a.doctor_name ? `د. ${a.doctor_name}` : null, a.specialty, a.reason]
+                          .filter(Boolean).join(" • ")}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <footer className="p-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/60">
+          <div className="text-xs text-[color:var(--portal-ink-2)]">
+            سيُصدَّر <span className="font-bold text-[color:var(--portal-ink)]">{totalEvents}</span> حدثاً
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="rounded-full h-10 px-4 text-sm font-semibold bg-white ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={totalEvents === 0}
+              className="inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "var(--portal-gradient)" }}
+            >
+              <CalendarPlus className="h-4 w-4" /> تنزيل .ics
+            </button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function FilterPill({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white ring-1 ring-slate-200 px-2.5 h-6 text-[color:var(--portal-ink-2)]">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+
