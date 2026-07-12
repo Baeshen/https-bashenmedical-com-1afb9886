@@ -6,10 +6,13 @@ import {
   getMyPrescriptions,
   generateMedicationReminders,
   getMedicationReminderLog,
+  getAdherenceStats,
+  confirmMedicationReminder,
   type PrescriptionItem,
   type ReminderPlan,
   type ReminderLogEntry,
   type UpcomingAppointment,
+  type AdherenceStats,
 } from "@/lib/portal/prescriptions.functions";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +21,7 @@ import {
   Calendar,
   CalendarClock,
   Check,
+  Award,
   CalendarPlus,
   CheckCheck,
   Clock,
@@ -199,6 +203,9 @@ function PrescriptionsPage() {
           </div>
         </div>
       )}
+
+      {/* Weekly adherence */}
+      <AdherenceCard />
 
       {/* Reminder log */}
       <ReminderLogSection />
@@ -560,14 +567,25 @@ function ReminderLogSection() {
 }
 
 function ReminderLogRow({ r }: { r: ReminderLogEntry }) {
+  const qc = useQueryClient();
+  const confirm = useMutation({
+    mutationFn: (taken: boolean) => confirmMedicationReminder({ data: { id: r.id, taken } }),
+    onSuccess: (_d, taken) => {
+      toast.success(taken ? "تم تسجيل تناول الجرعة." : "تم إلغاء التأكيد.");
+      qc.invalidateQueries({ queryKey: ["portal", "reminder-log"] });
+      qc.invalidateQueries({ queryKey: ["portal", "adherence"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر الحفظ"),
+  });
+  const taken = !!r.read_at;
   return (
     <li className="p-3.5 flex items-start gap-3 hover:bg-white/70 transition-colors">
-      <div className="shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-sky-100 grid place-items-center text-violet-600">
+      <div className={`shrink-0 h-10 w-10 rounded-xl grid place-items-center ${taken ? "bg-emerald-50 text-emerald-600" : "bg-gradient-to-br from-violet-100 to-sky-100 text-violet-600"}`}>
         <Pill className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold truncate">{r.medication || "تذكير دواء"}</span>
+          <span className={`font-semibold truncate ${taken ? "line-through opacity-70" : ""}`}>{r.medication || "تذكير دواء"}</span>
           {r.time && (
             <span className="text-xs bg-slate-100 text-slate-700 rounded-md px-1.5 py-0.5 tabular-nums inline-flex items-center gap-1">
               <Clock className="h-3 w-3" /> {r.time}
@@ -593,14 +611,34 @@ function ReminderLogRow({ r }: { r: ReminderLogEntry }) {
               ? `أُرسل ${formatDistanceToNow(parseISO(r.sent_at), { addSuffix: true, locale: arLocale })}`
               : `أُنشئ ${formatDistanceToNow(parseISO(r.created_at), { addSuffix: true, locale: arLocale })}`}
           </span>
-          {r.read_at && (
+          {taken && r.read_at && (
             <span className="inline-flex items-center gap-1 text-emerald-600">
-              <CheckCheck className="h-3 w-3" /> مقروء
+              <CheckCheck className="h-3 w-3" /> تم التناول {formatDistanceToNow(parseISO(r.read_at), { addSuffix: true, locale: arLocale })}
             </span>
           )}
         </div>
       </div>
-      <StatusBadge status={r.send_status} />
+      <div className="shrink-0 flex flex-col items-end gap-1.5">
+        <StatusBadge status={r.send_status} />
+        <button
+          onClick={() => confirm.mutate(!taken)}
+          disabled={confirm.isPending}
+          className={`inline-flex items-center gap-1 rounded-full h-7 px-2.5 text-[11px] font-semibold transition-colors disabled:opacity-60 ${
+            taken
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              : "bg-slate-900 text-white hover:bg-slate-800"
+          }`}
+          title={taken ? "إلغاء تأكيد التناول" : "تأكيد تناول الجرعة"}
+        >
+          {confirm.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : taken ? (
+            <><XCircle className="h-3 w-3" /> إلغاء</>
+          ) : (
+            <><Check className="h-3 w-3" /> تناولتها</>
+          )}
+        </button>
+      </div>
     </li>
   );
 }
@@ -755,4 +793,98 @@ function exportPlanToIcs(plan: ReminderPlan, upcoming: UpcomingAppointment[]) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   toast.success("تم تنزيل ملف التقويم. افتحه لاستيراده في Google / Apple / Outlook.");
+}
+
+/* --------------------------- Weekly adherence --------------------------- */
+
+const adherenceQuery = queryOptions({
+  queryKey: ["portal", "adherence"],
+  queryFn: () => getAdherenceStats(),
+  staleTime: 20_000,
+});
+
+function AdherenceCard() {
+  const { data, isLoading } = useQuery(adherenceQuery);
+  const stats: AdherenceStats | undefined = data;
+
+  const ring = (pct: number) => {
+    if (pct >= 80) return "text-emerald-600";
+    if (pct >= 50) return "text-amber-600";
+    return "text-rose-500";
+  };
+  const bar = (pct: number) => {
+    if (pct >= 80) return "bg-emerald-400";
+    if (pct >= 50) return "bg-amber-400";
+    if (pct > 0) return "bg-rose-400";
+    return "bg-slate-200";
+  };
+
+  return (
+    <div className="glass-card p-5 md:p-6">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-100 to-sky-100 grid place-items-center text-emerald-600">
+            <Award className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-bold">التزام هذا الأسبوع</h3>
+            <p className="text-xs text-[color:var(--portal-ink-2)]">
+              نسبة الجرعات المؤكَّدة من إجمالي التذكيرات في آخر 7 أيام.
+            </p>
+          </div>
+        </div>
+        {stats && (
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className={`text-3xl font-bold tabular-nums ${ring(stats.weekPct)}`}>{stats.weekPct}%</div>
+              <div className="text-[11px] text-[color:var(--portal-ink-2)]">
+                {stats.weekTaken} / {stats.weekTotal} جرعة
+              </div>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-3 py-2 text-center">
+              <div className="text-xs">🔥 سلسلة</div>
+              <div className="text-lg font-bold leading-none">{stats.streak} <span className="text-xs font-normal">يوم</span></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {isLoading || !stats ? (
+        <div className="py-6 text-center text-sm text-[color:var(--portal-ink-2)] inline-flex items-center gap-2 justify-center w-full">
+          <Loader2 className="h-4 w-4 animate-spin" /> جاري احتساب الالتزام…
+        </div>
+      ) : stats.weekTotal === 0 ? (
+        <div className="rounded-2xl bg-slate-50 p-6 text-center text-sm text-[color:var(--portal-ink-2)]">
+          لا توجد تذكيرات بعد هذا الأسبوع — ولّد خطة تذكيرات لبدء تتبع التزامك.
+        </div>
+      ) : (
+        <div className="grid grid-cols-7 gap-2">
+          {stats.days.map((d) => {
+            const h = Math.max(12, Math.round((d.pct / 100) * 90));
+            return (
+              <div key={d.date} className="flex flex-col items-center gap-1.5">
+                <div className="w-full h-24 rounded-xl bg-slate-100/70 flex items-end overflow-hidden">
+                  <div
+                    className={`w-full ${bar(d.pct)} transition-all`}
+                    style={{ height: d.total > 0 ? `${h}%` : "6%" }}
+                    title={`${d.taken} / ${d.total}`}
+                  />
+                </div>
+                <div className="text-[11px] font-semibold">{d.weekday}</div>
+                <div className={`text-[11px] tabular-nums ${d.total === 0 ? "text-slate-400" : ring(d.pct)}`}>
+                  {d.total === 0 ? "—" : `${d.pct}%`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {stats && stats.bestDay && stats.bestDay.total > 0 && (
+        <p className="mt-4 text-xs text-[color:var(--portal-ink-2)]">
+          أفضل يوم: <span className="font-semibold text-[color:var(--portal-ink)]">{stats.bestDay.weekday}</span> بنسبة {stats.bestDay.pct}%.
+        </p>
+      )}
+    </div>
+  );
 }
