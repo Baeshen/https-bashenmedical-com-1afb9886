@@ -104,7 +104,7 @@ export function HomeCareRequestForm({ services }: { services: string[] }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/my-orders" search={{}}><Button variant="premium">تتبع طلباتي</Button></Link>
+          <Link to="/my-orders"><Button variant="premium">تتبع طلباتي</Button></Link>
           <Button variant="outline" onClick={() => setResult(null)}>طلب جديد</Button>
         </div>
       </div>
