@@ -35,6 +35,9 @@
  * bookings that RLS would otherwise hide from anon; no PII is returned.
  */
 import { createFileRoute } from "@tanstack/react-router";
+// Riyadh-local "today"/"now" helpers shared with cancel.ts and slots.functions.ts
+// so the day boundary is identical across resolver, cancel API, and portal cancel.
+import { riyadhTodayIso, riyadhNowMinutes } from "@/lib/riyadh-date";
 
 function json(
   status: number,
