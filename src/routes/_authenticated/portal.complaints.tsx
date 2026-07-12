@@ -258,7 +258,15 @@ function MyComplaintsPage() {
               </button>
             </div>
 
-            <Timeline currentStatus={selected.status} />
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">مراحل معالجة البلاغ</p>
+              <OrderProgressSteps kind="complaint" status={selected.status} />
+              {selected.status === "waiting_patient" && (
+                <p className="mt-2 text-xs text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded p-2">
+                  يحتاج البلاغ إجراءً منك — يرجى مراجعة تفاصيلك أو التواصل مع فريق تجربة المريض.
+                </p>
+              )}
+            </div>
 
             <EditableMessage
               id={selected.id}
