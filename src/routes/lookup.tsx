@@ -482,11 +482,11 @@ function LookupPage() {
             </div>
 
             {/* Timeline */}
-            <StatusTimeline
+            <OrderTimeline
+              kind="appointment"
               status={appt.status}
               createdAt={appt.created_at}
-              apptDate={appt.appointment_date}
-              apptTime={appt.appointment_time}
+              scheduledAt={`${appt.appointment_date}T${appt.appointment_time}`}
             />
 
             {/* Change history from DB audit */}
