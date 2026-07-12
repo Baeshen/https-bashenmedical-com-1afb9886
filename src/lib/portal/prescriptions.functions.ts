@@ -203,7 +203,7 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
     const pid = patientRes.data.id;
 
     const today = new Date().toISOString().slice(0, 10);
-    const [medsRes, allergyRes, aptsRes] = await Promise.all([
+    const [medsRes, allergyRes, aptsRes, prefsRes] = await Promise.all([
       supabase
         .from("patient_medications")
         .select("medication_name, dosage, frequency, route, notes, status, start_date, end_date")
@@ -219,7 +219,13 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
         .in("status", ["new", "confirmed"])
         .order("appointment_date", { ascending: true })
         .limit(10),
+      supabase
+        .from("reminder_preferences")
+        .select("wake_hour, sleep_hour")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
+    const prefsRow = prefsRes.data;
 
     const activeMeds = (medsRes.data ?? []).filter((m) => {
       const status = ((m.status as string | null) ?? "").toLowerCase();
