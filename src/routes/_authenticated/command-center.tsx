@@ -13,6 +13,7 @@ import { LineChart, Line, ResponsiveContainer, Area, AreaChart, Tooltip, XAxis, 
 import { getCommandCenterKpis, type CommandCenterKpis } from "@/lib/command-center/kpis.functions";
 import { getDashboardUpcoming } from "@/lib/dashboard.functions";
 import { SITE } from "@/lib/site";
+import { useMyPermissions } from "@/components/rbac/RequirePermission";
 
 /* ============================================================
    Route
