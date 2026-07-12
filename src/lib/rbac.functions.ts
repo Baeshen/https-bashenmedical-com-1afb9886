@@ -152,6 +152,34 @@ export const setRolePermission = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const getMyPermissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const roles = await getRoles(supabase, userId);
+    const isSuper = roles.includes("super_admin");
+    if (isSuper) {
+      const { data } = await supabase.from("permissions").select("key");
+      return {
+        userId,
+        roles,
+        isSuper: true,
+        permissions: (data ?? []).map((p: any) => p.key as string),
+      };
+    }
+    if (roles.length === 0) {
+      return { userId, roles, isSuper: false, permissions: [] as string[] };
+    }
+    const { data } = await supabase
+      .from("role_permissions")
+      .select("permission_key")
+      .in("role", roles as any);
+    const perms = Array.from(
+      new Set((data ?? []).map((r: any) => r.permission_key as string)),
+    );
+    return { userId, roles, isSuper: false, permissions: perms };
+  });
+
 /* ---------------- Audit log (extended with IP/UA) ---------------- */
 
 const auditFilterSchema = z.object({
