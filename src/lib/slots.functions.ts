@@ -162,8 +162,12 @@ export const cancelMyAppointment = createServerFn({ method: "POST" })
       throw new Error("لا يمكن إلغاء موعد سابق.");
     }
 
-    // 3) Update via user-scoped client — RLS `users cancel own appointments`
-    //    enforces phone ownership + allowed status transitions.
+    // 3) Set audit reason (required by log_appointment_change for cancelled)
+    //    then update via user-scoped client — RLS `users cancel own
+    //    appointments` still enforces phone ownership + allowed transitions.
+    const reasonText =
+      (data.reason ?? "").trim() || "إلغاء ذاتي من بوابة المريض";
+    await sb.rpc("set_change_reason" as any, { _reason: reasonText } as any);
     const { error: updErr, data: updated } = await sb
       .from("appointments")
       .update({ status: "cancelled" })
