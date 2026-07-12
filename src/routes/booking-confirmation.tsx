@@ -18,8 +18,11 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  Printer,
+  QrCode,
 } from "lucide-react";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
+import { StatusTimeline } from "@/components/booking/StatusTimeline";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
@@ -230,6 +233,46 @@ function BookingConfirmationPage() {
                     تم استلام حجزك وسنتواصل معك لتأكيد الموعد.
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Timeline of booking stages */}
+            <StatusTimeline
+              status={appt.status}
+              createdAt={appt.created_at}
+              apptDate={appt.appointment_date}
+              apptTime={appt.appointment_time}
+            />
+
+            {/* QR + quick actions row */}
+            <div className="rounded-2xl border border-border bg-card p-6 flex flex-col sm:flex-row items-center gap-6 print:break-inside-avoid">
+              <div className="shrink-0 grid place-items-center">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=${encodeURIComponent(
+                    `${typeof window !== "undefined" ? window.location.origin : ""}/lookup?ref=${share.ref}&phone=${encodeURIComponent(appt.patient_phone)}`,
+                  )}`}
+                  alt="QR"
+                  width={160}
+                  height={160}
+                  className="rounded-lg border border-border bg-white p-2"
+                />
+                <span className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <QrCode className="h-3 w-3" /> {lang === "ar" ? "امسح لعرض حجزك" : "Scan to view booking"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0 text-sm text-muted-foreground leading-6 text-center sm:text-start">
+                <p>
+                  {lang === "ar"
+                    ? "احتفظ برقم الحجز ورقم جوالك — يمكنك التتبع في أي وقت من صفحة (تتبع الحجز)."
+                    : "Keep your booking ref and phone — you can track anytime from the Track page."}
+                </p>
+                <button
+                  onClick={() => typeof window !== "undefined" && window.print()}
+                  className="mt-3 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm hover:bg-muted print:hidden"
+                >
+                  <Printer className="h-4 w-4" />
+                  {lang === "ar" ? "طباعة / حفظ PDF" : "Print / Save PDF"}
+                </button>
               </div>
             </div>
 
