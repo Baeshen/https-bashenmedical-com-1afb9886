@@ -275,11 +275,13 @@ export const getRecordFileUrl = createServerFn({ method: "POST" })
     let owns = false;
     if (data.bucket === "lab-reports") {
       const q = await supabase
-        .from("lab_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+        .from("lab_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path)
+        .not("released_at", "is", null).limit(1);
       owns = (q.data ?? []).length > 0;
     } else if (data.bucket === "radiology-reports") {
       const q = await supabase
-        .from("radiology_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path).limit(1);
+        .from("radiology_reports").select("id").eq("patient_id", patientId).eq("file_path", data.path)
+        .not("released_at", "is", null).limit(1);
       owns = (q.data ?? []).length > 0;
     } else {
       const q = await supabase
