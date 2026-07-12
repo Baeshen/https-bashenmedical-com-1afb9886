@@ -60,6 +60,7 @@ import { Route as AuthenticatedTransitionAlertsRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSecondOpinionAdminRouteImport } from './routes/_authenticated/second-opinion-admin'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedReportDownloadsAuditRouteImport } from './routes/_authenticated/report-downloads-audit'
 import { Route as AuthenticatedRbacAuditRouteImport } from './routes/_authenticated/rbac-audit'
 import { Route as AuthenticatedRbacRouteImport } from './routes/_authenticated/rbac'
 import { Route as AuthenticatedRatingsRouteImport } from './routes/_authenticated/ratings'
@@ -378,6 +379,12 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportDownloadsAuditRoute =
+  AuthenticatedReportDownloadsAuditRouteImport.update({
+    id: '/report-downloads-audit',
+    path: '/report-downloads-audit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRbacAuditRoute = AuthenticatedRbacAuditRouteImport.update({
   id: '/rbac-audit',
   path: '/rbac-audit',
@@ -784,6 +791,7 @@ export interface FileRoutesByFullPath {
   '/ratings': typeof AuthenticatedRatingsRoute
   '/rbac': typeof AuthenticatedRbacRoute
   '/rbac-audit': typeof AuthenticatedRbacAuditRoute
+  '/report-downloads-audit': typeof AuthenticatedReportDownloadsAuditRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/second-opinion-admin': typeof AuthenticatedSecondOpinionAdminRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -895,6 +903,7 @@ export interface FileRoutesByTo {
   '/ratings': typeof AuthenticatedRatingsRoute
   '/rbac': typeof AuthenticatedRbacRoute
   '/rbac-audit': typeof AuthenticatedRbacAuditRoute
+  '/report-downloads-audit': typeof AuthenticatedReportDownloadsAuditRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/second-opinion-admin': typeof AuthenticatedSecondOpinionAdminRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -1009,6 +1018,7 @@ export interface FileRoutesById {
   '/_authenticated/ratings': typeof AuthenticatedRatingsRoute
   '/_authenticated/rbac': typeof AuthenticatedRbacRoute
   '/_authenticated/rbac-audit': typeof AuthenticatedRbacAuditRoute
+  '/_authenticated/report-downloads-audit': typeof AuthenticatedReportDownloadsAuditRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/second-opinion-admin': typeof AuthenticatedSecondOpinionAdminRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -1123,6 +1133,7 @@ export interface FileRouteTypes {
     | '/ratings'
     | '/rbac'
     | '/rbac-audit'
+    | '/report-downloads-audit'
     | '/reports'
     | '/second-opinion-admin'
     | '/settings'
@@ -1234,6 +1245,7 @@ export interface FileRouteTypes {
     | '/ratings'
     | '/rbac'
     | '/rbac-audit'
+    | '/report-downloads-audit'
     | '/reports'
     | '/second-opinion-admin'
     | '/settings'
@@ -1347,6 +1359,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ratings'
     | '/_authenticated/rbac'
     | '/_authenticated/rbac-audit'
+    | '/_authenticated/report-downloads-audit'
     | '/_authenticated/reports'
     | '/_authenticated/second-opinion-admin'
     | '/_authenticated/settings'
@@ -1809,6 +1822,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/report-downloads-audit': {
+      id: '/_authenticated/report-downloads-audit'
+      path: '/report-downloads-audit'
+      fullPath: '/report-downloads-audit'
+      preLoaderRoute: typeof AuthenticatedReportDownloadsAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/rbac-audit': {
@@ -2333,6 +2353,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRatingsRoute: typeof AuthenticatedRatingsRoute
   AuthenticatedRbacRoute: typeof AuthenticatedRbacRoute
   AuthenticatedRbacAuditRoute: typeof AuthenticatedRbacAuditRoute
+  AuthenticatedReportDownloadsAuditRoute: typeof AuthenticatedReportDownloadsAuditRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSecondOpinionAdminRoute: typeof AuthenticatedSecondOpinionAdminRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -2374,6 +2395,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRatingsRoute: AuthenticatedRatingsRoute,
   AuthenticatedRbacRoute: AuthenticatedRbacRoute,
   AuthenticatedRbacAuditRoute: AuthenticatedRbacAuditRoute,
+  AuthenticatedReportDownloadsAuditRoute:
+    AuthenticatedReportDownloadsAuditRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSecondOpinionAdminRoute: AuthenticatedSecondOpinionAdminRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
