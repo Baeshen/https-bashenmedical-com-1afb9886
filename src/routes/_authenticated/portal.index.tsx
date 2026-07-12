@@ -8,6 +8,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getDashboardSummary } from "@/lib/portal/portal.functions";
+import { MyRecentOrders } from "@/components/portal/MyRecentOrders";
 import { cancelMyAppointment } from "@/lib/slots.functions";
 import {
   CalendarCheck,
@@ -152,7 +153,11 @@ function PortalDashboard() {
         </div>
       </section>
 
+      {/* طلباتي الأخيرة (موحّد عبر كل الخدمات) */}
+      <MyRecentOrders />
+
       {/* Row 1: Upcoming + Health Summary + AI Summary */}
+
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Upcoming appointments */}
         <div className="portal-card p-5 md:p-6 lg:col-span-2 min-w-0">
