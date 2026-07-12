@@ -38,6 +38,7 @@ const NAV: NavItem[] = [
   { to: "/portal/invoices", icon: ReceiptText, label_ar: "الفواتير", label_en: "Invoices" },
   { to: "/portal/payments", icon: CreditCard, label_ar: "المدفوعات", label_en: "Payments" },
   { to: "/portal/notifications", icon: Bell, label_ar: "الإشعارات", label_en: "Notifications" },
+  { to: "/portal/complaints", icon: MessageSquareWarning, label_ar: "الشكاوى والمقترحات", label_en: "Complaints" },
   { to: "/portal/profile", icon: User, label_ar: "الملف الشخصي", label_en: "Profile" },
   { to: "/portal/settings", icon: Settings, label_ar: "الإعدادات", label_en: "Settings" },
 ];
