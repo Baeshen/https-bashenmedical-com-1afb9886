@@ -640,6 +640,7 @@ export type Database = {
       complaints: {
         Row: {
           assigned_to: string | null
+          attachments: Json
           created_at: string
           department: string | null
           id: string
@@ -656,6 +657,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          attachments?: Json
           created_at?: string
           department?: string | null
           id?: string
@@ -672,6 +674,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          attachments?: Json
           created_at?: string
           department?: string | null
           id?: string
