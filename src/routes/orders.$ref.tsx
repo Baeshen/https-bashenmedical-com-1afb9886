@@ -339,3 +339,13 @@ function ResultBanner({ show, isAr, okAr, okEn }: { show: boolean; isAr: boolean
     </div>
   );
 }
+
+function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-border/50 pb-2 last:border-b-0 last:pb-0">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground min-w-24">{label}</span>
+      <span className="font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
