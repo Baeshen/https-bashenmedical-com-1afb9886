@@ -119,19 +119,14 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       for (const d of drs.data ?? []) doctorsById[d.id] = d;
     }
 
-    // Featured / active doctors for the sidebar rail (branch-scoped when possible)
-    let doctorsRail = await supabase
+    // Featured / active doctors for the sidebar rail
+    const doctorsRail = await supabase
       .from("doctors")
       .select("id, name_ar, name_en, photo_url, title_ar, title_en, specialty_id")
-      .eq("is_active" as any, true)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
       .limit(6);
-    // If doctors table doesn't have is_active, fall back
-    if (doctorsRail.error) {
-      doctorsRail = await supabase
-        .from("doctors")
-        .select("id, name_ar, name_en, photo_url, title_ar, title_en, specialty_id")
-        .limit(6);
-    }
+
 
     // Notifications for the current user
     const notifRes = await supabase
