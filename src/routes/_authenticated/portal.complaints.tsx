@@ -151,8 +151,44 @@ function MyComplaintsPage() {
       ) : rows.length === 0 ? (
         <EmptyState onNew={() => setShowForm(true)} />
       ) : (
-        <div className="grid gap-2">
-          {rows.map((r) => (
+        <>
+          <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border bg-card p-3">
+            <label className="text-xs text-muted-foreground">الحالة</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            >
+              <option value="all">الكل</option>
+              {Object.entries(STATUS_AR).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+            <label className="text-xs text-muted-foreground ms-2">الترتيب</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+              className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            >
+              <option value="newest">الأحدث أولاً</option>
+              <option value="oldest">الأقدم أولاً</option>
+            </select>
+            {statusFilter !== "all" && (
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="ms-auto text-xs text-primary hover:underline"
+              >
+                مسح الفلاتر
+              </button>
+            )}
+          </div>
+          {filteredRows.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+              لا توجد بلاغات مطابقة للفلتر الحالي.
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              {filteredRows.map((r) => (
             <button
               key={r.id}
               onClick={() => setSelectedId(r.id)}
