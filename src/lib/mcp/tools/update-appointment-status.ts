@@ -47,7 +47,7 @@ export default defineTool({
     let result: {
       content: Array<{ type: "text"; text: string }>;
       isError?: boolean;
-      structuredContent?: unknown;
+      structuredContent?: Record<string, unknown>;
     };
     if (error) {
       result = {
