@@ -9,6 +9,7 @@ import heroMobileAvif from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;8
 import heroMobileWebp from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;800;960&format=webp&as=srcset";
 import heroMobileJpg from "@/assets/baeshen-hero-complex-mobile.jpg?w=800&format=jpg";
 import { CalendarCheck, Phone } from "lucide-react";
+import { MedicalMotifs } from "./MedicalMotifs";
 
 const DESKTOP_SIZES = "100vw";
 const MOBILE_SIZES = "100vw";
