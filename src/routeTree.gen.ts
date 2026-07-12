@@ -117,6 +117,7 @@ import { Route as ApiPublicBookMonthAvailabilityRouteImport } from './routes/api
 import { Route as ApiPublicBookCreateRouteImport } from './routes/api/public/book/create'
 import { Route as ApiPublicBookCancelRouteImport } from './routes/api/public/book/cancel'
 import { Route as ApiPublicBookAvailabilityRouteImport } from './routes/api/public/book/availability'
+import { Route as AuthenticatedOrdersUnifiedKindIdRouteImport } from './routes/_authenticated/orders-unified.$kind.$id'
 
 const TrackRoute = TrackRouteImport.update({
   id: '/track',
@@ -698,6 +699,12 @@ const ApiPublicBookAvailabilityRoute =
     path: '/api/public/book/availability',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedOrdersUnifiedKindIdRoute =
+  AuthenticatedOrdersUnifiedKindIdRouteImport.update({
+    id: '/$kind/$id',
+    path: '/$kind/$id',
+    getParentRoute: () => AuthenticatedOrdersUnifiedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -752,7 +759,7 @@ export interface FileRoutesByFullPath {
   '/my': typeof AuthenticatedMyRoute
   '/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
   '/nurses': typeof AuthenticatedNursesRoute
-  '/orders-unified': typeof AuthenticatedOrdersUnifiedRoute
+  '/orders-unified': typeof AuthenticatedOrdersUnifiedRouteWithChildren
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
@@ -801,6 +808,7 @@ export interface FileRoutesByFullPath {
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/portal/': typeof AuthenticatedPortalIndexRoute
+  '/orders-unified/$kind/$id': typeof AuthenticatedOrdersUnifiedKindIdRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
@@ -861,7 +869,7 @@ export interface FileRoutesByTo {
   '/my': typeof AuthenticatedMyRoute
   '/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
   '/nurses': typeof AuthenticatedNursesRoute
-  '/orders-unified': typeof AuthenticatedOrdersUnifiedRoute
+  '/orders-unified': typeof AuthenticatedOrdersUnifiedRouteWithChildren
   '/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/patients-management': typeof AuthenticatedPatientsManagementRoute
@@ -909,6 +917,7 @@ export interface FileRoutesByTo {
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/portal': typeof AuthenticatedPortalIndexRoute
+  '/orders-unified/$kind/$id': typeof AuthenticatedOrdersUnifiedKindIdRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
@@ -971,7 +980,7 @@ export interface FileRoutesById {
   '/_authenticated/my': typeof AuthenticatedMyRoute
   '/_authenticated/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
   '/_authenticated/nurses': typeof AuthenticatedNursesRoute
-  '/_authenticated/orders-unified': typeof AuthenticatedOrdersUnifiedRoute
+  '/_authenticated/orders-unified': typeof AuthenticatedOrdersUnifiedRouteWithChildren
   '/_authenticated/patient-stories-admin': typeof AuthenticatedPatientStoriesAdminRoute
   '/_authenticated/patients-analytics': typeof AuthenticatedPatientsAnalyticsRoute
   '/_authenticated/patients-management': typeof AuthenticatedPatientsManagementRoute
@@ -1020,6 +1029,7 @@ export interface FileRoutesById {
   '/media/stories/$slug': typeof MediaStoriesSlugRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
+  '/_authenticated/orders-unified/$kind/$id': typeof AuthenticatedOrdersUnifiedKindIdRoute
   '/api/public/book/availability': typeof ApiPublicBookAvailabilityRoute
   '/api/public/book/cancel': typeof ApiPublicBookCancelRoute
   '/api/public/book/create': typeof ApiPublicBookCreateRoute
@@ -1131,6 +1141,7 @@ export interface FileRouteTypes {
     | '/media/stories/$slug'
     | '/patients/'
     | '/portal/'
+    | '/orders-unified/$kind/$id'
     | '/api/public/book/availability'
     | '/api/public/book/cancel'
     | '/api/public/book/create'
@@ -1239,6 +1250,7 @@ export interface FileRouteTypes {
     | '/media/stories/$slug'
     | '/patients'
     | '/portal'
+    | '/orders-unified/$kind/$id'
     | '/api/public/book/availability'
     | '/api/public/book/cancel'
     | '/api/public/book/create'
@@ -1349,6 +1361,7 @@ export interface FileRouteTypes {
     | '/media/stories/$slug'
     | '/_authenticated/patients/'
     | '/_authenticated/portal/'
+    | '/_authenticated/orders-unified/$kind/$id'
     | '/api/public/book/availability'
     | '/api/public/book/cancel'
     | '/api/public/book/create'
@@ -2171,8 +2184,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookAvailabilityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/orders-unified/$kind/$id': {
+      id: '/_authenticated/orders-unified/$kind/$id'
+      path: '/$kind/$id'
+      fullPath: '/orders-unified/$kind/$id'
+      preLoaderRoute: typeof AuthenticatedOrdersUnifiedKindIdRouteImport
+      parentRoute: typeof AuthenticatedOrdersUnifiedRoute
+    }
   }
 }
+
+interface AuthenticatedOrdersUnifiedRouteChildren {
+  AuthenticatedOrdersUnifiedKindIdRoute: typeof AuthenticatedOrdersUnifiedKindIdRoute
+}
+
+const AuthenticatedOrdersUnifiedRouteChildren: AuthenticatedOrdersUnifiedRouteChildren =
+  {
+    AuthenticatedOrdersUnifiedKindIdRoute:
+      AuthenticatedOrdersUnifiedKindIdRoute,
+  }
+
+const AuthenticatedOrdersUnifiedRouteWithChildren =
+  AuthenticatedOrdersUnifiedRoute._addFileChildren(
+    AuthenticatedOrdersUnifiedRouteChildren,
+  )
 
 interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalBookRoute: typeof AuthenticatedPortalBookRoute
@@ -2231,7 +2266,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyRoute: typeof AuthenticatedMyRoute
   AuthenticatedNotificationsQueueRoute: typeof AuthenticatedNotificationsQueueRoute
   AuthenticatedNursesRoute: typeof AuthenticatedNursesRoute
-  AuthenticatedOrdersUnifiedRoute: typeof AuthenticatedOrdersUnifiedRoute
+  AuthenticatedOrdersUnifiedRoute: typeof AuthenticatedOrdersUnifiedRouteWithChildren
   AuthenticatedPatientStoriesAdminRoute: typeof AuthenticatedPatientStoriesAdminRoute
   AuthenticatedPatientsAnalyticsRoute: typeof AuthenticatedPatientsAnalyticsRoute
   AuthenticatedPatientsManagementRoute: typeof AuthenticatedPatientsManagementRoute
@@ -2272,7 +2307,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyRoute: AuthenticatedMyRoute,
   AuthenticatedNotificationsQueueRoute: AuthenticatedNotificationsQueueRoute,
   AuthenticatedNursesRoute: AuthenticatedNursesRoute,
-  AuthenticatedOrdersUnifiedRoute: AuthenticatedOrdersUnifiedRoute,
+  AuthenticatedOrdersUnifiedRoute: AuthenticatedOrdersUnifiedRouteWithChildren,
   AuthenticatedPatientStoriesAdminRoute: AuthenticatedPatientStoriesAdminRoute,
   AuthenticatedPatientsAnalyticsRoute: AuthenticatedPatientsAnalyticsRoute,
   AuthenticatedPatientsManagementRoute: AuthenticatedPatientsManagementRoute,
