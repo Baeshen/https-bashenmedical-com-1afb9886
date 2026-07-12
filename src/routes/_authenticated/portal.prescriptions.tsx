@@ -177,6 +177,11 @@ function PrescriptionsPage() {
       {/* AI reminder assistant */}
       <AiReminderCard upcoming={data.upcoming} activeCount={data.active.length} />
 
+      {/* Reminder preferences */}
+      <PreferencesCard />
+
+
+
       {/* Upcoming appointments strip */}
       {data.upcoming.length > 0 && (
         <div className="glass-card p-5">
