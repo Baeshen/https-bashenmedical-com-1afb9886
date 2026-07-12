@@ -579,10 +579,14 @@ html.reduce-motion *::after {
   color: transparent;
 }
 
-/* Skeleton with neon shine — replaces spinners. */
+/* Skeleton with neon shine + soft pulse — replaces spinners. */
 @keyframes fut-shine {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(120%); }
+}
+@keyframes fut-skeleton-pulse {
+  0%, 100% { background-color: color-mix(in oklab, #0a1a2f 60%, transparent); }
+  50%      { background-color: color-mix(in oklab, #0a1a2f 45%, transparent); }
 }
 @utility skeleton-neon {
   position: relative;
@@ -590,12 +594,38 @@ html.reduce-motion *::after {
   background: color-mix(in oklab, #0a1a2f 60%, transparent);
   border: 1px solid var(--fut-border);
   border-radius: 0.75rem;
+  animation: fut-skeleton-pulse 2.4s ease-in-out infinite;
 }
 .skeleton-neon::after {
   content: "";
   position: absolute; inset: 0;
-  background: linear-gradient(110deg, transparent 30%, rgba(0, 217, 192, 0.15) 50%, transparent 70%);
-  animation: fut-shine 1.8s ease-in-out infinite;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(0, 217, 192, 0.10) 40%,
+    rgba(140, 220, 255, 0.22) 50%,
+    rgba(0, 217, 192, 0.10) 60%,
+    transparent 80%
+  );
+  transform: translateX(-100%);
+  animation: fut-shine 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Reduced motion: kill shimmer + pulse, keep a legible static tint. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-neon { animation: none !important; }
+  .skeleton-neon::after {
+    animation: none !important;
+    transform: none;
+    background: linear-gradient(110deg, transparent 40%, rgba(0, 217, 192, 0.08) 50%, transparent 60%);
+  }
+}
+html.reduce-motion .skeleton-neon { animation: none !important; }
+html.reduce-motion .skeleton-neon::after {
+  animation: none !important;
+  transform: none;
+  background: linear-gradient(110deg, transparent 40%, rgba(0, 217, 192, 0.08) 50%, transparent 60%);
 }
 
 /* Pulse dot — availability / live indicator. */
