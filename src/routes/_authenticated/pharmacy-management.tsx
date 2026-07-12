@@ -443,7 +443,7 @@ function MovementsPanel({ branchId }: { branchId: string | null }) {
 
   const [newOpen, setNewOpen] = useState(false);
   const create = useMutation({
-    mutationFn: (v: Parameters<typeof createFn>[0]["data"]) => createFn({ data: v }),
+    mutationFn: (v: { item_id: string; branch_id: string | null; movement_type: MovementType; quantity: number; reason?: string | null; reference?: string | null }) => createFn({ data: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pharmacy", "moves"] });
       qc.invalidateQueries({ queryKey: ["pharmacy", "inv"] });
