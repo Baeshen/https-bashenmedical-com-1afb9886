@@ -73,6 +73,8 @@ function MyComplaintsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [live, setLive] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   // Realtime — refresh on any change to the user's complaints.
   useEffect(() => {
