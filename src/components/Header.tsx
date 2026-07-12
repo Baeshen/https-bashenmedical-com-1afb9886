@@ -18,6 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavItem = {
   to: string;
@@ -176,6 +177,7 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
+          <ThemeToggle />
           <Link
             to="/book"
             className="inline-flex items-center rounded-md bg-gradient-to-r from-primary to-accent px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95"
@@ -215,13 +217,16 @@ export function Header() {
           )}
         </div>
 
-        <button
-          className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-foreground"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="xl:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            className="inline-flex items-center justify-center rounded-md p-2 text-foreground"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
