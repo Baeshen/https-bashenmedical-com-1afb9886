@@ -11,8 +11,9 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User } from "lucide-react";
+import { ArrowLeft, Loader2, Pill, Stethoscope, Home as HomeIcon, Clock, MapPin, Phone, User, FileText, ClipboardList, Truck, MessageCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OrderTimeline } from "@/components/booking/OrderTimeline";
 
 const search = z.object({
   phone: z.string(),
