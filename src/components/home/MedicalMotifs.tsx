@@ -1,11 +1,13 @@
 // Ultra-light medical motifs overlay: single ECG line + one DNA helix.
 // Pure SVG + CSS keyframes, no shadows/blurs/gradients, GPU-friendly transforms.
 // Positions use logical properties (start/end) to auto-flip in RTL.
+// Fully respects prefers-reduced-motion AND a user toggle (html.reduce-motion):
+// animations freeze into a stable, fully-drawn state — no motion, no flicker.
 export function MedicalMotifs() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:[&_*]:!animate-none"
+      className="motifs pointer-events-none absolute inset-0 overflow-hidden"
     >
       {/* ECG pulse line — full width, bottom */}
       <svg
@@ -15,16 +17,12 @@ export function MedicalMotifs() {
         fill="none"
       >
         <path
+          className="ecg-path"
           d="M0 40 L280 40 L300 20 L315 60 L330 10 L345 70 L360 40 L720 40 L740 22 L755 58 L770 12 L785 68 L800 40 L1200 40"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{
-            strokeDasharray: 2400,
-            strokeDashoffset: 2400,
-            animation: "ecg-draw 10s linear infinite",
-          }}
         />
       </svg>
 
@@ -59,7 +57,23 @@ export function MedicalMotifs() {
           0%, 100% { transform: translate3d(0,0,0); }
           50% { transform: translate3d(0,-8px,0); }
         }
-        .float-y { animation: float-y 9s ease-in-out infinite; will-change: transform; }
+        .ecg-path {
+          stroke-dasharray: 2400;
+          stroke-dashoffset: 2400;
+          animation: ecg-draw 10s linear infinite;
+        }
+        .float-y {
+          animation: float-y 9s ease-in-out infinite;
+          will-change: transform;
+        }
+
+        /* Freeze into a stable, fully-drawn state — no partial frames. */
+        @media (prefers-reduced-motion: reduce) {
+          .motifs .ecg-path { animation: none !important; stroke-dashoffset: 0 !important; }
+          .motifs .float-y { animation: none !important; transform: none !important; will-change: auto; }
+        }
+        html.reduce-motion .motifs .ecg-path { animation: none !important; stroke-dashoffset: 0 !important; }
+        html.reduce-motion .motifs .float-y { animation: none !important; transform: none !important; will-change: auto; }
       `}</style>
     </div>
   );
