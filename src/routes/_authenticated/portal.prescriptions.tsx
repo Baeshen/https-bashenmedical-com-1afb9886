@@ -513,6 +513,15 @@ function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointme
           </div>
         </div>
       )}
+
+      {plan && previewOpen && (
+        <ExportPreviewModal
+          plan={plan}
+          upcoming={upcoming}
+          prefs={prefs}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }
