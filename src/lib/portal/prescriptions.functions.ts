@@ -311,7 +311,7 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
     let parsed: Partial<ReminderPlan> = {};
     try { parsed = JSON.parse(raw); } catch { /* ignore */ }
 
-    return {
+    const plan: ReminderPlan = {
       headline: parsed.headline ?? "خطة التذكيرات اليومية",
       overview: parsed.overview ?? "",
       slots: parsed.slots ?? [],
@@ -320,4 +320,81 @@ export const generateMedicationReminders = createServerFn({ method: "POST" })
       generatedAt: new Date().toISOString(),
       model,
     };
+
+    // Persist each slot in the notifications log so the user can see history & status
+    if (plan.slots.length > 0) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const rows = plan.slots.slice(0, 40).map((s) => ({
+          audience: "user",
+          user_id: userId,
+          kind: "medication_reminder",
+          title: s.medication,
+          body: [s.dosage, s.label, s.note].filter(Boolean).join(" • "),
+          channel: "in_app" as const,
+          send_status: "sent" as const,
+          sent_at: plan.generatedAt,
+          metadata: {
+            source: "ai-plan",
+            time: s.time,
+            label: s.label,
+            model: plan.model,
+            headline: plan.headline,
+          },
+        }));
+        await supabaseAdmin.from("notifications").insert(rows);
+      } catch {
+        // logging is best-effort; the plan itself is still returned
+      }
+    }
+
+    return plan;
   });
+
+/* --------------------------- Reminder log --------------------------- */
+
+export type ReminderLogEntry = {
+  id: string;
+  medication: string;
+  detail: string | null;
+  time: string | null;
+  label: string | null;
+  channel: string;
+  send_status: string;
+  sent_at: string | null;
+  created_at: string;
+  read_at: string | null;
+  last_error: string | null;
+};
+
+export const getMedicationReminderLog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ReminderLogEntry[]> => {
+    const { supabase, userId } = context;
+    const res = await supabase
+      .from("notifications")
+      .select("id, title, body, channel, send_status, sent_at, created_at, read_at, last_error, metadata")
+      .eq("audience", "user")
+      .eq("user_id", userId)
+      .eq("kind", "medication_reminder")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (res.error) return [];
+    return (res.data ?? []).map((r) => {
+      const meta = (r.metadata as { time?: string; label?: string } | null) ?? null;
+      return {
+        id: r.id as string,
+        medication: (r.title as string) ?? "",
+        detail: (r.body as string | null) ?? null,
+        time: meta?.time ?? null,
+        label: meta?.label ?? null,
+        channel: (r.channel as string) ?? "in_app",
+        send_status: (r.send_status as string) ?? "pending",
+        sent_at: (r.sent_at as string | null) ?? null,
+        created_at: (r.created_at as string) ?? new Date().toISOString(),
+        read_at: (r.read_at as string | null) ?? null,
+        last_error: (r.last_error as string | null) ?? null,
+      };
+    });
+  });
+
