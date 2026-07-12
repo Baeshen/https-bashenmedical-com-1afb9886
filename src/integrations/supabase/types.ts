@@ -2029,27 +2029,60 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
+          dark_mode: boolean
+          date_of_birth: string | null
           default_branch_id: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string | null
+          gender: string | null
           id: string
+          insurance_policy_no: string | null
+          insurance_provider: string | null
+          national_id: string | null
+          notification_prefs: Json
           phone: string | null
+          preferred_language: string
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean
+          date_of_birth?: string | null
           default_branch_id?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
+          gender?: string | null
           id: string
+          insurance_policy_no?: string | null
+          insurance_provider?: string | null
+          national_id?: string | null
+          notification_prefs?: Json
           phone?: string | null
+          preferred_language?: string
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean
+          date_of_birth?: string | null
           default_branch_id?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          insurance_policy_no?: string | null
+          insurance_provider?: string | null
+          national_id?: string | null
+          notification_prefs?: Json
           phone?: string | null
+          preferred_language?: string
           updated_at?: string
         }
         Relationships: [
@@ -2532,6 +2565,7 @@ export type Database = {
       }
       enqueue_appointment_reminders: { Args: never; Returns: Json }
       generate_mrn: { Args: { _branch_id: string }; Returns: string }
+      get_my_patient_id: { Args: never; Returns: string }
       get_order_by_ref: {
         Args: { _kind: string; _phone: string; _ref: string }
         Returns: {
