@@ -110,15 +110,15 @@ export const getMyRecentOrders = createServerFn({ method: "GET" })
           .limit(5)
       : Promise.resolve({ data: [] as unknown[], error: null });
 
-    // استشارة عن بُعد: عبر جدول second_opinion_requests (لا يحمل هاتف مباشرة عادة)
-    // نستخدم البريد إن وجد بديلاً؛ وإلا نتخطاها للمستخدمين بدون بريد
-    const secondOp = supabase
-      .from("second_opinion_requests")
-      .select("id, status, created_at, specialty, patient_name")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .or(phone ? `patient_name.eq.${phone}` : "id.eq.00000000-0000-0000-0000-000000000000")
-      .then((r) => r); // placeholder — تُصفَّى فعلياً حسب المشروع
+    // استشارة عن بُعد: عبر عمود phone
+    const secondOp = phone
+      ? supabase
+          .from("second_opinion_requests")
+          .select("id, status, created_at, specialty, patient_name")
+          .eq("phone", phone)
+          .order("created_at", { ascending: false })
+          .limit(5)
+      : Promise.resolve({ data: [] as unknown[], error: null });
 
     // فواتير / مختبر / أشعة: patient_id فقط
     const invoices = patientId
