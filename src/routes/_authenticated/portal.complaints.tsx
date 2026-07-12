@@ -281,8 +281,8 @@ function MyComplaintsPage() {
             <AttachmentsList
               complaintId={selected.id}
               attachments={
-                Array.isArray((selected as { attachments?: unknown }).attachments)
-                  ? ((selected as { attachments: Array<{ path: string; name: string; type?: string; size?: number }> }).attachments)
+                Array.isArray((selected as unknown as { attachments?: unknown }).attachments)
+                  ? ((selected as unknown as { attachments: Array<{ path: string; name: string; type?: string; size?: number }> }).attachments)
                   : []
               }
             />
