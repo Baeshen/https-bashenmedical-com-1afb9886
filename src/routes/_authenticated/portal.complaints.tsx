@@ -324,43 +324,6 @@ function EmptyState({ onNew }: { onNew: () => void }) {
   );
 }
 
-function Timeline({ currentStatus }: { currentStatus: string }) {
-  // Cancelled/closed shown as its own final state
-  const closedState = currentStatus === "closed" || currentStatus === "waiting_patient";
-  const currentIdx =
-    currentStatus === "resolved" ? 2 : currentStatus === "under_review" ? 1 : 0;
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-2">مراحل معالجة البلاغ</p>
-      <ol className="flex items-center gap-2">
-        {STAGES.map((s, i) => {
-          const done = i <= currentIdx && currentStatus !== "waiting_patient";
-          return (
-            <li key={s.key} className="flex-1">
-              <div
-                className={`h-1.5 rounded-full ${
-                  done ? "bg-primary" : "bg-muted"
-                }`}
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground text-center">
-                {s.label}
-              </p>
-            </li>
-          );
-        })}
-      </ol>
-      {currentStatus === "waiting_patient" && (
-        <p className="mt-2 text-xs text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded p-2">
-          يحتاج البلاغ إجراءً منك — يرجى مراجعة تفاصيلك أو التواصل مع فريق تجربة المريض.
-        </p>
-      )}
-      {closedState && currentStatus === "closed" && (
-        <p className="mt-2 text-xs text-muted-foreground">تم إغلاق البلاغ.</p>
-      )}
-    </div>
-  );
-}
-
 function NewComplaintForm({
   defaultName,
   defaultPhone,
