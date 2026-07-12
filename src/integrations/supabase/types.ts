@@ -144,6 +144,7 @@ export type Database = {
           appointment_date: string
           appointment_time: string
           branch_id: string | null
+          cancelled_at: string | null
           created_at: string
           doctor_id: string | null
           gender: string | null
@@ -167,6 +168,7 @@ export type Database = {
           appointment_date: string
           appointment_time: string
           branch_id?: string | null
+          cancelled_at?: string | null
           created_at?: string
           doctor_id?: string | null
           gender?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           appointment_date?: string
           appointment_time?: string
           branch_id?: string | null
+          cancelled_at?: string | null
           created_at?: string
           doctor_id?: string | null
           gender?: string | null
