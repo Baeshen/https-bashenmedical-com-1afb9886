@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import manifest from "../../../.lovable/mcp/manifest.json";
 import { getLastMcpInvocations, type LastToolInvocation } from "@/lib/mcp-diagnostics.functions";
+import { runMcpTool, type RunToolResult } from "@/lib/mcp-run.functions";
 
 export const Route = createFileRoute("/_authenticated/mcp-status")({
   head: () => ({
