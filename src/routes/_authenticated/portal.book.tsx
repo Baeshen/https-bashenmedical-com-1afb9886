@@ -443,16 +443,19 @@ function BookPage() {
                     <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
                   ))}
                 </div>
-              ) : slotsQ.data && slotsQ.data.slots.length > 0 ? (
+              ) : slotsView.length > 0 ? (
                 <>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {slotsQ.data.slots.map((s) => {
-                      const active = slot === s.time;
+                    {slotsView.map((s) => {
+                      const active = slotId === s.id;
                       return (
                         <button
-                          key={s.time}
+                          key={s.id}
                           disabled={!s.available}
-                          onClick={() => setSlot(s.time)}
+                          onClick={() => {
+                            setSlotId(s.id);
+                            setSlot(s.time);
+                          }}
                           className={`h-10 rounded-xl text-sm font-semibold border transition-all ${
                             active
                               ? "text-white border-transparent shadow-md"
