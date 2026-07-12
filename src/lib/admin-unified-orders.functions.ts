@@ -3,12 +3,8 @@
  *
  * تجمع لأصحاب الأدوار (admin / reception / super_admin) أحدث الطلبات عبر
  * كل جداول الخدمات (مواعيد، بلاغات، أدوية، زيارات منزلية، استشارات،
- * فواتير، مختبر، أشعة) مع فلاتر: النوع، الحالة الخام، بحث نصي، والحد.
- *
- * ملاحظات:
- *   - المرحلة الأولى: بدون Server-side pagination كاملة؛ نقص عند الحد.
- *   - الحالة الموحّدة تُشتق في الواجهة عبر toUnifiedStatus.
- *   - البلاغات والمواعيد تدعم البحث بالاسم/الهاتف/المرجع.
+ * فواتير، مختبر، أشعة) مع فلاتر: النوع، الحالة الخام، بحث نصي، نطاق تاريخ،
+ * ترتيب حسب آخر تحديث/الإنشاء.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -36,6 +32,7 @@ export type UnifiedAdminOrder = {
   patient_phone: string | null;
   status: string;
   created_at: string;
+  updated_at: string;
   meta: string | null;
 };
 
@@ -71,6 +68,9 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
           .optional(),
         search: z.string().trim().max(100).optional(),
         limitPerKind: z.number().int().min(1).max(200).default(50),
+        from: z.string().datetime().optional(),
+        to: z.string().datetime().optional(),
+        sortBy: z.enum(["created_at", "updated_at"]).default("created_at"),
       })
       .parse(d),
   )
@@ -82,102 +82,80 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
     const q = (data.search ?? "").trim();
     const like = q ? `%${q}%` : null;
     const lim = data.limitPerKind;
+    const sortCol = data.sortBy;
+    const from = data.from ?? null;
+    const to = data.to ?? null;
 
     const supabase = context.supabase;
 
+    const build = (table: string, columns: string, searchOr?: string) => {
+      let sel = supabase
+        .from(table)
+        .select(columns)
+        .order(sortCol, { ascending: false })
+        .limit(lim);
+      if (from) sel = sel.gte(sortCol, from);
+      if (to) sel = sel.lte(sortCol, to);
+      if (like && searchOr) sel = sel.or(searchOr);
+      return sel;
+    };
+
     const wants = (k: OrderTableKind) => wanted.has(k);
+    const NONE = Promise.resolve({ data: [], error: null });
 
     const appts = wants("appointment")
-      ? (async () => {
-          let sel = supabase
-            .from("appointments")
-            .select(
-              "id, patient_name, patient_phone, status, created_at, appointment_date, appointment_time",
-            )
-            .order("created_at", { ascending: false })
-            .limit(lim);
-          if (like)
-            sel = sel.or(`patient_name.ilike.${like},patient_phone.ilike.${like}`);
-          return sel;
-        })()
-      : Promise.resolve({ data: [], error: null });
+      ? build(
+          "appointments",
+          "id, patient_name, patient_phone, status, created_at, updated_at, appointment_date, appointment_time",
+          like ? `patient_name.ilike.${like},patient_phone.ilike.${like}` : undefined,
+        )
+      : NONE;
 
     const complaints = wants("complaint")
-      ? (async () => {
-          let sel = supabase
-            .from("complaints")
-            .select("id, reference, patient_name, patient_phone, status, created_at, message")
-            .order("created_at", { ascending: false })
-            .limit(lim);
-          if (like)
-            sel = sel.or(
-              `reference.ilike.${like},patient_name.ilike.${like},patient_phone.ilike.${like}`,
-            );
-          return sel;
-        })()
-      : Promise.resolve({ data: [], error: null });
+      ? build(
+          "complaints",
+          "id, reference, patient_name, patient_phone, status, created_at, updated_at, message",
+          like
+            ? `reference.ilike.${like},patient_name.ilike.${like},patient_phone.ilike.${like}`
+            : undefined,
+        )
+      : NONE;
 
     const meds = wants("medicine_order")
-      ? (async () => {
-          let sel = supabase
-            .from("medicine_orders")
-            .select("id, patient_name, patient_phone, status, created_at, delivery_type")
-            .order("created_at", { ascending: false })
-            .limit(lim);
-          if (like)
-            sel = sel.or(`patient_name.ilike.${like},patient_phone.ilike.${like}`);
-          return sel;
-        })()
-      : Promise.resolve({ data: [], error: null });
+      ? build(
+          "medicine_orders",
+          "id, patient_name, patient_phone, status, created_at, updated_at, delivery_type",
+          like ? `patient_name.ilike.${like},patient_phone.ilike.${like}` : undefined,
+        )
+      : NONE;
 
     const homeCare = wants("home_care")
-      ? (async () => {
-          let sel = supabase
-            .from("home_care_requests")
-            .select("id, patient_name, patient_phone, status, created_at, service_type")
-            .order("created_at", { ascending: false })
-            .limit(lim);
-          if (like)
-            sel = sel.or(`patient_name.ilike.${like},patient_phone.ilike.${like}`);
-          return sel;
-        })()
-      : Promise.resolve({ data: [], error: null });
+      ? build(
+          "home_care_requests",
+          "id, patient_name, patient_phone, status, created_at, updated_at, service_type",
+          like ? `patient_name.ilike.${like},patient_phone.ilike.${like}` : undefined,
+        )
+      : NONE;
 
     const secondOp = wants("second_opinion")
-      ? (async () => {
-          let sel = supabase
-            .from("second_opinion_requests")
-            .select("id, patient_name, phone, status, created_at, specialty")
-            .order("created_at", { ascending: false })
-            .limit(lim);
-          if (like) sel = sel.or(`patient_name.ilike.${like},phone.ilike.${like}`);
-          return sel;
-        })()
-      : Promise.resolve({ data: [], error: null });
+      ? build(
+          "second_opinion_requests",
+          "id, patient_name, phone, status, created_at, updated_at, specialty",
+          like ? `patient_name.ilike.${like},phone.ilike.${like}` : undefined,
+        )
+      : NONE;
 
     const invoices = wants("invoice")
-      ? supabase
-          .from("invoices")
-          .select("id, invoice_number, status, created_at, patient_id")
-          .order("created_at", { ascending: false })
-          .limit(lim)
-      : Promise.resolve({ data: [], error: null });
+      ? build("invoices", "id, invoice_number, status, created_at, updated_at, patient_id")
+      : NONE;
 
     const labs = wants("lab_report")
-      ? supabase
-          .from("lab_reports")
-          .select("id, title, test_type, status, created_at, patient_id")
-          .order("created_at", { ascending: false })
-          .limit(lim)
-      : Promise.resolve({ data: [], error: null });
+      ? build("lab_reports", "id, title, test_type, status, created_at, updated_at, patient_id")
+      : NONE;
 
     const rads = wants("radiology_report")
-      ? supabase
-          .from("radiology_reports")
-          .select("id, status, created_at, patient_id")
-          .order("created_at", { ascending: false })
-          .limit(lim)
-      : Promise.resolve({ data: [], error: null });
+      ? build("radiology_reports", "id, status, created_at, updated_at, patient_id")
+      : NONE;
 
     const [aRes, cRes, mRes, hRes, sRes, iRes, lRes, rRes] = await Promise.all([
       appts,
@@ -216,6 +194,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: r.patient_phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta:
           r.appointment_date
             ? `${r.appointment_date}${r.appointment_time ? " " + String(r.appointment_time).slice(0, 5) : ""}`
@@ -231,6 +210,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: r.patient_phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: typeof r.message === "string" ? r.message.slice(0, 60) : null,
       });
     }
@@ -243,6 +223,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: r.patient_phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: r.delivery_type ?? null,
       });
     }
@@ -255,6 +236,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: r.patient_phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: r.service_type ?? null,
       });
     }
@@ -267,6 +249,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: r.phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: r.specialty ?? null,
       });
     }
@@ -280,6 +263,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: p?.phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: null,
       });
     }
@@ -293,6 +277,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: p?.phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: r.title ?? r.test_type ?? null,
       });
     }
@@ -306,6 +291,7 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         patient_phone: p?.phone ?? null,
         status: r.status,
         created_at: r.created_at,
+        updated_at: r.updated_at ?? r.created_at,
         meta: null,
       });
     }
@@ -322,6 +308,10 @@ export const listAllUnifiedOrders = createServerFn({ method: "GET" })
         })
       : out;
 
-    filtered.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    filtered.sort((a, b) => {
+      const av = sortCol === "updated_at" ? a.updated_at : a.created_at;
+      const bv = sortCol === "updated_at" ? b.updated_at : b.created_at;
+      return av < bv ? 1 : av > bv ? -1 : 0;
+    });
     return filtered;
   });
