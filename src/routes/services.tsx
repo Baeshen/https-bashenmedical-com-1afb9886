@@ -135,7 +135,7 @@ function ServicesPortal() {
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
               {lang === "ar" ? "بوابة الخدمات الإلكترونية" : "E-Services Portal"}
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl leading-tight">
+            <h1 className="text-4xl md:text-5xl leading-tight">
               {lang === "ar"
                 ? "جميع خدماتك الطبية في مكان واحد"
                 : "All your medical services, in one place"}
