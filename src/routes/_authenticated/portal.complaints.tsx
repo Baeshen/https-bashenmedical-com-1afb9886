@@ -149,9 +149,11 @@ function MyComplaintsPage() {
               className="rounded-md border border-border bg-background px-2 py-1 text-sm"
             >
               <option value="all">الكل</option>
-              {Object.entries(STATUS_AR).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
+              <option value="submitted">تم الإرسال</option>
+              <option value="under_review">تحت المراجعة</option>
+              <option value="waiting_patient">بانتظار إجراء منك</option>
+              <option value="resolved">تم الحل</option>
+              <option value="closed">مغلق</option>
             </select>
             <label className="text-xs text-muted-foreground ms-2">الترتيب</label>
             <select
