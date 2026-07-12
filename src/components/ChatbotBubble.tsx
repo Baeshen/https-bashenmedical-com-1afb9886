@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, X, Search, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE, whatsappUrl } from "@/lib/site";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * Floating chatbot bubble.
@@ -8,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
  * - Reads FAQs via publishable key + narrow public SELECT policy.
  * - No AI in this iteration: simple case-insensitive substring search.
  * - Fallback: WhatsApp deeplink with the user's own question pre-filled.
+ * - Single source of truth for phone/WhatsApp: `@/lib/site` (SITE.whatsapp).
  */
 
 type Faq = {
@@ -16,8 +19,6 @@ type Faq = {
   answer_ar: string;
 };
 
-// Same public WA number used elsewhere; hardcoded here to avoid coupling.
-const WHATSAPP_NUMBER = "966555555555";
 
 export function ChatbotBubble() {
   const [open, setOpen] = useState(false);
@@ -64,9 +65,21 @@ export function ChatbotBubble() {
 
   const active = selected ? faqs?.find((f) => f.id === selected) : null;
 
-  const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    query.trim() ? `مرحبًا، لدي سؤال: ${query.trim()}` : "مرحبًا، أحتاج مساعدة من مجمع باعشن الطبي.",
-  )}`;
+  const pagePath =
+    typeof window !== "undefined" ? window.location.pathname || "/" : "/";
+  const waMessage = query.trim()
+    ? `مرحبًا ${SITE.nameAr} 👋\nلدي سؤال: ${query.trim()}\n(صفحة: ${pagePath})`
+    : `مرحبًا ${SITE.nameAr} 👋\nأحتاج مساعدة.\n(صفحة: ${pagePath})`;
+  const waHref = whatsappUrl(waMessage);
+
+  const handleWaClick = () => {
+    trackEvent("whatsapp_chatbot_click", {
+      phone: SITE.whatsapp,
+      source: pagePath,
+      has_query: query.trim().length > 0,
+    });
+  };
+
 
   if (!hydrated) return null;
 
@@ -167,17 +180,26 @@ export function ChatbotBubble() {
             </>
           )}
 
-          <footer className="border-t border-border p-3">
+          <footer className="border-t border-border p-3 space-y-2">
             <a
               href={waHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-500 text-white px-3 py-2 text-sm font-semibold hover:bg-emerald-600"
+              onClick={handleWaClick}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#25D366] text-white px-3 py-2 text-sm font-semibold hover:bg-[#1EBE5D] transition"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              تحدّث معنا على واتساب
+              تحدّث معنا على واتساب · {SITE.phoneDisplay}
             </a>
+            <a
+              href={`tel:${SITE.phone}`}
+              className="block text-center text-[11px] text-muted-foreground hover:text-primary"
+            >
+              أو اتصل مباشرة: {SITE.phoneDisplay}
+            </a>
+
           </footer>
+
         </div>
       )}
     </>
