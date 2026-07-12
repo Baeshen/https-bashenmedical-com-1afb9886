@@ -176,7 +176,10 @@ export const updateComplaint = createServerFn({ method: "POST" })
     });
     if (!isAdmin && !isReception) throw new Error("Forbidden");
 
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      status?: (typeof complaintStatuses)[number];
+      internal_notes?: string | null;
+    } = {};
     if (data.status) patch.status = data.status;
     if (data.internal_notes !== undefined) patch.internal_notes = data.internal_notes;
     if (Object.keys(patch).length === 0) return { ok: true };
