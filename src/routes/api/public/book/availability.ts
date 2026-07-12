@@ -35,6 +35,9 @@
  * bookings that RLS would otherwise hide from anon; no PII is returned.
  */
 import { createFileRoute } from "@tanstack/react-router";
+// Riyadh-local "today"/"now" helpers shared with cancel.ts and slots.functions.ts
+// so the day boundary is identical across resolver, cancel API, and portal cancel.
+import { riyadhTodayIso, riyadhNowMinutes } from "@/lib/riyadh-date";
 
 function json(
   status: number,
@@ -102,18 +105,6 @@ function weekdayOf(iso: string): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-/**
- * Today in Asia/Riyadh (UTC+3), returned as `YYYY-MM-DD`. The booking UI
- * always displays Riyadh time, so slot filtering must use the same zone.
- */
-function riyadhTodayIso(): string {
-  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  return `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}-${pad2(now.getUTCDate())}`;
-}
-function riyadhNowMinutes(): number {
-  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  return now.getUTCHours() * 60 + now.getUTCMinutes();
-}
 
 export const Route = createFileRoute("/api/public/book/availability")({
   server: {
