@@ -405,7 +405,7 @@ function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointme
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <button
-            onClick={() => plan && exportPlanToIcs(plan, upcoming)}
+            onClick={() => plan && exportPlanToIcs(plan, upcoming, prefs)}
             disabled={!plan}
             title="تنزيل ملف .ics لاستيراده في Google / Apple / Outlook Calendar"
             className="inline-flex items-center gap-2 rounded-full h-10 px-4 text-sm font-semibold bg-white/20 hover:bg-white/30 backdrop-blur disabled:opacity-40"
