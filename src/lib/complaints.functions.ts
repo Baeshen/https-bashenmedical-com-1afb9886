@@ -176,12 +176,45 @@ export const listMyComplaints = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("complaints")
-      .select("id, reference, type, department, message, status, created_at, updated_at")
+      .select(
+        "id, reference, type, department, message, status, attachments, created_at, updated_at",
+      )
       .eq("patient_user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+// ---------------------------------------------------------------------------
+// Patient: signed URLs for the attachments of one of my complaints
+// ---------------------------------------------------------------------------
+const signUrlsSchema = z.object({ id: z.string().uuid() });
+
+export const getMyComplaintAttachmentUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => signUrlsSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("complaints")
+      .select("attachments, patient_user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error || !row || row.patient_user_id !== context.userId) {
+      throw new Error("لم نعثر على البلاغ.");
+    }
+    const items = Array.isArray(row.attachments)
+      ? (row.attachments as Array<{ path: string; name: string; type?: string; size?: number }>)
+      : [];
+    const signed = await Promise.all(
+      items.map(async (a) => {
+        const { data: s } = await context.supabase.storage
+          .from("complaint-attachments")
+          .createSignedUrl(a.path, 60 * 10);
+        return { ...a, url: s?.signedUrl ?? null };
+      }),
+    );
+    return signed;
   });
 
 // ---------------------------------------------------------------------------
