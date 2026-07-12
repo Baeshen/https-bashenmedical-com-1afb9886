@@ -9,6 +9,7 @@ import { WEEKDAYS_AR } from "@/lib/site";
 import { downloadIcs, whatsappShareUrl, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
 import { ReminderHistoryByRefModal } from "@/components/ReminderPreferenceHistory";
 import { AppointmentAuditHistory } from "@/components/booking/AppointmentAuditHistory";
+import { OrderTimeline } from "@/components/booking/OrderTimeline";
 
 const lookupSearch = z.object({
   ref: z.string().optional(),
