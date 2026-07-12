@@ -93,7 +93,7 @@ export function CentersStrip() {
                   {isAr ? c.name_ar : c.name_en}
                 </h3>
                 <p className="mt-1.5 text-sm text-white/70 line-clamp-2 min-h-[2.5rem]">
-                  {isAr ? c.short_desc_ar : c.short_desc_en}
+                  {isAr ? c.short_ar : c.short_en}
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-white/90">
                   {isAr ? "اعرف المزيد" : "Learn more"}
