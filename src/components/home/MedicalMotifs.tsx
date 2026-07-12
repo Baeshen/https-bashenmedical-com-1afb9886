@@ -7,7 +7,10 @@ export function MedicalMotifs() {
   return (
     <div
       aria-hidden="true"
-      className="motifs pointer-events-none absolute inset-0 overflow-hidden"
+      // mix-blend-mode: soft-light keeps motifs as gentle light on light areas
+      // and never darkens text. A mask carves out the start-side text zone so
+      // motifs render only in the end-side "safe area", preserving contrast.
+      className="motifs pointer-events-none absolute inset-0 overflow-hidden mix-blend-soft-light opacity-70 [mask-image:linear-gradient(to_var(--motif-dir,left),black_0%,black_45%,transparent_78%)] [--motif-dir:left] rtl:[--motif-dir:right]"
     >
       {/* ECG pulse line — full width, bottom */}
       <svg
