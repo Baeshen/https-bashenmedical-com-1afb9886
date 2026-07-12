@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   getMyPrescriptions,
   generateMedicationReminders,
+  getMedicationReminderLog,
   type PrescriptionItem,
   type ReminderPlan,
+  type ReminderLogEntry,
 } from "@/lib/portal/prescriptions.functions";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,15 +17,23 @@ import {
   Calendar,
   CalendarClock,
   Check,
+  CheckCheck,
   Clock,
+  History,
   Loader2,
+  Mail,
+  MessageCircle,
+  Phone,
   Pill,
   RefreshCw,
   Search,
+  Send,
+  Smartphone,
   Sparkles,
   Stethoscope,
+  XCircle,
 } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, formatDistanceToNow } from "date-fns";
 import { ar as arLocale } from "date-fns/locale";
 
 const rxQuery = queryOptions({
@@ -188,6 +198,10 @@ function PrescriptionsPage() {
         </div>
       )}
 
+      {/* Reminder log */}
+      <ReminderLogSection />
+
+
       {/* Prescription list */}
       {filtered.length === 0 ? (
         <div className="glass-card p-10 text-center">
@@ -310,10 +324,14 @@ function Field({ label, value }: { label: string; value: string }) {
 /* --------------------------- AI assistant --------------------------- */
 
 function AiReminderCard({ upcoming, activeCount }: { upcoming: unknown[]; activeCount: number }) {
+  const qc = useQueryClient();
   const mut = useMutation({
     mutationFn: () => generateMedicationReminders({ data: {} }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "تعذّر توليد الخطة"),
-    onSuccess: () => toast.success("تم توليد جدول التذكيرات."),
+    onSuccess: () => {
+      toast.success("تم توليد جدول التذكيرات.");
+      qc.invalidateQueries({ queryKey: ["portal", "reminder-log"] });
+    },
   });
   const plan = mut.data as ReminderPlan | undefined;
 
@@ -452,5 +470,174 @@ function AiReminderCard({ upcoming, activeCount }: { upcoming: unknown[]; active
         </div>
       )}
     </div>
+  );
+}
+
+/* --------------------------- Reminder log --------------------------- */
+
+const reminderLogQuery = queryOptions({
+  queryKey: ["portal", "reminder-log"],
+  queryFn: () => getMedicationReminderLog(),
+  staleTime: 15_000,
+});
+
+function ReminderLogSection() {
+  const { data: log = [], isLoading, refetch, isFetching } = useQuery(reminderLogQuery);
+
+  const stats = useMemo(() => {
+    const s = { sent: 0, pending: 0, failed: 0, read: 0 };
+    for (const r of log) {
+      if (r.send_status === "sent") s.sent++;
+      else if (r.send_status === "failed") s.failed++;
+      else s.pending++;
+      if (r.read_at) s.read++;
+    }
+    return s;
+  }, [log]);
+
+  return (
+    <div className="glass-card p-5 md:p-6">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 grid place-items-center text-rose-500">
+            <History className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-bold">سجل التذكيرات المرسلة</h3>
+            <p className="text-xs text-[color:var(--portal-ink-2)]">
+              كل تذكير دواء تم إنشاؤه بواسطة المساعد الذكي مع حالة الإرسال والتنبيه.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <LogKpi label="مرسل" value={stats.sent} tone="ok" />
+          <LogKpi label="قيد الإرسال" value={stats.pending} tone="warn" />
+          <LogKpi label="فشل" value={stats.failed} tone="danger" />
+          <LogKpi label="مقروء" value={stats.read} tone="neutral" />
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="h-9 rounded-full px-3 text-xs font-semibold bg-white/70 ring-1 ring-white/60 inline-flex items-center gap-1.5 hover:bg-white disabled:opacity-60"
+          >
+            {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            تحديث
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="py-8 text-center text-sm text-[color:var(--portal-ink-2)] inline-flex items-center gap-2 justify-center w-full">
+          <Loader2 className="h-4 w-4 animate-spin" /> جاري التحميل…
+        </div>
+      ) : log.length === 0 ? (
+        <div className="rounded-2xl bg-slate-50 p-8 text-center">
+          <BellRing className="h-10 w-10 mx-auto text-[color:var(--portal-ink-2)] mb-2" />
+          <p className="text-sm text-[color:var(--portal-ink-2)]">
+            لم يتم توليد أي تذكيرات دواء بعد. استخدم المساعد الذكي بالأعلى لتوليد خطة.
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-slate-100 rounded-2xl bg-white/60 ring-1 ring-white/60 overflow-hidden">
+          {log.map((r) => (
+            <ReminderLogRow key={r.id} r={r} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ReminderLogRow({ r }: { r: ReminderLogEntry }) {
+  return (
+    <li className="p-3.5 flex items-start gap-3 hover:bg-white/70 transition-colors">
+      <div className="shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-sky-100 grid place-items-center text-violet-600">
+        <Pill className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold truncate">{r.medication || "تذكير دواء"}</span>
+          {r.time && (
+            <span className="text-xs bg-slate-100 text-slate-700 rounded-md px-1.5 py-0.5 tabular-nums inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" /> {r.time}
+            </span>
+          )}
+          {r.label && (
+            <span className="text-xs bg-amber-50 text-amber-700 rounded-md px-1.5 py-0.5">{r.label}</span>
+          )}
+        </div>
+        {r.detail && (
+          <p className="text-xs text-[color:var(--portal-ink-2)] mt-1 line-clamp-2">{r.detail}</p>
+        )}
+        {r.last_error && (
+          <p className="text-xs text-rose-600 mt-1 inline-flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" /> {r.last_error}
+          </p>
+        )}
+        <div className="mt-1.5 text-[11px] text-[color:var(--portal-ink-2)] flex items-center gap-2 flex-wrap">
+          <ChannelChip channel={r.channel} />
+          <span>·</span>
+          <span>
+            {r.sent_at
+              ? `أُرسل ${formatDistanceToNow(parseISO(r.sent_at), { addSuffix: true, locale: arLocale })}`
+              : `أُنشئ ${formatDistanceToNow(parseISO(r.created_at), { addSuffix: true, locale: arLocale })}`}
+          </span>
+          {r.read_at && (
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <CheckCheck className="h-3 w-3" /> مقروء
+            </span>
+          )}
+        </div>
+      </div>
+      <StatusBadge status={r.send_status} />
+    </li>
+  );
+}
+
+function ChannelChip({ channel }: { channel: string }) {
+  const map: Record<string, { icon: typeof Send; label: string }> = {
+    in_app: { icon: BellRing, label: "داخل التطبيق" },
+    email: { icon: Mail, label: "بريد" },
+    sms: { icon: Phone, label: "SMS" },
+    whatsapp: { icon: MessageCircle, label: "واتساب" },
+    web_push: { icon: Smartphone, label: "إشعار" },
+  };
+  const cfg = map[channel] ?? { icon: Send, label: channel };
+  const Icon = cfg.icon;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Icon className="h-3 w-3" /> {cfg.label}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg =
+    status === "sent"
+      ? { cls: "bg-emerald-100 text-emerald-700", icon: Check, label: "تم الإرسال" }
+      : status === "failed"
+      ? { cls: "bg-rose-100 text-rose-700", icon: XCircle, label: "فشل" }
+      : status === "queued"
+      ? { cls: "bg-sky-100 text-sky-700", icon: Send, label: "في الطابور" }
+      : status === "skipped"
+      ? { cls: "bg-slate-100 text-slate-600", icon: XCircle, label: "متجاوز" }
+      : { cls: "bg-amber-100 text-amber-700", icon: Clock, label: "قيد الإرسال" };
+  const Icon = cfg.icon;
+  return (
+    <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${cfg.cls}`}>
+      <Icon className="h-3 w-3" /> {cfg.label}
+    </span>
+  );
+}
+
+function LogKpi({ label, value, tone }: { label: string; value: number; tone: "ok" | "warn" | "danger" | "neutral" }) {
+  const cls =
+    tone === "ok" ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    : tone === "warn" ? "bg-amber-50 text-amber-700 ring-amber-200"
+    : tone === "danger" ? "bg-rose-50 text-rose-700 ring-rose-200"
+    : "bg-slate-50 text-slate-700 ring-slate-200";
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${cls}`}>
+      {label} <span className="tabular-nums">{value}</span>
+    </span>
   );
 }
