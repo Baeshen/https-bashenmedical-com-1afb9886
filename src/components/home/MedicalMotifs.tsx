@@ -1,14 +1,15 @@
 // Subtle floating medical motifs overlay: DNA, ECG line, and medical cross.
-// Pure SVG + CSS animations. Non-interactive, low-opacity, respects reduced motion.
+// Positions use logical properties (start/end) so they auto-flip in RTL,
+// and sizes/positions adapt per breakpoint to avoid the text zone.
 export function MedicalMotifs() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_78%)] motion-reduce:[&_*]:!animate-none"
+      className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_82%)] motion-reduce:[&_*]:!animate-none"
     >
-      {/* ECG pulse line — bottom */}
+      {/* ECG pulse line — spans full width, sits lower on desktop */}
       <svg
-        className="absolute inset-x-0 bottom-[18%] w-full h-16 opacity-[0.14] text-cyan-200"
+        className="absolute inset-x-0 bottom-[12%] sm:bottom-[16%] lg:bottom-[20%] w-full h-10 sm:h-14 lg:h-16 opacity-[0.12] sm:opacity-[0.14] text-cyan-200"
         viewBox="0 0 1200 80"
         preserveAspectRatio="none"
         fill="none"
@@ -27,9 +28,9 @@ export function MedicalMotifs() {
         />
       </svg>
 
-      {/* DNA helix — top-right */}
+      {/* DNA helix — opposite text side (end = right in LTR, left in RTL) */}
       <svg
-        className="absolute top-[8%] end-[6%] w-40 h-64 opacity-[0.10] text-white float-slow"
+        className="absolute top-[6%] sm:top-[8%] end-[4%] sm:end-[6%] lg:end-[8%] w-24 h-40 sm:w-32 sm:h-52 lg:w-40 lg:h-64 opacity-[0.09] sm:opacity-[0.10] text-white float-slow"
         viewBox="0 0 100 200"
         fill="none"
         stroke="currentColor"
@@ -43,19 +44,29 @@ export function MedicalMotifs() {
         })}
       </svg>
 
-      {/* Medical cross — mid-left */}
+      {/* Medical cross — hidden on small screens (text zone), shown from md up on end side */}
       <svg
-        className="absolute top-[42%] start-[7%] w-14 h-14 opacity-[0.10] text-cyan-100 float-slower"
+        className="hidden md:block absolute top-[62%] end-[14%] lg:end-[18%] w-10 h-10 lg:w-14 lg:h-14 opacity-[0.10] text-cyan-100 float-slower"
         viewBox="0 0 40 40"
         fill="currentColor"
       >
         <path d="M16 4h8v12h12v8H24v12h-8V24H4v-8h12z" />
       </svg>
 
-      {/* Small floating dots (molecules) */}
-      <div className="absolute top-[22%] start-[38%] w-1.5 h-1.5 rounded-full bg-cyan-200/40 float-slow" />
-      <div className="absolute top-[68%] start-[22%] w-1 h-1 rounded-full bg-white/30 float-slower" />
-      <div className="absolute top-[30%] end-[28%] w-1 h-1 rounded-full bg-cyan-200/40 float-slow" />
+      {/* Second small cross — desktop only, upper end area */}
+      <svg
+        className="hidden lg:block absolute top-[26%] end-[38%] w-6 h-6 opacity-[0.09] text-white float-slow"
+        viewBox="0 0 40 40"
+        fill="currentColor"
+      >
+        <path d="M16 4h8v12h12v8H24v12h-8V24H4v-8h12z" />
+      </svg>
+
+      {/* Small floating dots (molecules) — biased toward end side to avoid text */}
+      <div className="hidden sm:block absolute top-[22%] end-[32%] w-1.5 h-1.5 rounded-full bg-cyan-200/40 float-slow" />
+      <div className="absolute top-[74%] end-[10%] w-1 h-1 rounded-full bg-white/40 float-slower" />
+      <div className="hidden md:block absolute top-[46%] end-[28%] w-1 h-1 rounded-full bg-cyan-200/40 float-slow" />
+      <div className="hidden lg:block absolute top-[38%] end-[46%] w-1 h-1 rounded-full bg-white/30 float-slower" />
 
       <style>{`
         @keyframes ecg-draw {
