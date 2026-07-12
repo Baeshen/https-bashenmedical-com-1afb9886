@@ -67,6 +67,7 @@ import { Route as AuthenticatedPatientStoriesAdminRouteImport } from './routes/_
 import { Route as AuthenticatedNotificationsQueueRouteImport } from './routes/_authenticated/notifications-queue'
 import { Route as AuthenticatedMyRouteImport } from './routes/_authenticated/my'
 import { Route as AuthenticatedMessageTemplatesRouteImport } from './routes/_authenticated/message-templates'
+import { Route as AuthenticatedMcpStatusRouteImport } from './routes/_authenticated/mcp-status'
 import { Route as AuthenticatedDoctorsManagementRouteImport } from './routes/_authenticated/doctors-management'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCorporateAdminRouteImport } from './routes/_authenticated/corporate-admin'
@@ -386,6 +387,11 @@ const AuthenticatedMessageTemplatesRoute =
     path: '/message-templates',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMcpStatusRoute = AuthenticatedMcpStatusRouteImport.update({
+  id: '/mcp-status',
+  path: '/mcp-status',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDoctorsManagementRoute =
   AuthenticatedDoctorsManagementRouteImport.update({
     id: '/doctors-management',
@@ -546,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/message-templates': typeof AuthenticatedMessageTemplatesRoute
   '/my': typeof AuthenticatedMyRoute
   '/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
@@ -626,6 +633,7 @@ export interface FileRoutesByTo {
   '/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/message-templates': typeof AuthenticatedMessageTemplatesRoute
   '/my': typeof AuthenticatedMyRoute
   '/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
@@ -708,6 +716,7 @@ export interface FileRoutesById {
   '/_authenticated/corporate-admin': typeof AuthenticatedCorporateAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctors-management': typeof AuthenticatedDoctorsManagementRoute
+  '/_authenticated/mcp-status': typeof AuthenticatedMcpStatusRoute
   '/_authenticated/message-templates': typeof AuthenticatedMessageTemplatesRoute
   '/_authenticated/my': typeof AuthenticatedMyRoute
   '/_authenticated/notifications-queue': typeof AuthenticatedNotificationsQueueRoute
@@ -790,6 +799,7 @@ export interface FileRouteTypes {
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
+    | '/mcp-status'
     | '/message-templates'
     | '/my'
     | '/notifications-queue'
@@ -870,6 +880,7 @@ export interface FileRouteTypes {
     | '/corporate-admin'
     | '/dashboard'
     | '/doctors-management'
+    | '/mcp-status'
     | '/message-templates'
     | '/my'
     | '/notifications-queue'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/_authenticated/corporate-admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctors-management'
+    | '/_authenticated/mcp-status'
     | '/_authenticated/message-templates'
     | '/_authenticated/my'
     | '/_authenticated/notifications-queue'
@@ -1451,6 +1463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessageTemplatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mcp-status': {
+      id: '/_authenticated/mcp-status'
+      path: '/mcp-status'
+      fullPath: '/mcp-status'
+      preLoaderRoute: typeof AuthenticatedMcpStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/doctors-management': {
       id: '/_authenticated/doctors-management'
       path: '/doctors-management'
@@ -1611,6 +1630,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCorporateAdminRoute: typeof AuthenticatedCorporateAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDoctorsManagementRoute: typeof AuthenticatedDoctorsManagementRoute
+  AuthenticatedMcpStatusRoute: typeof AuthenticatedMcpStatusRoute
   AuthenticatedMessageTemplatesRoute: typeof AuthenticatedMessageTemplatesRoute
   AuthenticatedMyRoute: typeof AuthenticatedMyRoute
   AuthenticatedNotificationsQueueRoute: typeof AuthenticatedNotificationsQueueRoute
@@ -1640,6 +1660,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCorporateAdminRoute: AuthenticatedCorporateAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDoctorsManagementRoute: AuthenticatedDoctorsManagementRoute,
+  AuthenticatedMcpStatusRoute: AuthenticatedMcpStatusRoute,
   AuthenticatedMessageTemplatesRoute: AuthenticatedMessageTemplatesRoute,
   AuthenticatedMyRoute: AuthenticatedMyRoute,
   AuthenticatedNotificationsQueueRoute: AuthenticatedNotificationsQueueRoute,
