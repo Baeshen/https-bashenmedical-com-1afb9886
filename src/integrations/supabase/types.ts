@@ -1033,6 +1033,71 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          barcode: string | null
+          branch_id: string | null
+          created_at: string
+          expiry_date: string | null
+          form: string | null
+          id: string
+          is_active: boolean
+          min_stock: number
+          name_ar: string
+          name_en: string | null
+          notes: string | null
+          price: number | null
+          quantity: number
+          sku: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          branch_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name_ar: string
+          name_en?: string | null
+          notes?: string | null
+          price?: number | null
+          quantity?: number
+          sku?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          branch_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name_ar?: string
+          name_en?: string | null
+          notes?: string | null
+          price?: number | null
+          quantity?: number
+          sku?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           appointment_id: string | null
@@ -2202,59 +2267,94 @@ export type Database = {
       }
       prescriptions: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string | null
+          dispense_qty: number | null
           doctor_id: string | null
           dosage: string | null
           end_date: string | null
           id: string
           instructions: string | null
+          item_id: string | null
           medication: string
           notes: string | null
           patient_id: string
+          pharmacy_status: string
           refills_remaining: number
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           start_date: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
+          dispense_qty?: number | null
           doctor_id?: string | null
           dosage?: string | null
           end_date?: string | null
           id?: string
           instructions?: string | null
+          item_id?: string | null
           medication: string
           notes?: string | null
           patient_id: string
+          pharmacy_status?: string
           refills_remaining?: number
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
+          dispense_qty?: number | null
           doctor_id?: string | null
           dosage?: string | null
           end_date?: string | null
           id?: string
           instructions?: string | null
+          item_id?: string | null
           medication?: string
           notes?: string | null
           patient_id?: string
+          pharmacy_status?: string
           refills_remaining?: number
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "prescriptions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prescriptions_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
           {
@@ -2642,6 +2742,57 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_id: string
+          movement_type: string
+          quantity_delta: number
+          reason: string | null
+          reference: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id: string
+          movement_type: string
+          quantity_delta: number
+          reason?: string | null
+          reference?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string
+          movement_type?: string
+          quantity_delta?: number
+          reason?: string | null
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transition_alert_rules: {
         Row: {
           created_at: string
@@ -2926,6 +3077,26 @@ export type Database = {
           next_slot_branch_id: string
         }[]
       }
+      list_pharmacy_prescriptions: {
+        Args: { _branch_id?: string; _status?: string }
+        Returns: {
+          branch_id: string
+          created_at: string
+          dispense_qty: number
+          doctor_id: string
+          doctor_name: string
+          dosage: string
+          id: string
+          instructions: string
+          item_id: string
+          medication: string
+          patient_id: string
+          patient_name: string
+          pharmacy_status: string
+          review_notes: string
+          reviewed_at: string
+        }[]
+      }
       list_public_branches: {
         Args: never
         Returns: {
@@ -3183,6 +3354,16 @@ export type Database = {
           patient_id: string
           scan_count: number
         }[]
+      }
+      pharmacy_review_prescription: {
+        Args: {
+          _decision: string
+          _id: string
+          _item_id?: string
+          _notes?: string
+          _quantity?: number
+        }
+        Returns: Json
       }
       reply_to_rating: {
         Args: { _id: string; _reply: string }
