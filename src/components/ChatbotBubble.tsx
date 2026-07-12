@@ -65,9 +65,21 @@ export function ChatbotBubble() {
 
   const active = selected ? faqs?.find((f) => f.id === selected) : null;
 
-  const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    query.trim() ? `مرحبًا، لدي سؤال: ${query.trim()}` : "مرحبًا، أحتاج مساعدة من مجمع باعشن الطبي.",
-  )}`;
+  const pagePath =
+    typeof window !== "undefined" ? window.location.pathname || "/" : "/";
+  const waMessage = query.trim()
+    ? `مرحبًا ${SITE.nameAr} 👋\nلدي سؤال: ${query.trim()}\n(صفحة: ${pagePath})`
+    : `مرحبًا ${SITE.nameAr} 👋\nأحتاج مساعدة.\n(صفحة: ${pagePath})`;
+  const waHref = whatsappUrl(waMessage);
+
+  const handleWaClick = () => {
+    trackEvent("whatsapp_chatbot_click", {
+      phone: SITE.whatsapp,
+      source: pagePath,
+      has_query: query.trim().length > 0,
+    });
+  };
+
 
   if (!hydrated) return null;
 
