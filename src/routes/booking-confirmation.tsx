@@ -273,6 +273,34 @@ function BookingConfirmationPage() {
               </div>
             </div>
 
+            {/* Live status + manual refresh */}
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2 text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span
+                  className={`inline-flex items-center gap-1 ${liveConnected ? "text-green-600" : "text-muted-foreground"}`}
+                  title={liveConnected ? "متصل بالتحديث المباشر" : "غير متصل"}
+                >
+                  <Radio className={`h-3.5 w-3.5 ${liveConnected ? "animate-pulse" : ""}`} />
+                  {liveConnected ? "تحديث مباشر" : "غير متصل"}
+                </span>
+                {lastUpdated && (
+                  <span className="opacity-70">
+                    · آخر تحديث {lastUpdated.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => void fetchAppt({ silent: true })}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                تحديث الحالة
+              </button>
+            </div>
+
+
             {/* Timeline of booking stages */}
             <OrderTimeline
               kind="appointment"
