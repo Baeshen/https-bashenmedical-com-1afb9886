@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   getMyPrescriptions,
   generateMedicationReminders,
+  getMedicationReminderLog,
   type PrescriptionItem,
   type ReminderPlan,
+  type ReminderLogEntry,
 } from "@/lib/portal/prescriptions.functions";
 import { Badge } from "@/components/ui/badge";
 import {
