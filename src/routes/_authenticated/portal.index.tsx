@@ -1,6 +1,14 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { getDashboardSummary } from "@/lib/portal/portal.functions";
+import { cancelMyAppointment } from "@/lib/slots.functions";
 import {
   CalendarCheck,
   Stethoscope,
@@ -13,6 +21,8 @@ import {
   FlaskConical,
   AlertTriangle,
   RefreshCw,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 
 const dashboardQuery = queryOptions({
@@ -73,6 +83,18 @@ function PortalDashboard() {
 
   const firstName =
     (data.profile?.full_name?.trim().split(/\s+/)[0]) || (isAr ? "بك" : "there");
+
+  const qc = useQueryClient();
+  const cancelFn = useServerFn(cancelMyAppointment);
+  const cancelM = useMutation({
+    mutationFn: (id: string) => cancelFn({ data: { appointmentId: id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["portal", "dashboard-summary"] });
+      toast.success(isAr ? "تم إلغاء الحجز." : "Appointment cancelled.");
+    },
+    onError: (err: Error) =>
+      toast.error(err.message || (isAr ? "تعذّر الإلغاء." : "Cancel failed.")),
+  });
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -194,7 +216,30 @@ function PortalDashboard() {
                       {a.appointment_time?.slice(0, 5)}
                     </div>
                   </div>
-                  <StatusBadge status={a.status} isAr={isAr} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={a.status} isAr={isAr} />
+                    {(a.status === "new" || a.status === "confirmed") && (
+                      <button
+                        type="button"
+                        disabled={cancelM.isPending && cancelM.variables === a.id}
+                        onClick={() => {
+                          const msg = isAr
+                            ? "هل تريد إلغاء هذا الحجز؟"
+                            : "Cancel this appointment?";
+                          if (confirm(msg)) cancelM.mutate(a.id);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-2.5 h-8 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                        title={isAr ? "إلغاء الحجز" : "Cancel"}
+                      >
+                        {cancelM.isPending && cancelM.variables === a.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5" />
+                        )}
+                        {isAr ? "إلغاء" : "Cancel"}
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
