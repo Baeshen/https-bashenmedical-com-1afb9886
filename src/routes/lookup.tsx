@@ -489,6 +489,13 @@ function LookupPage() {
               apptTime={appt.appointment_time}
             />
 
+            {/* Change history from DB audit */}
+            <AppointmentAuditHistory
+              refId={appt.id.replace(/-/g, "").slice(0, 8)}
+              phone={appt.patient_phone}
+            />
+
+
 
             {/* Details card */}
             <div className="rounded-2xl border border-border bg-card p-6">
