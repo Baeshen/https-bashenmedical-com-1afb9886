@@ -17,7 +17,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import {
-import { RequirePermission } from "@/components/rbac/RequirePermission";
   listMessageTemplates,
   upsertMessageTemplate,
   deleteMessageTemplate,
@@ -26,6 +25,7 @@ import { RequirePermission } from "@/components/rbac/RequirePermission";
   type MessageChannel,
   type MessageTemplate,
 } from "@/lib/message-templates.functions";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/message-templates")({
   head: () => ({

@@ -19,7 +19,6 @@ import { listBranches } from "@/lib/dashboard.functions";
 import { listDoctorsForCalendar } from "@/lib/calendar.functions";
 import { exportCsv, exportXlsx, exportPdf, type Column } from "@/lib/export-utils";
 import {
-import { RequirePermission } from "@/components/rbac/RequirePermission";
   BarChart3,
   Download,
   FileSpreadsheet,
@@ -28,6 +27,7 @@ import { RequirePermission } from "@/components/rbac/RequirePermission";
   LogOut,
   ArrowRight,
 } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({

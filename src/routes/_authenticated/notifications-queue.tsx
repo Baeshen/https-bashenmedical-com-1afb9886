@@ -15,12 +15,12 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-import { RequirePermission } from "@/components/rbac/RequirePermission";
   listOutboundNotifications,
   outboundNotificationStats,
   setNotificationStatus,
   type OutboundNotification,
 } from "@/lib/notifications.functions";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/notifications-queue")({
   head: () => ({

@@ -14,7 +14,6 @@ import {
 } from "@/lib/patients-mgmt.functions";
 import { listBranches } from "@/lib/dashboard.functions";
 import {
-import { RequirePermission } from "@/components/rbac/RequirePermission";
   Users,
   Search,
   Loader2,
@@ -33,6 +32,7 @@ import { RequirePermission } from "@/components/rbac/RequirePermission";
   Save,
   MoreVertical,
 } from "lucide-react";
+import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/patients-management")({
   head: () => ({
