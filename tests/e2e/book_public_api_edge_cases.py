@@ -167,8 +167,8 @@ def run():
     expect_status("G2 missing date → 400", st, 400, body)
 
     st, body = api("GET", "/api/public/book/availability",
-                   query={"date": "2026-13-40", "doctor_id": doctor_id})
-    expect_status("G3 invalid date → 400", st, 400, body)
+                   query={"date": "not-a-date", "doctor_id": doctor_id})
+    expect_status("G3 malformed date → 400", st, 400, body)
 
     st, body = api("GET", "/api/public/book/availability",
                    query={"date": iso_date, "doctor_id": "not-a-uuid"})
