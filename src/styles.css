@@ -341,3 +341,91 @@ html.reduce-motion *::after {
   50%     { transform: translateY(-6px); }
 }
 .portal-float { animation: portal-float 6s ease-in-out infinite; }
+
+/* ============================================================
+   Command Center — Enterprise admin design tokens
+   Dark navy shell + glassmorphism + cyan/blue gradients
+   ============================================================ */
+:root {
+  --cc-bg-1: #0b1220;
+  --cc-bg-2: #0f1a2e;
+  --cc-surface: rgba(255, 255, 255, 0.04);
+  --cc-surface-strong: rgba(255, 255, 255, 0.07);
+  --cc-border: rgba(255, 255, 255, 0.08);
+  --cc-border-strong: rgba(255, 255, 255, 0.14);
+  --cc-fg: #e6edf7;
+  --cc-fg-muted: rgba(230, 237, 247, 0.62);
+  --cc-fg-dim: rgba(230, 237, 247, 0.42);
+  --cc-primary: #0f6cbd;
+  --cc-cyan: #1cc8ee;
+  --cc-success: #22c55e;
+  --cc-warning: #f59e0b;
+  --cc-danger: #ef4444;
+  --cc-gradient-primary: linear-gradient(135deg, #0f6cbd 0%, #1cc8ee 100%);
+  --cc-gradient-panel: linear-gradient(180deg, rgba(28, 200, 238, 0.08), rgba(15, 108, 189, 0.02));
+  --cc-gradient-emergency: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.06));
+  --cc-shadow-glass: 0 10px 40px -12px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --cc-shadow-elevated: 0 24px 60px -20px rgba(15, 108, 189, 0.4);
+}
+
+.cc-shell {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(28, 200, 238, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(15, 108, 189, 0.14), transparent 55%),
+    linear-gradient(180deg, var(--cc-bg-1) 0%, var(--cc-bg-2) 100%);
+  color: var(--cc-fg);
+  min-height: 100vh;
+}
+
+.cc-glass {
+  background: var(--cc-surface);
+  border: 1px solid var(--cc-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  border-radius: 1.5rem;
+  box-shadow: var(--cc-shadow-glass);
+}
+.cc-glass-strong {
+  background: var(--cc-surface-strong);
+  border: 1px solid var(--cc-border-strong);
+  backdrop-filter: blur(18px) saturate(140%);
+  border-radius: 1.5rem;
+  box-shadow: var(--cc-shadow-glass);
+}
+
+.cc-gradient-text {
+  background: var(--cc-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cc-ring-glow {
+  box-shadow: 0 0 0 1px rgba(28, 200, 238, 0.5), 0 0 32px -8px rgba(28, 200, 238, 0.55);
+}
+
+@keyframes cc-pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+.cc-pulse-dot { animation: cc-pulse-dot 1.8s ease-in-out infinite; }
+
+@keyframes cc-sheen {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+.cc-sheen {
+  position: relative; overflow: hidden;
+}
+.cc-sheen::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.14) 50%, transparent 60%);
+  animation: cc-sheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cc-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cc-rise { animation: cc-rise 0.5s ease-out both; }
+
