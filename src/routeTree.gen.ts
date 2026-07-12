@@ -101,6 +101,7 @@ import { Route as AuthenticatedPortalRadiologyRouteImport } from './routes/_auth
 import { Route as AuthenticatedPortalProfileRouteImport } from './routes/_authenticated/portal.profile'
 import { Route as AuthenticatedPortalPrescriptionsRouteImport } from './routes/_authenticated/portal.prescriptions'
 import { Route as AuthenticatedPortalPaymentsRouteImport } from './routes/_authenticated/portal.payments'
+import { Route as AuthenticatedPortalOrdersRouteImport } from './routes/_authenticated/portal.orders'
 import { Route as AuthenticatedPortalNotificationsRouteImport } from './routes/_authenticated/portal.notifications'
 import { Route as AuthenticatedPortalLaboratoryRouteImport } from './routes/_authenticated/portal.laboratory'
 import { Route as AuthenticatedPortalInvoicesRouteImport } from './routes/_authenticated/portal.invoices'
@@ -609,6 +610,12 @@ const AuthenticatedPortalPaymentsRoute =
     path: '/payments',
     getParentRoute: () => AuthenticatedPortalRoute,
   } as any)
+const AuthenticatedPortalOrdersRoute =
+  AuthenticatedPortalOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedPortalRoute,
+  } as any)
 const AuthenticatedPortalNotificationsRoute =
   AuthenticatedPortalNotificationsRouteImport.update({
     id: '/notifications',
@@ -708,9 +715,9 @@ const AuthenticatedOrdersUnifiedKindIdRoute =
   } as any)
 const AuthenticatedPortalOrdersKindIdRoute =
   AuthenticatedPortalOrdersKindIdRouteImport.update({
-    id: '/orders/$kind/$id',
-    path: '/orders/$kind/$id',
-    getParentRoute: () => AuthenticatedPortalRoute,
+    id: '/$kind/$id',
+    path: '/$kind/$id',
+    getParentRoute: () => AuthenticatedPortalOrdersRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -806,6 +813,7 @@ export interface FileRoutesByFullPath {
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -916,6 +924,7 @@ export interface FileRoutesByTo {
   '/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -1029,6 +1038,7 @@ export interface FileRoutesById {
   '/_authenticated/portal/invoices': typeof AuthenticatedPortalInvoicesRoute
   '/_authenticated/portal/laboratory': typeof AuthenticatedPortalLaboratoryRoute
   '/_authenticated/portal/notifications': typeof AuthenticatedPortalNotificationsRoute
+  '/_authenticated/portal/orders': typeof AuthenticatedPortalOrdersRouteWithChildren
   '/_authenticated/portal/payments': typeof AuthenticatedPortalPaymentsRoute
   '/_authenticated/portal/prescriptions': typeof AuthenticatedPortalPrescriptionsRoute
   '/_authenticated/portal/profile': typeof AuthenticatedPortalProfileRoute
@@ -1142,6 +1152,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/laboratory'
     | '/portal/notifications'
+    | '/portal/orders'
     | '/portal/payments'
     | '/portal/prescriptions'
     | '/portal/profile'
@@ -1252,6 +1263,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/laboratory'
     | '/portal/notifications'
+    | '/portal/orders'
     | '/portal/payments'
     | '/portal/prescriptions'
     | '/portal/profile'
@@ -1364,6 +1376,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/invoices'
     | '/_authenticated/portal/laboratory'
     | '/_authenticated/portal/notifications'
+    | '/_authenticated/portal/orders'
     | '/_authenticated/portal/payments'
     | '/_authenticated/portal/prescriptions'
     | '/_authenticated/portal/profile'
@@ -2085,6 +2098,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalPaymentsRouteImport
       parentRoute: typeof AuthenticatedPortalRoute
     }
+    '/_authenticated/portal/orders': {
+      id: '/_authenticated/portal/orders'
+      path: '/orders'
+      fullPath: '/portal/orders'
+      preLoaderRoute: typeof AuthenticatedPortalOrdersRouteImport
+      parentRoute: typeof AuthenticatedPortalRoute
+    }
     '/_authenticated/portal/notifications': {
       id: '/_authenticated/portal/notifications'
       path: '/notifications'
@@ -2206,10 +2226,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/portal/orders/$kind/$id': {
       id: '/_authenticated/portal/orders/$kind/$id'
-      path: '/orders/$kind/$id'
+      path: '/$kind/$id'
       fullPath: '/portal/orders/$kind/$id'
       preLoaderRoute: typeof AuthenticatedPortalOrdersKindIdRouteImport
-      parentRoute: typeof AuthenticatedPortalRoute
+      parentRoute: typeof AuthenticatedPortalOrdersRoute
     }
   }
 }
@@ -2229,6 +2249,20 @@ const AuthenticatedOrdersUnifiedRouteWithChildren =
     AuthenticatedOrdersUnifiedRouteChildren,
   )
 
+interface AuthenticatedPortalOrdersRouteChildren {
+  AuthenticatedPortalOrdersKindIdRoute: typeof AuthenticatedPortalOrdersKindIdRoute
+}
+
+const AuthenticatedPortalOrdersRouteChildren: AuthenticatedPortalOrdersRouteChildren =
+  {
+    AuthenticatedPortalOrdersKindIdRoute: AuthenticatedPortalOrdersKindIdRoute,
+  }
+
+const AuthenticatedPortalOrdersRouteWithChildren =
+  AuthenticatedPortalOrdersRoute._addFileChildren(
+    AuthenticatedPortalOrdersRouteChildren,
+  )
+
 interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalBookRoute: typeof AuthenticatedPortalBookRoute
   AuthenticatedPortalComplaintsRoute: typeof AuthenticatedPortalComplaintsRoute
@@ -2237,6 +2271,7 @@ interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalInvoicesRoute: typeof AuthenticatedPortalInvoicesRoute
   AuthenticatedPortalLaboratoryRoute: typeof AuthenticatedPortalLaboratoryRoute
   AuthenticatedPortalNotificationsRoute: typeof AuthenticatedPortalNotificationsRoute
+  AuthenticatedPortalOrdersRoute: typeof AuthenticatedPortalOrdersRouteWithChildren
   AuthenticatedPortalPaymentsRoute: typeof AuthenticatedPortalPaymentsRoute
   AuthenticatedPortalPrescriptionsRoute: typeof AuthenticatedPortalPrescriptionsRoute
   AuthenticatedPortalProfileRoute: typeof AuthenticatedPortalProfileRoute
@@ -2244,7 +2279,6 @@ interface AuthenticatedPortalRouteChildren {
   AuthenticatedPortalRecordsRoute: typeof AuthenticatedPortalRecordsRoute
   AuthenticatedPortalSettingsRoute: typeof AuthenticatedPortalSettingsRoute
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
-  AuthenticatedPortalOrdersKindIdRoute: typeof AuthenticatedPortalOrdersKindIdRoute
 }
 
 const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
@@ -2255,6 +2289,7 @@ const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
   AuthenticatedPortalInvoicesRoute: AuthenticatedPortalInvoicesRoute,
   AuthenticatedPortalLaboratoryRoute: AuthenticatedPortalLaboratoryRoute,
   AuthenticatedPortalNotificationsRoute: AuthenticatedPortalNotificationsRoute,
+  AuthenticatedPortalOrdersRoute: AuthenticatedPortalOrdersRouteWithChildren,
   AuthenticatedPortalPaymentsRoute: AuthenticatedPortalPaymentsRoute,
   AuthenticatedPortalPrescriptionsRoute: AuthenticatedPortalPrescriptionsRoute,
   AuthenticatedPortalProfileRoute: AuthenticatedPortalProfileRoute,
@@ -2262,7 +2297,6 @@ const AuthenticatedPortalRouteChildren: AuthenticatedPortalRouteChildren = {
   AuthenticatedPortalRecordsRoute: AuthenticatedPortalRecordsRoute,
   AuthenticatedPortalSettingsRoute: AuthenticatedPortalSettingsRoute,
   AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
-  AuthenticatedPortalOrdersKindIdRoute: AuthenticatedPortalOrdersKindIdRoute,
 }
 
 const AuthenticatedPortalRouteWithChildren =
