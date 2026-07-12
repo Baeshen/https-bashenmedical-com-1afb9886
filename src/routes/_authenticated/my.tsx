@@ -508,8 +508,9 @@ function LabsTab({ patientId }: { patientId: string | null }) {
     (async () => {
       const { data, error } = await supabase
         .from("lab_reports")
-        .select("id, title, test_type, report_date, file_path, summary, status")
+        .select("id, title, test_type, report_date, file_path, summary, status, released_at")
         .eq("patient_id", patientId)
+        .not("released_at", "is", null)
         .order("report_date", { ascending: false });
       if (error) return toast.error(error.message);
       setRows((data as LabReport[]) ?? []);
