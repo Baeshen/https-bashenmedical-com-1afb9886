@@ -202,18 +202,29 @@ function MyOrdersPage() {
                 {isAr ? "تعذّر تحميل الطلبات — حاول مجددًا." : "Failed to load orders."}
               </div>
             ) : (orders?.length ?? 0) === 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-10 text-center">
-                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                  <Search className="h-6 w-6 text-muted-foreground" />
+              <div className="rounded-2xl border border-border bg-card p-8 md:p-10">
+                <div className="text-center">
+                  <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Search className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold">
+                    {isAr ? "لا توجد طلبات مرتبطة بهذا الرقم" : "No orders found for this number"}
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                    {isAr ? (
+                      <>لم نعثر على أي طلب مرتبط بالرقم <span className="font-semibold text-foreground" dir="ltr">{queryPhone}</span>. تأكّد من صحة الرقم، أو ابدأ حجزًا جديدًا الآن.</>
+                    ) : (
+                      <>We couldn't find any request linked to <span className="font-semibold text-foreground" dir="ltr">{queryPhone}</span>. Double-check the number or start a new request below.</>
+                    )}
+                  </p>
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                    <Link to="/book"><Button variant="premium" size="lg"><CalendarCheck className="h-4 w-4" />{isAr ? "احجز موعدًا الآن" : "Book an appointment"}</Button></Link>
+                    <Link to="/services"><Button variant="outline" size="lg">{isAr ? "استعرض كل الخدمات" : "Browse all services"}</Button></Link>
+                    <Button variant="ghost" size="lg" onClick={clear}>{isAr ? "تغيير الرقم" : "Change number"}</Button>
+                  </div>
                 </div>
-                <h3 className="font-bold">{isAr ? "لا توجد طلبات" : "No orders found"}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {isAr
-                    ? "لم نجد أي طلبات مرتبطة بهذا الرقم. تأكّد من الرقم أو ابدأ طلبًا جديدًا."
-                    : "No orders match this phone. Try another number or start a new request."}
-                </p>
-                <div className="mt-4">
-                  <Link to="/services"><Button variant="premium">{isAr ? "استعرض الخدمات" : "Browse services"}</Button></Link>
+                <div className="mt-8 border-t border-border pt-6">
+                  <QuickLinks isAr={isAr} />
                 </div>
               </div>
             ) : (
