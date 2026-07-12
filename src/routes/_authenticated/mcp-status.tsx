@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import manifest from "../../../.lovable/mcp/manifest.json";
+import { getLastMcpInvocations, type LastToolInvocation } from "@/lib/mcp-diagnostics.functions";
 
 export const Route = createFileRoute("/_authenticated/mcp-status")({
   head: () => ({
@@ -188,7 +191,7 @@ function McpStatusPage() {
         <Row label={`اتصال بخادم MCP (${mcpPath})`} check={mcpPing} />
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <section className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold">
           الأدوات المُسجّلة <span className="text-muted-foreground">({tools.length})</span>
         </h2>
@@ -220,6 +223,109 @@ function McpStatusPage() {
           </ul>
         )}
       </section>
+
+      <ToolInvocationsSection toolNames={tools.map((t: any) => t.name)} />
     </main>
+  );
+}
+
+function ToolInvocationsSection({ toolNames }: { toolNames: string[] }) {
+  const fetchInvocations = useServerFn(getLastMcpInvocations);
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["mcp-last-invocations"],
+    queryFn: () => fetchInvocations(),
+    staleTime: 30_000,
+  });
+
+  const byName = new Map<string, LastToolInvocation>();
+  for (const row of data ?? []) byName.set(row.tool_name, row);
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">آخر استدعاء لكل أداة</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            يعرض آخر مرة استدعى فيها حسابك الأداة عبر MCP (لا تُسجَّل الاستدعاءات المجهولة).
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+          disabled={isFetching}
+        >
+          {isFetching ? "..." : "تحديث"}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">جارٍ التحميل…</p>
+      ) : isError ? (
+        <p className="text-sm text-destructive">
+          تعذّر تحميل السجل: {(error as Error)?.message ?? "خطأ غير معروف"}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {toolNames.map((name) => {
+            const row = byName.get(name);
+            return (
+              <li key={name} className="py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm">{name}</span>
+                    {row ? (
+                      row.is_error ? (
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive">
+                          فشل
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                          نجاح
+                        </span>
+                      )
+                    ) : (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        لم يُستخدم
+                      </span>
+                    )}
+                  </div>
+                  {row && (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <time dateTime={row.invoked_at} title={row.invoked_at}>
+                        {new Date(row.invoked_at).toLocaleString("ar")}
+                      </time>
+                      {row.duration_ms != null && (
+                        <span className="font-mono">{row.duration_ms} ms</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {row?.args_summary && (
+                  <div className="mt-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      الوسائط
+                    </div>
+                    <pre className="mt-0.5 overflow-x-auto rounded bg-muted/50 p-2 text-[11px] font-mono leading-snug">
+                      {row.args_summary}
+                    </pre>
+                  </div>
+                )}
+                {row?.result_summary && (
+                  <div className="mt-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      النتيجة
+                    </div>
+                    <pre className="mt-0.5 overflow-x-auto rounded bg-muted/50 p-2 text-[11px] font-mono leading-snug whitespace-pre-wrap break-all">
+                      {row.result_summary}
+                    </pre>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

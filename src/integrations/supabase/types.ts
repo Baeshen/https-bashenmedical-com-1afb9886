@@ -1097,6 +1097,39 @@ export type Database = {
           },
         ]
       }
+      mcp_tool_invocations: {
+        Row: {
+          args_summary: Json | null
+          duration_ms: number | null
+          id: string
+          invoked_at: string
+          is_error: boolean
+          result_summary: string | null
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          args_summary?: Json | null
+          duration_ms?: number | null
+          id?: string
+          invoked_at?: string
+          is_error?: boolean
+          result_summary?: string | null
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          args_summary?: Json | null
+          duration_ms?: number | null
+          id?: string
+          invoked_at?: string
+          is_error?: boolean
+          result_summary?: string | null
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medicine_orders: {
         Row: {
           address: string | null

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { logMcpInvocation } from "../log-invocation";
 
 export default defineTool({
   name: "update_appointment_status",
@@ -16,8 +17,13 @@ export default defineTool({
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ appointment_id, status }, ctx: ToolContext) => {
+    const startedAt = Date.now();
+    const args = { appointment_id, status };
     if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+      return {
+        content: [{ type: "text" as const, text: "Not authenticated" }],
+        isError: true,
+      };
     }
 
     const supabase = createClient<Database>(
@@ -38,11 +44,18 @@ export default defineTool({
       )
       .maybeSingle();
 
+    let result: {
+      content: Array<{ type: "text"; text: string }>;
+      isError?: boolean;
+      structuredContent?: Record<string, unknown>;
+    };
     if (error) {
-      return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
-    }
-    if (!data) {
-      return {
+      result = {
+        content: [{ type: "text", text: `Error: ${error.message}` }],
+        isError: true,
+      };
+    } else if (!data) {
+      result = {
         content: [
           {
             type: "text",
@@ -51,11 +64,20 @@ export default defineTool({
         ],
         isError: true,
       };
+    } else {
+      result = {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+        structuredContent: { appointment: data },
+      };
     }
 
-    return {
-      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      structuredContent: { appointment: data },
-    };
+    await logMcpInvocation({
+      ctx,
+      toolName: "update_appointment_status",
+      args,
+      result,
+      startedAt,
+    });
+    return result;
   },
 });

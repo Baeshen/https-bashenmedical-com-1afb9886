@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { logMcpInvocation } from "../log-invocation";
 
 export default defineTool({
   name: "list_my_appointments",
@@ -13,8 +14,14 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx: ToolContext) => {
+    const startedAt = Date.now();
+    const args = { limit };
     if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+      const result = {
+        content: [{ type: "text" as const, text: "Not authenticated" }],
+        isError: true,
+      };
+      return result;
     }
 
     const supabase = createClient<Database>(
@@ -34,13 +41,17 @@ export default defineTool({
       .order("appointment_date", { ascending: false })
       .limit(limit ?? 20);
 
-    if (error) {
-      return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
-    }
+    const result = error
+      ? {
+          content: [{ type: "text" as const, text: `Error: ${error.message}` }],
+          isError: true,
+        }
+      : {
+          content: [{ type: "text" as const, text: JSON.stringify(data ?? [], null, 2) }],
+          structuredContent: { appointments: data ?? [] },
+        };
 
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
-      structuredContent: { appointments: data ?? [] },
-    };
+    await logMcpInvocation({ ctx, toolName: "list_my_appointments", args, result, startedAt });
+    return result;
   },
 });
