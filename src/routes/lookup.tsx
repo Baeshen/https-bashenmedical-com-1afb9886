@@ -13,6 +13,7 @@ import { OrderTimeline } from "@/components/booking/OrderTimeline";
 import {
   parseOrderDetail,
   isFinalStatus,
+  OrderParseError,
   type AppointmentDetail,
   type OrderStatus,
 } from "@/lib/order-types";
