@@ -378,7 +378,7 @@ export const getMedicationReminderLog = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .eq("kind", "medication_reminder")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
     if (res.error) return [];
     return (res.data ?? []).map((r) => {
       const meta = (r.metadata as { time?: string; label?: string } | null) ?? null;
@@ -398,3 +398,99 @@ export const getMedicationReminderLog = createServerFn({ method: "GET" })
     });
   });
 
+
+/* --------------------------- Confirmations & adherence --------------------------- */
+
+const ConfirmInput = z.object({ id: z.string().uuid(), taken: z.boolean().default(true) });
+
+export const confirmMedicationReminder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => ConfirmInput.parse(i))
+  .handler(async ({ context, data }): Promise<{ ok: true; taken_at: string | null }> => {
+    const { supabase, userId } = context;
+    const takenAt = data.taken ? new Date().toISOString() : null;
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: takenAt })
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .eq("audience", "user")
+      .eq("kind", "medication_reminder");
+    if (error) throw new Error(error.message);
+    return { ok: true, taken_at: takenAt };
+  });
+
+export type AdherenceDay = {
+  date: string; // YYYY-MM-DD
+  weekday: string; // Arabic short
+  total: number;
+  taken: number;
+  pct: number; // 0..100
+};
+
+export type AdherenceStats = {
+  days: AdherenceDay[];
+  weekTotal: number;
+  weekTaken: number;
+  weekPct: number;
+  streak: number; // consecutive recent days with pct>=80
+  bestDay: AdherenceDay | null;
+};
+
+export const getAdherenceStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdherenceStats> => {
+    const { supabase, userId } = context;
+    const since = new Date();
+    since.setDate(since.getDate() - 6);
+    since.setHours(0, 0, 0, 0);
+
+    const res = await supabase
+      .from("notifications")
+      .select("created_at, read_at")
+      .eq("audience", "user")
+      .eq("user_id", userId)
+      .eq("kind", "medication_reminder")
+      .gte("created_at", since.toISOString())
+      .limit(1000);
+
+    const rows = res.data ?? [];
+    const weekdayAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const days: AdherenceDay[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ date: key, weekday: weekdayAr[d.getDay()], total: 0, taken: 0, pct: 0 });
+    }
+    const byDate = new Map(days.map((d) => [d.date, d]));
+    for (const r of rows) {
+      const key = ((r.created_at as string) ?? "").slice(0, 10);
+      const bucket = byDate.get(key);
+      if (!bucket) continue;
+      bucket.total += 1;
+      if (r.read_at) bucket.taken += 1;
+    }
+    let weekTotal = 0, weekTaken = 0;
+    for (const d of days) {
+      d.pct = d.total > 0 ? Math.round((d.taken / d.total) * 100) : 0;
+      weekTotal += d.total;
+      weekTaken += d.taken;
+    }
+    const weekPct = weekTotal > 0 ? Math.round((weekTaken / weekTotal) * 100) : 0;
+
+    let streak = 0;
+    for (let i = days.length - 1; i >= 0; i--) {
+      const d = days[i];
+      if (d.total === 0) continue;
+      if (d.pct >= 80) streak += 1;
+      else break;
+    }
+    const bestDay = days.reduce<AdherenceDay | null>(
+      (acc, d) => (d.total > 0 && (!acc || d.pct > acc.pct) ? d : acc),
+      null,
+    );
+
+    return { days, weekTotal, weekTaken, weekPct, streak, bestDay };
+  });
