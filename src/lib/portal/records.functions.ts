@@ -104,15 +104,15 @@ export const getMyMedicalRecords = createServerFn({ method: "GET" })
         .limit(50),
       supabase
         .from("radiology_reports")
-        .select("id, title, modality, findings, report_date, file_path, status")
+        .select("id, modality, body_part, findings, report_date, file_path, status")
         .eq("patient_id", patient.id)
         .order("report_date", { ascending: false })
         .limit(50),
       supabase
         .from("prescriptions")
-        .select("id, medication, dosage, frequency, duration, notes, issued_at, file_path")
+        .select("id, medication, dosage, instructions, start_date, end_date, notes, status")
         .eq("patient_id", patient.id)
-        .order("issued_at", { ascending: false })
+        .order("start_date", { ascending: false, nullsFirst: false })
         .limit(50),
       supabase
         .from("patient_attachments")
