@@ -20,6 +20,11 @@ import { buildLocalBusinessSchema } from "@/lib/localBusinessSchema";
 import { clinicSettingsQuery, type ClinicSettings } from "@/lib/clinicSettings";
 import { StaggerReveal, RevealItem } from "@/components/motion/StaggerReveal";
 import { AnnouncementsSection } from "@/components/home/AnnouncementsSection";
+import {
+  SkeletonSwap,
+  SpecialtiesSkeleton,
+  DoctorsSkeleton,
+} from "@/components/home/HomeSkeletons";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
@@ -147,7 +152,7 @@ function HomePage() {
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
 
-  const { data: specialties } = useQuery({
+  const { data: specialties, isPending: specialtiesLoading } = useQuery({
     queryKey: ["specialties"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -159,7 +164,7 @@ function HomePage() {
       return data;
     },
   });
-  const { data: doctors } = useQuery({
+  const { data: doctors, isPending: doctorsLoading } = useQuery({
     queryKey: ["doctors_featured"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -340,27 +345,32 @@ function HomePage() {
             </Link>
           </div>
 
-          <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {specialties?.slice(0, 12).map((s) => (
-              <RevealItem key={s.id}>
-                <Link
-                  to="/book"
-                  search={{ specialty: s.slug }}
-                  className="glass-fut neon-glow-hover group block h-full p-5"
-                >
-                  <div className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--fut-border)] bg-white/[0.04] text-[color:var(--neon-teal)] transition group-hover:border-[var(--neon-teal)]">
-                    <Stethoscope className="h-5 w-5" />
-                  </div>
-                  <div className="mt-3 text-sm font-semibold text-[color:var(--fut-ink)]">
-                    {isAr ? s.name_ar : s.name_en}
-                  </div>
-                  <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)] line-clamp-2">
-                    {isAr ? s.description_ar : s.description_en}
-                  </div>
-                </Link>
-              </RevealItem>
-            ))}
-          </StaggerReveal>
+          <SkeletonSwap
+            loading={specialtiesLoading}
+            skeleton={<SpecialtiesSkeleton count={8} />}
+          >
+            <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {specialties?.slice(0, 12).map((s) => (
+                <RevealItem key={s.id}>
+                  <Link
+                    to="/book"
+                    search={{ specialty: s.slug }}
+                    className="glass-fut neon-glow-hover group block h-full p-5"
+                  >
+                    <div className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--fut-border)] bg-white/[0.04] text-[color:var(--neon-teal)] transition group-hover:border-[var(--neon-teal)]">
+                      <Stethoscope className="h-5 w-5" />
+                    </div>
+                    <div className="mt-3 text-sm font-semibold text-[color:var(--fut-ink)]">
+                      {isAr ? s.name_ar : s.name_en}
+                    </div>
+                    <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)] line-clamp-2">
+                      {isAr ? s.description_ar : s.description_en}
+                    </div>
+                  </Link>
+                </RevealItem>
+              ))}
+            </StaggerReveal>
+          </SkeletonSwap>
         </div>
       </section>
 
@@ -421,34 +431,39 @@ function HomePage() {
             </Link>
           </div>
 
-          <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {doctors?.map((d) => (
-              <RevealItem
-                key={d.id}
-                className="glass-fut neon-glow-hover flex flex-col items-center p-6 text-center"
-              >
-                <div className="grid h-24 w-24 place-items-center rounded-full text-2xl font-bold text-[#04121a] shadow-[var(--fut-glow-teal)]"
-                     style={{ background: "var(--fut-gradient-neon)" }}>
-                  {(isAr ? d.name_ar : d.name_en).charAt(0)}
-                </div>
-                <div className="mt-4">
-                  <div className="font-bold text-[color:var(--fut-ink)]">
-                    {isAr ? d.name_ar : d.name_en}
-                  </div>
-                  <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)]">
-                    {isAr ? d.title_ar : d.title_en}
-                  </div>
-                </div>
-                <Link
-                  to="/book"
-                  search={{ doctor: d.id }}
-                  className="btn-magnetic mt-4 w-full !py-2 text-xs"
+          <SkeletonSwap
+            loading={doctorsLoading}
+            skeleton={<DoctorsSkeleton count={4} />}
+          >
+            <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {doctors?.map((d) => (
+                <RevealItem
+                  key={d.id}
+                  className="glass-fut neon-glow-hover flex flex-col items-center p-6 text-center"
                 >
-                  {t("book_with_doctor")}
-                </Link>
-              </RevealItem>
-            ))}
-          </StaggerReveal>
+                  <div className="grid h-24 w-24 place-items-center rounded-full text-2xl font-bold text-[#04121a] shadow-[var(--fut-glow-teal)]"
+                       style={{ background: "var(--fut-gradient-neon)" }}>
+                    {(isAr ? d.name_ar : d.name_en).charAt(0)}
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-bold text-[color:var(--fut-ink)]">
+                      {isAr ? d.name_ar : d.name_en}
+                    </div>
+                    <div className="mt-1 text-xs text-[color:var(--fut-ink-muted)]">
+                      {isAr ? d.title_ar : d.title_en}
+                    </div>
+                  </div>
+                  <Link
+                    to="/book"
+                    search={{ doctor: d.id }}
+                    className="btn-magnetic mt-4 w-full !py-2 text-xs"
+                  >
+                    {t("book_with_doctor")}
+                  </Link>
+                </RevealItem>
+              ))}
+            </StaggerReveal>
+          </SkeletonSwap>
         </div>
       </section>
 
