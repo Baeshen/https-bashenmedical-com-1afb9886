@@ -75,7 +75,7 @@ type NavItem = { label: string; icon: React.ComponentType<{ className?: string }
 const NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/_authenticated/command-center" as string },
   { label: "الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string },
-  { label: "الممرضون", icon: HeartPulse, comingSoon: true },
+  { label: "الممرضون", icon: HeartPulse, to: "/_authenticated/nurses" as string },
   { label: "المرضى", icon: Users, to: "/_authenticated/patients-management" as string },
   { label: "المواعيد", icon: CalendarDays, to: "/_authenticated/appointments-queue" as string },
   { label: "العيادات", icon: Building2, to: "/_authenticated/clinic-settings" as string },
