@@ -100,6 +100,15 @@ function MyComplaintsPage() {
   }, [profileQuery.data?.id, qc]);
 
   const rows = listQuery.data ?? [];
+  const filteredRows = useMemo(() => {
+    const filtered = statusFilter === "all" ? rows : rows.filter((r) => r.status === statusFilter);
+    const sorted = [...filtered].sort((a, b) => {
+      const da = new Date(a.created_at).getTime();
+      const db = new Date(b.created_at).getTime();
+      return sortOrder === "newest" ? db - da : da - db;
+    });
+    return sorted;
+  }, [rows, statusFilter, sortOrder]);
   const selected = useMemo(
     () => rows.find((r) => r.id === selectedId) ?? null,
     [rows, selectedId],
