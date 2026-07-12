@@ -157,17 +157,8 @@ function HomeCarePage() {
           </div>
         </div>
 
-        <ServiceRequestForm
-          tag="رعاية منزلية"
-          refPrefix="HC"
-          title="اطلب زيارة منزلية"
-          subtitle="سنتواصل معك خلال ساعة عمل لتأكيد التفاصيل."
-          services={services}
-          extraLabel="العنوان + وصف الحالة"
-          extraPlaceholder="مثال: صبيا — حي الروضة، بجوار مسجد… — والدي عمره 72 عام يحتاج تغيير قسطرة."
-          extraRequired
-          submitLabel="أرسل طلب الزيارة"
-        />
+        <HomeCareRequestForm services={services} />
+
       </section>
     </>
   );
