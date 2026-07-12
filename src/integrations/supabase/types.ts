@@ -2447,6 +2447,10 @@ export type Database = {
         Args: { _phone: string; _reason?: string; _ref: string }
         Returns: boolean
       }
+      cancel_order_by_ref: {
+        Args: { _kind: string; _phone: string; _reason?: string; _ref: string }
+        Returns: Json
+      }
       dashboard_appointments_daily: {
         Args: { _branch_id?: string; _days?: number }
         Returns: {
