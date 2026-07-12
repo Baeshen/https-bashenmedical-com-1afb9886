@@ -35,13 +35,11 @@ export const Route = createFileRoute("/my-orders")({
 
 type Order = {
   kind: "appointment" | "pharmacy" | "second_opinion" | "home_care";
-  id: string;
   reference: string;
   title: string;
   status: string;
   created_at: string;
   scheduled_at: string | null;
-  metadata: Record<string, unknown> | null;
 };
 
 const KIND_META: Record<Order["kind"], { ar: string; en: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
