@@ -325,7 +325,7 @@ function Field({ label, value }: { label: string; value: string }) {
 
 /* --------------------------- AI assistant --------------------------- */
 
-function AiReminderCard({ upcoming, activeCount }: { upcoming: unknown[]; activeCount: number }) {
+function AiReminderCard({ upcoming, activeCount }: { upcoming: UpcomingAppointment[]; activeCount: number }) {
   const qc = useQueryClient();
   const mut = useMutation({
     mutationFn: () => generateMedicationReminders({ data: {} }),
