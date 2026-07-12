@@ -1,11 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
-import heroAvif from "@/assets/baeshen-hero-complex.jpg?w=640;960;1280;1600;1920&format=avif&as=srcset";
-import heroWebp from "@/assets/baeshen-hero-complex.jpg?w=640;960;1280;1600;1920&format=webp&as=srcset";
+// Desktop / landscape (16:9-ish)
+import heroAvif from "@/assets/baeshen-hero-complex.jpg?w=960;1280;1600;1920&format=avif&as=srcset";
+import heroWebp from "@/assets/baeshen-hero-complex.jpg?w=960;1280;1600;1920&format=webp&as=srcset";
 import heroJpg from "@/assets/baeshen-hero-complex.jpg?w=1600&format=jpg";
+// Mobile / portrait — art-directed vertical crop
+import heroMobileAvif from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;800;960&format=avif&as=srcset";
+import heroMobileWebp from "@/assets/baeshen-hero-complex-mobile.jpg?w=480;640;800;960&format=webp&as=srcset";
+import heroMobileJpg from "@/assets/baeshen-hero-complex-mobile.jpg?w=800&format=jpg";
 import { CalendarCheck, Phone } from "lucide-react";
 
-const HERO_SIZES = "100vw";
+const DESKTOP_SIZES = "100vw";
+const MOBILE_SIZES = "100vw";
+const MOBILE_MEDIA = "(max-width: 767px)";
 
 export function HeroComplex() {
   const { lang } = useI18n();
@@ -17,10 +24,15 @@ export function HeroComplex() {
       className="relative isolate overflow-hidden min-h-[78vh] md:min-h-[86vh] flex items-center"
       aria-label={isAr ? "مجمع باعشن الطبي" : "Baeshen Medical Complex"}
     >
-      {/* Background image — responsive with AVIF/WebP fallback */}
+      {/* Art-directed background: portrait crop on mobile, wide crop on desktop */}
       <picture>
-        <source type="image/avif" srcSet={heroAvif} sizes={HERO_SIZES} />
-        <source type="image/webp" srcSet={heroWebp} sizes={HERO_SIZES} />
+        {/* Mobile-first: vertical composition */}
+        <source type="image/avif" media={MOBILE_MEDIA} srcSet={heroMobileAvif} sizes={MOBILE_SIZES} />
+        <source type="image/webp" media={MOBILE_MEDIA} srcSet={heroMobileWebp} sizes={MOBILE_SIZES} />
+        <source type="image/jpeg" media={MOBILE_MEDIA} srcSet={heroMobileJpg} sizes={MOBILE_SIZES} />
+        {/* Desktop / tablet: wide composition */}
+        <source type="image/avif" srcSet={heroAvif} sizes={DESKTOP_SIZES} />
+        <source type="image/webp" srcSet={heroWebp} sizes={DESKTOP_SIZES} />
         <img
           src={heroJpg}
           alt={isAr ? "مجمع باعشن الطبي" : "Baeshen Medical Complex"}
@@ -28,9 +40,10 @@ export function HeroComplex() {
           height={1088}
           fetchPriority="high"
           decoding="async"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
       </picture>
+
 
 
       {/* Medical color overlay */}
