@@ -12,6 +12,10 @@ import { AwardsMarquee } from "@/components/home/AwardsMarquee";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { ServicesBento } from "@/components/home/ServicesBento";
+import { CentersStrip } from "@/components/home/CentersStrip";
+import { PatientJourney } from "@/components/home/PatientJourney";
+import { NewsStrip } from "@/components/home/NewsStrip";
+import { AppPromo } from "@/components/home/AppPromo";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
 const HOME_URL = "https://bashenmedical.com/";
@@ -130,26 +134,25 @@ function HomePage() {
   return (
     <div>
       <HeroSlider />
-
       <QuickBar />
+      <StatsBar />
 
       <ServicesBento />
 
-
-
-      <StatsBar />
-
       {/* Specialties grid */}
-      <section className="py-16">
+      <section className="py-16 md:py-20">
         <div className="container-app">
-          <div className="flex items-end justify-between mb-8">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-bold">{t("specialties_title")}</h2>
-              <p className="mt-2 text-muted-foreground">{t("specialties_sub")}</p>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
+                {lang === "ar" ? "التخصصات الطبية" : "Medical Specialties"}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold">{t("specialties_title")}</h2>
+              <p className="mt-2 max-w-2xl text-muted-foreground">{t("specialties_sub")}</p>
             </div>
             <Link
               to="/specialties"
-              className="hidden md:inline text-sm font-semibold text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
             >
               {t("all_specialties")} →
             </Link>
@@ -160,9 +163,9 @@ function HomePage() {
                 key={s.id}
                 to="/book"
                 search={{ specialty: s.slug }}
-                className="group rounded-2xl border border-border bg-card p-5 hover:border-primary hover:shadow-md transition"
+                className="bento-card group p-5"
               >
-                <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-white transition">
+                <div className="h-11 w-11 rounded-xl bg-primary/10 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
                   <Stethoscope className="h-5 w-5" />
                 </div>
                 <div className="mt-3 font-semibold text-sm">
@@ -177,30 +180,35 @@ function HomePage() {
         </div>
       </section>
 
-      <WhyChooseUs />
+      <CentersStrip />
+
+      <PatientJourney />
 
       {/* Featured doctors */}
-      <section className="py-16">
+      <section className="py-16 md:py-20">
         <div className="container-app">
-          <div className="flex items-end justify-between mb-8">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-bold">{t("doctors_title")}</h2>
-              <p className="mt-2 text-muted-foreground">{t("doctors_sub")}</p>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
+                {lang === "ar" ? "فريقنا الطبي" : "Our Medical Team"}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold">{t("doctors_title")}</h2>
+              <p className="mt-2 max-w-2xl text-muted-foreground">{t("doctors_sub")}</p>
             </div>
             <Link
               to="/doctors"
-              className="hidden md:inline text-sm font-semibold text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
             >
               {t("nav_doctors")} →
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {doctors?.map((d) => (
-              <div key={d.id} className="rounded-2xl border border-border bg-card p-5">
-                <div className="h-20 w-20 rounded-full bg-primary/10 text-primary grid place-items-center text-2xl font-bold mx-auto">
+              <div key={d.id} className="bento-card p-5 flex flex-col items-center text-center">
+                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground grid place-items-center text-2xl font-bold shadow-lg shadow-primary/20">
                   {(lang === "ar" ? d.name_ar : d.name_en).charAt(0)}
                 </div>
-                <div className="mt-4 text-center">
+                <div className="mt-4">
                   <div className="font-bold">{lang === "ar" ? d.name_ar : d.name_en}</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {lang === "ar" ? d.title_ar : d.title_en}
@@ -209,7 +217,7 @@ function HomePage() {
                 <Link
                   to="/book"
                   search={{ doctor: d.id }}
-                  className="mt-4 block text-center rounded-lg bg-primary/10 text-primary px-3 py-2 text-xs font-semibold hover:bg-primary hover:text-white transition"
+                  className="mt-4 w-full block text-center rounded-lg bg-primary text-primary-foreground px-3 py-2 text-xs font-semibold hover:bg-primary/90 transition"
                 >
                   {t("book_with_doctor")}
                 </Link>
@@ -219,13 +227,24 @@ function HomePage() {
         </div>
       </section>
 
+      <WhyChooseUs />
+
+      <NewsStrip />
+
       <AwardsMarquee />
 
+      <AppPromo />
+
       {/* Map/Location */}
-      <section className="py-16 bg-muted/40">
+      <section className="py-16 md:py-20 bg-secondary/40">
         <div className="container-app grid gap-8 md:grid-cols-2 items-center">
           <div>
-            <h2 className="text-3xl font-bold">{lang === "ar" ? "موقعنا" : "Find us"}</h2>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
+              {lang === "ar" ? "زُرنا" : "Visit us"}
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              {lang === "ar" ? "موقعنا في قلب صبيا" : "In the heart of Sabya"}
+            </h2>
             <p className="mt-3 text-muted-foreground">
               {lang === "ar" ? SITE.addressAr : SITE.addressEn}
             </p>
@@ -234,16 +253,24 @@ function HomePage() {
                 ? `الرمز البريدي ${SITE.postalCode}`
                 : `Postal code ${SITE.postalCode}`}
             </p>
-            <a
-              href={SITE.mapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              {lang === "ar" ? "الخريطة" : "Open in Maps"}
-            </a>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href={SITE.mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition"
+              >
+                {lang === "ar" ? "افتح في الخرائط" : "Open in Maps"}
+              </a>
+              <Link
+                to="/contact"
+                className="inline-flex items-center rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:border-primary transition"
+              >
+                {lang === "ar" ? "تواصل معنا" : "Contact us"}
+              </Link>
+            </div>
           </div>
-          <div className="aspect-video rounded-2xl overflow-hidden border border-border shadow-sm">
+          <div className="aspect-video rounded-2xl overflow-hidden border border-border shadow-lg">
             <iframe
               title="map"
               className="w-full h-full"
@@ -256,3 +283,4 @@ function HomePage() {
     </div>
   );
 }
+
