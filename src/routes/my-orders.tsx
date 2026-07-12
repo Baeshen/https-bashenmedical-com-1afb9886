@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CalendarCheck, Pill, Stethoscope, Home as HomeIcon,
-  Search, Phone, ArrowLeft, Loader2, ExternalLink, Clock, MapPin,
+  Search, Phone, ArrowLeft, Loader2, ExternalLink, Clock,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
