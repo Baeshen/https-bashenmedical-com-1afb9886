@@ -56,6 +56,12 @@ const rxQuery = queryOptions({
   staleTime: 30_000,
 });
 
+const prefsQuery = queryOptions({
+  queryKey: ["portal", "reminder-prefs"],
+  queryFn: () => getReminderPreferences(),
+  staleTime: 60_000,
+});
+
 export const Route = createFileRoute("/_authenticated/portal/prescriptions")({
   loader: async ({ context }) => context.queryClient.ensureQueryData(rxQuery),
   head: () => ({
