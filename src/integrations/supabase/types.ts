@@ -2520,6 +2520,30 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          category: string
+          created_at: string
+          description_ar: string
+          description_en: string | null
+          key: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description_ar: string
+          description_en?: string | null
+          key: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description_ar?: string
+          description_en?: string | null
+          key?: string
+        }
+        Relationships: []
+      }
       prescriptions: {
         Row: {
           branch_id: string | null
@@ -2969,6 +2993,35 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       second_opinion_requests: {
         Row: {
           admin_notes: string | null
@@ -3390,6 +3443,10 @@ export type Database = {
         Args: { _branch_id: string; _user_id: string }
         Returns: boolean
       }
+      has_permission: {
+        Args: { _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3434,6 +3491,15 @@ export type Database = {
           doctor_id: string
           next_slot_at: string
           next_slot_branch_id: string
+        }[]
+      }
+      list_permissions_catalog: {
+        Args: never
+        Returns: {
+          category: string
+          description_ar: string
+          description_en: string
+          key: string
         }[]
       }
       list_pharmacy_prescriptions: {
@@ -3571,6 +3637,13 @@ export type Database = {
           reason: string
           reminder_kind: string
           source: string
+        }[]
+      }
+      list_role_permissions_matrix: {
+        Args: never
+        Returns: {
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
         }[]
       }
       list_users_with_roles: {
@@ -3744,6 +3817,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _ua?: string
           _user_id: string
+        }
+        Returns: undefined
+      }
+      set_role_permission: {
+        Args: {
+          _enabled: boolean
+          _permission_key: string
+          _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: undefined
       }
