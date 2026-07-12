@@ -445,10 +445,13 @@ function PermissionsTab(props: {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        فعّل أو عطّل كل صلاحية لكل دور. صلاحيات <strong>المسؤول الأعلى</strong> و
-        <strong> المسؤول</strong> لا يمكن تعديلها إلا بواسطة المسؤول الأعلى.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          فعّل أو عطّل كل صلاحية لكل دور. صلاحيات <strong>المسؤول الأعلى</strong> و
+          <strong> المسؤول</strong> لا يمكن تعديلها إلا بواسطة المسؤول الأعلى.
+        </p>
+        <ImportExportToolbar isSuper={isSuper} qc={qc} />
+      </div>
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
