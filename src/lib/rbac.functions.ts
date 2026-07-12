@@ -152,6 +152,132 @@ export const setRolePermission = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------------- Export / Import role-permission settings ---------------- */
+
+export const exportRolePermissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const roles = await getRoles(context.supabase, context.userId);
+    if (!roles.some((r) => r === "admin" || r === "super_admin")) {
+      throw new Error("ليست لديك الصلاحية.");
+    }
+    const [{ data: matrix, error: e1 }, { data: catalog, error: e2 }] = await Promise.all([
+      context.supabase.rpc("list_role_permissions_matrix" as any),
+      context.supabase.rpc("list_permissions_catalog" as any),
+    ]);
+    if (e1) throw new Error(humanize(e1));
+    if (e2) throw new Error(humanize(e2));
+
+    const grouped: Record<string, string[]> = {};
+    for (const r of (matrix ?? []) as any[]) {
+      (grouped[r.role] ??= []).push(r.permission_key);
+    }
+    for (const k of Object.keys(grouped)) grouped[k].sort();
+
+    return {
+      version: 1 as const,
+      exported_at: new Date().toISOString(),
+      exported_by: context.userId,
+      known_permissions: ((catalog ?? []) as any[]).map((c) => c.key).sort(),
+      roles: grouped,
+    };
+  });
+
+const importSchema = z.object({
+  mode: z.enum(["merge", "replace"]).default("merge"),
+  payload: z.object({
+    version: z.literal(1),
+    roles: z.record(z.string(), z.array(z.string().min(1).max(120))),
+  }),
+});
+
+export const importRolePermissions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => importSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const myRoles = await getRoles(supabase, context.userId);
+    const isSuper = myRoles.includes("super_admin");
+    if (!isSuper && !myRoles.includes("admin")) {
+      throw new Error("ليست لديك الصلاحية لاستيراد الإعدادات.");
+    }
+
+    // Fetch known permission keys to reject unknown entries
+    const { data: cat } = await supabase.from("permissions").select("key");
+    const known = new Set<string>(((cat ?? []) as any[]).map((r) => r.key));
+
+    // Current matrix
+    const { data: current } = await supabase.rpc("list_role_permissions_matrix" as any);
+    const currentByRole = new Map<string, Set<string>>();
+    for (const r of ((current ?? []) as any[])) {
+      const s = currentByRole.get(r.role) ?? new Set<string>();
+      s.add(r.permission_key);
+      currentByRole.set(r.role, s);
+    }
+
+    const stats = {
+      added: 0,
+      removed: 0,
+      skipped_unknown: [] as string[],
+      skipped_roles: [] as string[],
+      errors: [] as string[],
+    };
+
+    const targetRoles = Object.keys(data.payload.roles);
+    for (const role of targetRoles) {
+      if (!ROLES.includes(role as AppRole)) {
+        stats.skipped_roles.push(role);
+        continue;
+      }
+      if (role === "super_admin") {
+        stats.skipped_roles.push(role); // never modify super_admin
+        continue;
+      }
+      if (!isSuper && role === "admin") {
+        stats.skipped_roles.push(role);
+        continue;
+      }
+
+      const desired = new Set<string>();
+      for (const k of data.payload.roles[role] ?? []) {
+        if (!known.has(k)) {
+          stats.skipped_unknown.push(`${role}:${k}`);
+          continue;
+        }
+        desired.add(k);
+      }
+      const existing = currentByRole.get(role) ?? new Set<string>();
+
+      // Add missing
+      for (const k of desired) {
+        if (existing.has(k)) continue;
+        const { error } = await supabase.rpc("set_role_permission" as any, {
+          _role: role,
+          _permission_key: k,
+          _enabled: true,
+        } as any);
+        if (error) stats.errors.push(`+${role}:${k}: ${error.message}`);
+        else stats.added++;
+      }
+
+      // Remove extras (replace mode only)
+      if (data.mode === "replace") {
+        for (const k of existing) {
+          if (desired.has(k)) continue;
+          const { error } = await supabase.rpc("set_role_permission" as any, {
+            _role: role,
+            _permission_key: k,
+            _enabled: false,
+          } as any);
+          if (error) stats.errors.push(`-${role}:${k}: ${error.message}`);
+          else stats.removed++;
+        }
+      }
+    }
+
+    return { ok: true, mode: data.mode, ...stats };
+  });
+
 export const getMyPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

@@ -11,10 +11,12 @@ import {
   listPermissionsCatalog,
   listRolePermissionsMatrix,
   setRolePermission,
+  exportRolePermissions,
+  importRolePermissions,
   type AppRole,
 } from "@/lib/rbac.functions";
 import { getMyRoles } from "@/lib/admin.functions";
-import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers } from "lucide-react";
+import { ShieldCheck, UserPlus, X, ArrowRight, Users, KeyRound, Layers, Download, Upload } from "lucide-react";
 import { RequirePermission } from "@/components/rbac/RequirePermission";
 
 export const Route = createFileRoute("/_authenticated/rbac")({
@@ -443,10 +445,13 @@ function PermissionsTab(props: {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        فعّل أو عطّل كل صلاحية لكل دور. صلاحيات <strong>المسؤول الأعلى</strong> و
-        <strong> المسؤول</strong> لا يمكن تعديلها إلا بواسطة المسؤول الأعلى.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          فعّل أو عطّل كل صلاحية لكل دور. صلاحيات <strong>المسؤول الأعلى</strong> و
+          <strong> المسؤول</strong> لا يمكن تعديلها إلا بواسطة المسؤول الأعلى.
+        </p>
+        <ImportExportToolbar isSuper={isSuper} qc={qc} />
+      </div>
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
@@ -513,6 +518,191 @@ function PermissionsTab(props: {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/* ------------------------ Import / Export toolbar ----------------------- */
+
+function ImportExportToolbar(props: {
+  isSuper: boolean;
+  qc: ReturnType<typeof useQueryClient>;
+}) {
+  const { isSuper, qc } = props;
+  const exportFn = useServerFn(exportRolePermissions);
+  const importFn = useServerFn(importRolePermissions);
+  const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [mode, setMode] = useState<"merge" | "replace">("merge");
+  const [text, setText] = useState("");
+
+  const handleExport = async () => {
+    try {
+      setBusy(true);
+      const data = await exportFn();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rbac-permissions-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("تم تصدير الإعدادات");
+    } catch (e: any) {
+      toast.error(e?.message ?? "تعذّر التصدير");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFile = async (f: File) => {
+    const t = await f.text();
+    setText(t);
+  };
+
+  const handleImport = async () => {
+    let payload: any;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      toast.error("ملف JSON غير صالح");
+      return;
+    }
+    if (payload?.version !== 1 || typeof payload?.roles !== "object") {
+      toast.error("بنية الملف غير مدعومة (يجب أن يكون version=1 مع كائن roles)");
+      return;
+    }
+    try {
+      setBusy(true);
+      const res: any = await importFn({ data: { mode, payload } });
+      qc.invalidateQueries({ queryKey: ["rbac-perm-matrix"] });
+      const bits = [
+        `أُضيفت ${res.added}`,
+        mode === "replace" ? `أُلغيت ${res.removed}` : null,
+        res.skipped_unknown?.length ? `تخطّت ${res.skipped_unknown.length} صلاحية مجهولة` : null,
+        res.skipped_roles?.length ? `تخطّت أدوار: ${res.skipped_roles.join(", ")}` : null,
+        res.errors?.length ? `أخطاء: ${res.errors.length}` : null,
+      ].filter(Boolean);
+      toast.success(`تم الاستيراد — ${bits.join(" • ")}`);
+      setImportOpen(false);
+      setText("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "تعذّر الاستيراد");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleExport}
+        disabled={busy}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-60"
+      >
+        <Download className="h-3.5 w-3.5" />
+        تصدير JSON
+      </button>
+      <button
+        onClick={() => setImportOpen((v) => !v)}
+        disabled={busy}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-muted disabled:opacity-60"
+      >
+        <Upload className="h-3.5 w-3.5" />
+        استيراد JSON
+      </button>
+
+      {importOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
+          onClick={() => !busy && setImportOpen(false)}
+          dir="rtl"
+        >
+          <div
+            className="w-full max-w-2xl rounded-xl border border-border bg-card p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold">استيراد إعدادات الصلاحيات</h3>
+              <button
+                onClick={() => setImportOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mb-3 text-xs text-muted-foreground">
+              الصق محتوى ملف JSON أو ارفعه. سيتم تجاهل دور <code>super_admin</code>
+              {!isSuper && <> ودور <code>admin</code></>} تلقائياً.
+            </p>
+
+            <div className="mb-3 flex flex-wrap items-center gap-4 text-xs">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="import-mode"
+                  checked={mode === "merge"}
+                  onChange={() => setMode("merge")}
+                />
+                <span>دمج (إضافة فقط)</span>
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="import-mode"
+                  checked={mode === "replace"}
+                  onChange={() => setMode("replace")}
+                />
+                <span>استبدال (تعطيل ما ليس في الملف)</span>
+              </label>
+              <label className="ms-auto inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 py-1 hover:bg-muted">
+                <Upload className="h-3 w-3" />
+                رفع ملف
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFile(f);
+                  }}
+                />
+              </label>
+            </div>
+
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={12}
+              dir="ltr"
+              placeholder='{ "version": 1, "roles": { "doctor": ["patients.view"] } }'
+              className="w-full rounded-md border border-input bg-background p-2 font-mono text-[11px]"
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setImportOpen(false)}
+                disabled={busy}
+                className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-muted"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={busy || !text.trim()}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                {busy ? "جارٍ الاستيراد…" : "تنفيذ الاستيراد"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
