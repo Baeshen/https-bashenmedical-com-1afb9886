@@ -57,12 +57,13 @@ function PatientsList() {
   const [q, setQ] = useState("");
   const [branchId, setBranchId] = useState<string | "all">("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const listBranchesFn = useServerFn(listBranches);
   const branchesQ = useQuery({ queryKey: ["branches"], queryFn: () => listBranchesFn() });
 
   const patientsQ = useQuery({
-    queryKey: ["patients", q, branchId],
+    queryKey: ["patients", q, branchId, showInactive],
     queryFn: async (): Promise<Patient[]> => {
       let query = supabase
         .from("patients")
@@ -71,6 +72,7 @@ function PatientsList() {
         )
         .order("created_at", { ascending: false })
         .limit(100);
+      if (!showInactive) query = query.eq("is_active", true);
       if (branchId !== "all") query = query.eq("branch_id", branchId);
       if (q.trim()) {
         const term = q.trim();
@@ -145,6 +147,15 @@ function PatientsList() {
                 </option>
               ))}
             </select>
+            <label className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="h-4 w-4"
+              />
+              عرض المؤرشفين
+            </label>
           </div>
 
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
