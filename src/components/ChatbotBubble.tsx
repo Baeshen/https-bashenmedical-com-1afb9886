@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, X, Search, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE, whatsappUrl } from "@/lib/site";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * Floating chatbot bubble.
@@ -8,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
  * - Reads FAQs via publishable key + narrow public SELECT policy.
  * - No AI in this iteration: simple case-insensitive substring search.
  * - Fallback: WhatsApp deeplink with the user's own question pre-filled.
+ * - Single source of truth for phone/WhatsApp: `@/lib/site` (SITE.whatsapp).
  */
 
 type Faq = {
@@ -16,8 +19,6 @@ type Faq = {
   answer_ar: string;
 };
 
-// Same public WA number used elsewhere; hardcoded here to avoid coupling.
-const WHATSAPP_NUMBER = "966555555555";
 
 export function ChatbotBubble() {
   const [open, setOpen] = useState(false);
