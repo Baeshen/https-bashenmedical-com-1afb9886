@@ -123,66 +123,71 @@ export function AnnouncementsSection() {
           </Link>
         </div>
 
-        <StaggerReveal className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {ITEMS.map((it) => {
-            const meta = KIND_META[it.kind];
-            const Icon = meta.icon;
-            return (
-              <RevealItem
-                key={it.id}
-                className="glass-fut neon-glow-hover group relative flex h-full flex-col overflow-hidden p-6"
-              >
-                {/* Aurora wash on hover */}
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                  style={{ background: "var(--fut-gradient-aurora)" }}
-                />
-                <div className="relative flex items-center justify-between gap-3">
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest"
-                    style={{
-                      color: meta.color,
-                      borderColor: "var(--fut-border-strong)",
-                      background: "rgba(255,255,255,0.03)",
-                    }}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {isAr ? it.badgeAr : it.badgeEn}
-                  </span>
-                  {(it.dateAr || it.dateEn) && (
-                    <span className="text-[11px] text-[color:var(--fut-ink-dim)]">
-                      {isAr ? it.dateAr : it.dateEn}
+        <SkeletonSwap
+          loading={isPending}
+          skeleton={<AnnouncementsSkeleton count={3} />}
+        >
+          <StaggerReveal className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((it) => {
+              const meta = KIND_META[it.kind];
+              const Icon = meta.icon;
+              return (
+                <RevealItem
+                  key={it.id}
+                  className="glass-fut neon-glow-hover group relative flex h-full flex-col overflow-hidden p-6"
+                >
+                  {/* Aurora wash on hover */}
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    style={{ background: "var(--fut-gradient-aurora)" }}
+                  />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest"
+                      style={{
+                        color: meta.color,
+                        borderColor: "var(--fut-border-strong)",
+                        background: "rgba(255,255,255,0.03)",
+                      }}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {isAr ? it.badgeAr : it.badgeEn}
                     </span>
-                  )}
-                </div>
+                    {(it.dateAr || it.dateEn) && (
+                      <span className="text-[11px] text-[color:var(--fut-ink-dim)]">
+                        {isAr ? it.dateAr : it.dateEn}
+                      </span>
+                    )}
+                  </div>
 
-                <h3 className="relative mt-5 text-xl font-bold leading-snug text-[color:var(--fut-ink)]">
-                  {isAr ? it.titleAr : it.titleEn}
-                </h3>
-                <p className="relative mt-2 text-sm leading-6 text-[color:var(--fut-ink-muted)]">
-                  {isAr ? it.descAr : it.descEn}
-                </p>
+                  <h3 className="relative mt-5 text-xl font-bold leading-snug text-[color:var(--fut-ink)]">
+                    {isAr ? it.titleAr : it.titleEn}
+                  </h3>
+                  <p className="relative mt-2 text-sm leading-6 text-[color:var(--fut-ink-muted)]">
+                    {isAr ? it.descAr : it.descEn}
+                  </p>
 
-                <div className="relative mt-auto pt-6">
-                  <Link
-                    to={it.to}
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-[color:var(--fut-ink)] transition group-hover:border-[var(--neon-teal)]"
-                    style={{ boxShadow: "0 0 0 0 transparent" }}
-                  >
-                    {isAr ? it.ctaAr : it.ctaEn}
-                    <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
-                  </Link>
-                </div>
+                  <div className="relative mt-auto pt-6">
+                    <Link
+                      to={it.to}
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-[color:var(--fut-ink)] transition group-hover:border-[var(--neon-teal)]"
+                      style={{ boxShadow: "0 0 0 0 transparent" }}
+                    >
+                      {isAr ? it.ctaAr : it.ctaEn}
+                      <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
+                    </Link>
+                  </div>
 
-                {/* Accent hairline */}
-                <span
-                  className="pointer-events-none absolute inset-x-6 bottom-0 h-px opacity-40"
-                  style={{ background: `linear-gradient(90deg, transparent, ${meta.color}, transparent)` }}
-                />
-              </RevealItem>
-            );
-          })}
-        </StaggerReveal>
+                  {/* Accent hairline */}
+                  <span
+                    className="pointer-events-none absolute inset-x-6 bottom-0 h-px opacity-40"
+                    style={{ background: `linear-gradient(90deg, transparent, ${meta.color}, transparent)` }}
+                  />
+                </RevealItem>
+              );
+            })}
+          </StaggerReveal>
+        </SkeletonSwap>
       </div>
     </section>
   );
