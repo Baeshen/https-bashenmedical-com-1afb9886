@@ -33,6 +33,13 @@ const complaintStatuses = [
 // ---------------------------------------------------------------------------
 // Submit (public — attaches user_id if signed in via optional bearer)
 // ---------------------------------------------------------------------------
+const attachmentSchema = z.object({
+  path: z.string().min(1).max(500),
+  name: z.string().min(1).max(255),
+  type: z.string().max(120).optional().or(z.literal("")),
+  size: z.number().int().nonnegative().max(20 * 1024 * 1024),
+});
+
 const submitSchema = z.object({
   name: z.string().trim().min(2, "الاسم قصير جداً").max(120),
   phone: z
@@ -43,6 +50,7 @@ const submitSchema = z.object({
   type: z.enum(complaintTypes),
   department: z.string().trim().max(120).optional().or(z.literal("")),
   message: z.string().trim().min(10, "الرسالة قصيرة جداً — 10 أحرف على الأقل").max(4000),
+  attachments: z.array(attachmentSchema).max(10).optional(),
 });
 
 export const submitComplaint = createServerFn({ method: "POST" })
