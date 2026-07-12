@@ -21,6 +21,7 @@ import {
   Calendar,
   CalendarClock,
   Check,
+  Award,
   CalendarPlus,
   CheckCheck,
   Clock,
