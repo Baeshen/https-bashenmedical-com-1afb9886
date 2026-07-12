@@ -5,7 +5,7 @@ export type LastToolInvocation = {
   tool_name: string;
   is_error: boolean;
   duration_ms: number | null;
-  args_summary: Record<string, unknown> | null;
+  args_summary: string | null;
   result_summary: string | null;
   invoked_at: string;
 };
@@ -14,7 +14,7 @@ type Row = {
   tool_name: string;
   is_error: boolean;
   duration_ms: number | null;
-  args_summary: Record<string, unknown> | null;
+  args_summary: unknown;
   result_summary: string | null;
   invoked_at: string;
 };
@@ -48,7 +48,23 @@ export const getLastMcpInvocations = createServerFn({ method: "GET" })
 
     const latest = new Map<string, LastToolInvocation>();
     for (const row of data ?? []) {
-      if (!latest.has(row.tool_name)) latest.set(row.tool_name, row);
+      if (latest.has(row.tool_name)) continue;
+      let argsJson: string | null = null;
+      if (row.args_summary != null) {
+        try {
+          argsJson = JSON.stringify(row.args_summary);
+        } catch {
+          argsJson = null;
+        }
+      }
+      latest.set(row.tool_name, {
+        tool_name: row.tool_name,
+        is_error: row.is_error,
+        duration_ms: row.duration_ms,
+        args_summary: argsJson,
+        result_summary: row.result_summary,
+        invoked_at: row.invoked_at,
+      });
     }
     return Array.from(latest.values());
   });
