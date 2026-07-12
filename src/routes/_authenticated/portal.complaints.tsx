@@ -238,13 +238,7 @@ function MyComplaintsPage() {
         <Modal onClose={() => setSelectedId(null)} title={`بلاغ ${selected.reference}`}>
           <div className="space-y-4 text-sm">
             <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`inline-block text-xs px-2 py-0.5 rounded-full border ${
-                  STATUS_COLOR[selected.status] ?? ""
-                }`}
-              >
-                {STATUS_AR[selected.status] ?? selected.status}
-              </span>
+              <OrderStatusBadge kind="complaint" status={selected.status} />
               <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
                 {TYPE_AR[selected.type] ?? selected.type}
               </span>
