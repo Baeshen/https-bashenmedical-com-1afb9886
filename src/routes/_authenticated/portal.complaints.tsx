@@ -12,9 +12,10 @@ import {
   Copy,
   ChevronRight,
   X,
+  Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { listMyComplaints, submitMyComplaint } from "@/lib/complaints.functions";
+import { editMyComplaint, listMyComplaints, submitMyComplaint } from "@/lib/complaints.functions";
 import { getMyProfile } from "@/lib/portal/portal.functions";
 
 export const Route = createFileRoute("/_authenticated/portal/complaints")({
