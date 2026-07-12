@@ -455,58 +455,56 @@ function PermissionsTab(props: {
             </tr>
           </thead>
           <tbody>
-            {Array.from(byCat.entries()).map(([cat, perms]) => (
-              <>
-                <tr key={`cat-${cat}`} className="bg-muted/30">
-                  <td
-                    colSpan={ROLES.length + 1}
-                    className="px-3 py-1.5 text-right text-xs font-semibold text-muted-foreground"
-                  >
-                    {cat}
+            {Array.from(byCat.entries()).flatMap(([cat, perms]) => [
+              <tr key={`cat-${cat}`} className="bg-muted/30">
+                <td
+                  colSpan={ROLES.length + 1}
+                  className="px-3 py-1.5 text-right text-xs font-semibold text-muted-foreground"
+                >
+                  {cat}
+                </td>
+              </tr>,
+              ...(perms ?? []).map((p: any) => (
+                <tr key={p.key} className="border-t border-border">
+                  <td className="sticky right-0 z-10 bg-card px-3 py-2 text-right">
+                    <div className="font-medium">{p.description_ar}</div>
+                    <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                      {p.key}
+                    </div>
                   </td>
+                  {ROLES.map((r) => {
+                    const on = r === "super_admin" ? true : set.has(`${r}::${p.key}`);
+                    const locked =
+                      r === "super_admin" || (!isSuper && r === "admin");
+                    return (
+                      <td key={r} className="px-3 py-2 text-center">
+                        <button
+                          disabled={locked || toggleMut.isPending}
+                          onClick={() =>
+                            toggleMut.mutate({
+                              role: r,
+                              permission_key: p.key,
+                              enabled: !on,
+                            })
+                          }
+                          title={locked ? "غير قابل للتعديل" : on ? "تعطيل" : "تفعيل"}
+                          className={`inline-flex h-5 w-9 items-center rounded-full transition ${
+                            on ? "bg-primary" : "bg-muted"
+                          } ${locked ? "opacity-60" : "hover:opacity-80"}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-background transition ${
+                              on ? "-translate-x-0.5" : "-translate-x-4"
+                            }`}
+                          />
+                        </button>
+                      </td>
+                    );
+                  })}
                 </tr>
-                {(perms ?? []).map((p: any) => (
-                  <tr key={p.key} className="border-t border-border">
-                    <td className="sticky right-0 z-10 bg-card px-3 py-2 text-right">
-                      <div className="font-medium">{p.description_ar}</div>
-                      <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
-                        {p.key}
-                      </div>
-                    </td>
-                    {ROLES.map((r) => {
-                      const on = r === "super_admin" ? true : set.has(`${r}::${p.key}`);
-                      const locked =
-                        r === "super_admin" ||
-                        (!isSuper && (r === "admin" || r === "super_admin"));
-                      return (
-                        <td key={r} className="px-3 py-2 text-center">
-                          <button
-                            disabled={locked || toggleMut.isPending}
-                            onClick={() =>
-                              toggleMut.mutate({
-                                role: r,
-                                permission_key: p.key,
-                                enabled: !on,
-                              })
-                            }
-                            title={locked ? "غير قابل للتعديل" : on ? "تعطيل" : "تفعيل"}
-                            className={`inline-flex h-5 w-9 items-center rounded-full transition ${
-                              on ? "bg-primary" : "bg-muted"
-                            } ${locked ? "opacity-60" : "hover:opacity-80"}`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-background transition ${
-                                on ? "-translate-x-0.5" : "-translate-x-4"
-                              }`}
-                            />
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </>
-            ))}
+              )),
+            ])}
+
           </tbody>
         </table>
       </div>
