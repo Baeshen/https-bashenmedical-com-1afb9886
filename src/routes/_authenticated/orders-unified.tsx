@@ -12,12 +12,22 @@ import { useMemo, useState } from "react";
 import { RequirePermission } from "@/components/rbac/RequirePermission";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import {
-  KIND_LABELS_AR,
   UNIFIED_STATUS_LABELS_AR,
   toUnifiedStatus,
   type OrderTableKind,
   type UnifiedStatus,
 } from "@/lib/unified-status";
+
+const KIND_LABELS_AR: Record<OrderTableKind, string> = {
+  appointment: "موعد",
+  complaint: "بلاغ",
+  medicine_order: "صيدلية",
+  home_care: "زيارة منزلية",
+  second_opinion: "رأي ثانٍ",
+  invoice: "فاتورة",
+  lab_report: "مختبر",
+  radiology_report: "أشعة",
+};
 import { listAllUnifiedOrders } from "@/lib/admin-unified-orders.functions";
 import { listAppointmentAudit } from "@/lib/admin.functions";
 import {
