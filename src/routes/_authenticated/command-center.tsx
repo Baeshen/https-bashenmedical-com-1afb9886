@@ -557,28 +557,39 @@ function AppointmentBoard() {
    ============================================================ */
 
 function QuickActions() {
-  const actions = [
-    { label: "حجز موعد جديد", icon: CalendarDays, to: "/_authenticated/quick-add" as string },
-    { label: "بحث عن مريض", icon: Search, to: "/_authenticated/patients-management" as string },
-    { label: "إدارة الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string },
-    { label: "قائمة الانتظار", icon: Clock, to: "/_authenticated/appointments-queue" as string },
+  const perms = useMyPermissions();
+  const allowed = new Set(perms.data?.permissions ?? []);
+  const isSuper = !!perms.data?.isSuper;
+  const has = (p?: string) => !p || isSuper || allowed.has(p);
+  const all = [
+    { label: "حجز موعد جديد", icon: CalendarDays, to: "/_authenticated/quick-add" as string, permission: "appointments.manage" },
+    { label: "بحث عن مريض", icon: Search, to: "/_authenticated/patients-management" as string, permission: "patients.view" },
+    { label: "إدارة الأطباء", icon: Stethoscope, to: "/_authenticated/doctors-management" as string, permission: "doctors.manage" },
+    { label: "قائمة الانتظار", icon: Clock, to: "/_authenticated/appointments-queue" as string, permission: "appointments.view" },
   ];
+  const actions = all.filter((a) => has(a.permission));
   return (
     <section className="cc-glass p-5">
       <h3 className="text-sm font-bold mb-3">إجراءات سريعة</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {actions.map((a) => {
-          const Icon = a.icon;
-          return (
-            <Link key={a.label} to={a.to} className="group flex flex-col items-start gap-2 rounded-2xl border border-[color:var(--cc-border)] bg-white/[0.02] p-3 hover:border-[color:var(--cc-cyan)]/40 hover:bg-white/[0.05] transition">
-              <div className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--cc-cyan)]" style={{ background: "color-mix(in oklab, var(--cc-cyan) 18%, transparent)" }}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="text-xs font-semibold">{a.label}</div>
-            </Link>
-          );
-        })}
-      </div>
+      {actions.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[color:var(--cc-border)] bg-white/[0.02] p-4 text-center text-[11px] text-[color:var(--cc-fg-dim)]">
+          لا توجد إجراءات متاحة لصلاحياتك.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {actions.map((a) => {
+            const Icon = a.icon;
+            return (
+              <Link key={a.label} to={a.to} className="group flex flex-col items-start gap-2 rounded-2xl border border-[color:var(--cc-border)] bg-white/[0.02] p-3 hover:border-[color:var(--cc-cyan)]/40 hover:bg-white/[0.05] transition">
+                <div className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--cc-cyan)]" style={{ background: "color-mix(in oklab, var(--cc-cyan) 18%, transparent)" }}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-xs font-semibold">{a.label}</div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
