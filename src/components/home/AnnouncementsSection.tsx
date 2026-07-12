@@ -82,6 +82,20 @@ export function AnnouncementsSection() {
   const { lang } = useI18n();
   const isAr = lang === "ar";
 
+  // Wired to a query so it participates in loading UX consistently with the
+  // rest of the home page. Backed by static data now; swaps to ads/offers
+  // tables in Phase 2 without touching this component.
+  const { data: items = [], isPending } = useQuery({
+    queryKey: ["home_announcements"],
+    queryFn: async () => {
+      // Small artificial latency ensures the skeleton has a visible pass
+      // on fast connections; real DB queries will replace this.
+      await new Promise((r) => setTimeout(r, 250));
+      return ITEMS;
+    },
+    staleTime: 5 * 60_000,
+  });
+
   return (
     <section className="py-16 md:py-20">
       <div className="container-app">
