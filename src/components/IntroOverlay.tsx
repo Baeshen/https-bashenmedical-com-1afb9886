@@ -114,18 +114,13 @@ function useIntroSettings(enabled: boolean): IntroSettingsRow {
         .eq("is_active", true)
         .maybeSingle();
       if (cancelled || error || !data) return;
+      const row = data as unknown as Partial<IntroSettingsRow>;
       setSettings({
         ...DEFAULT_INTRO_SETTINGS,
-        ...(data as unknown as IntroSettingsRow),
-        services: Array.isArray((data as { services?: unknown }).services) && (data as { services: unknown[] }).services.length
-          ? (data as { services: IntroSettingsRow["services"] }).services
-          : DEFAULT_INTRO_SETTINGS.services,
-        stat_metrics: Array.isArray((data as { stat_metrics?: unknown }).stat_metrics) && (data as { stat_metrics: unknown[] }).stat_metrics.length
-          ? (data as { stat_metrics: IntroSettingsRow["stat_metrics"] }).stat_metrics
-          : DEFAULT_INTRO_SETTINGS.stat_metrics,
-        scene_order: Array.isArray((data as { scene_order?: unknown }).scene_order) && (data as { scene_order: unknown[] }).scene_order.length
-          ? (data as { scene_order: IntroSettingsRow["scene_order"] }).scene_order
-          : DEFAULT_INTRO_SETTINGS.scene_order,
+        ...row,
+        services: Array.isArray(row.services) && row.services.length ? row.services : DEFAULT_INTRO_SETTINGS.services,
+        stat_metrics: Array.isArray(row.stat_metrics) && row.stat_metrics.length ? row.stat_metrics : DEFAULT_INTRO_SETTINGS.stat_metrics,
+        scene_order: Array.isArray(row.scene_order) && row.scene_order.length ? row.scene_order : DEFAULT_INTRO_SETTINGS.scene_order,
       });
     })();
     return () => { cancelled = true; };
