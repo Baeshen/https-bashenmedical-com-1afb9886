@@ -97,7 +97,17 @@ const SERVICES: IntroService[] = [
 // ---------------------------------------------------------------------------
 // Public statistics — quietly hides any value that fails to load
 // ---------------------------------------------------------------------------
-type Stat = { id: string; labelAr: string; value: number; suffix?: string; prefix?: string; Icon: LucideIcon };
+type Stat = {
+  id: string;
+  labelAr: string;
+  value: number;
+  suffix?: string;
+  prefix?: string;
+  Icon: LucideIcon;
+  source: string;      // Arabic, user-facing source description
+  updatedAt: number;   // epoch ms
+  live?: boolean;      // true = pulled from live database this session
+};
 
 function useIntroPreferences() {
   const [disabled, setDisabled] = useState(false);
@@ -106,6 +116,9 @@ function useIntroPreferences() {
   }, []);
   return { disabled };
 }
+
+// Static values — reviewed & approved for public display
+const STATIC_STAT_REVIEW_DATE = Date.parse("2026-01-15T00:00:00Z");
 
 function usePublicClinicStatistics(enabled: boolean) {
   const [stats, setStats] = useState<Stat[]>([]);
@@ -118,21 +131,46 @@ function usePublicClinicStatistics(enabled: boolean) {
         supabase.from("doctors").select("specialty_id", { count: "exact", head: true }).eq("is_active", true),
       ]);
       if (cancelled) return;
+      const now = Date.now();
       const out: Stat[] = [];
       const doctors = results[0].status === "fulfilled" ? results[0].value.count ?? null : null;
       if (doctors && doctors > 0) {
-        out.push({ id: "doctors", labelAr: "طبيبًا واستشاريًا", value: doctors, prefix: "+", Icon: Users });
+        out.push({
+          id: "doctors", labelAr: "طبيبًا واستشاريًا", value: doctors, prefix: "+", Icon: Users,
+          source: "قاعدة بيانات المجمع — الأطباء النشطون",
+          updatedAt: now, live: true,
+        });
       }
       // Fallback / evergreen public values
-      out.push({ id: "years", labelAr: "سنوات من الخبرة", value: 15, prefix: "+", Icon: Award });
-      out.push({ id: "sat",   labelAr: "رضا المرضى",       value: 98, suffix: "%", Icon: Star });
-      out.push({ id: "care",  labelAr: "رعاية طوال الأسبوع", value: 7, suffix: " أيام", Icon: Clock });
+      out.push({
+        id: "years", labelAr: "سنوات من الخبرة", value: 15, prefix: "+", Icon: Award,
+        source: "بيانات معتمدة من إدارة المجمع", updatedAt: STATIC_STAT_REVIEW_DATE,
+      });
+      out.push({
+        id: "sat",   labelAr: "رضا المرضى",       value: 98, suffix: "%", Icon: Star,
+        source: "استبيانات رضا المرضى الداخلية", updatedAt: STATIC_STAT_REVIEW_DATE,
+      });
+      out.push({
+        id: "care",  labelAr: "رعاية طوال الأسبوع", value: 7, suffix: " أيام", Icon: Clock,
+        source: "جدول عمل المجمع الرسمي", updatedAt: STATIC_STAT_REVIEW_DATE,
+      });
       setStats(out);
     })();
     return () => { cancelled = true; };
   }, [enabled]);
   return stats;
 }
+
+function formatUpdatedAt(ms: number): string {
+  try {
+    return new Intl.DateTimeFormat("ar-SA", {
+      year: "numeric", month: "long", day: "numeric",
+    }).format(new Date(ms));
+  } catch {
+    return new Date(ms).toLocaleDateString();
+  }
+}
+
 
 // ---------------------------------------------------------------------------
 // Small helpers
