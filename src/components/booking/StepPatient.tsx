@@ -41,7 +41,7 @@ export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "e
         <Field label={lang === "ar" ? "رقم الهوية / الإقامة (اختياري)" : "National ID (optional)"} error={show("nationalId")}>
           <input
             value={value.nationalId}
-            onChange={(e) => onChange({ nationalId: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+            onChange={(e) => { onChange({ nationalId: e.target.value.replace(/\D/g, "").slice(0, 10) }); mark("nationalId"); }}
             onBlur={() => mark("nationalId")}
             aria-invalid={!!show("nationalId")}
             className={`input ${show("nationalId") ? "input-error" : ""}`}
