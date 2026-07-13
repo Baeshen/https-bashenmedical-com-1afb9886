@@ -448,7 +448,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         style={{ background: CHARCOAL }}
       >
         {logoFailed ? <LogoTextFallback /> : (
-          <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
+          <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" width={176} height={176} loading="eager" decoding="async" fetchPriority="high" />
         )}
         <p id="intro-reduced-title" className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
         <button
