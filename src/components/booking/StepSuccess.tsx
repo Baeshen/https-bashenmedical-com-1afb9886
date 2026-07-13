@@ -265,6 +265,37 @@ export function StepSuccess({
           {lang === "ar" ? "عرض التفاصيل الكاملة" : "View full details"}
         </Link>
       </div>
+
+      {reference && (
+        <div className="mt-6 rounded-xl border border-border bg-card p-4 text-start">
+          <h3 className="text-sm font-bold mb-1">
+            {lang === "ar" ? "إدارة الحجز" : "Manage booking"}
+          </h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            {lang === "ar"
+              ? "يمكنك تعديل موعدك أو إلغاؤه في أي وقت — سنستخدم رقم الحجز ورقم جوالك للتحقق."
+              : "You can reschedule or cancel anytime — we verify via reference and phone."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/lookup"
+              search={{ ref: reference, phone, action: "reschedule" } as never}
+              className="inline-flex items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+            >
+              <CalendarPlus className="h-4 w-4" />
+              {lang === "ar" ? "تعديل الموعد" : "Reschedule"}
+            </Link>
+            <Link
+              to="/lookup"
+              search={{ ref: reference, phone, action: "cancel" } as never}
+              className="inline-flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
+            >
+              <AlertCircle className="h-4 w-4" />
+              {lang === "ar" ? "إلغاء الحجز" : "Cancel booking"}
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="mt-3">
         <a
           href={waHref}
