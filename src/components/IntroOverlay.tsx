@@ -107,9 +107,41 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [fading, setFading] = useState(false);
   const [muted, setMuted] = useState(true);
   const [audioReady, setAudioReady] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
+
+  // Textual/SVG fallback shown when the logo image fails to load
+  const LogoFallback = ({ size = "w-40 h-40" }: { size?: string }) => (
+    <div
+      role="img"
+      aria-label="مجمع باعشن الطبي — Baeshen Medical Complex"
+      className={`${size} flex flex-col items-center justify-center rounded-full text-center`}
+      style={{
+        background: `radial-gradient(circle at 50% 45%, ${BAESHEN_BLUE} 0%, ${CHARCOAL_SOFT} 75%)`,
+        border: `1px solid ${GOLD}55`,
+        boxShadow: `0 0 40px ${BAESHEN_BLUE}66`,
+      }}
+    >
+      <span
+        className="text-white text-2xl md:text-3xl font-bold leading-tight"
+        style={{ fontFamily: "Cairo, sans-serif" }}
+      >
+        باعشن
+      </span>
+      <span
+        className="mt-1 text-[10px] md:text-xs tracking-[0.3em] uppercase"
+        style={{ color: GOLD }}
+      >
+        B · M · C
+      </span>
+      <span className="mt-1 text-[9px] md:text-[10px] text-white/60">
+        Baeshen Medical
+      </span>
+    </div>
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -170,7 +202,13 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       cycle();
       heartbeatTimerRef.current = window.setInterval(cycle, 1000);
       setAudioReady(true);
-    } catch {}
+    } catch (err) {
+      console.warn("[IntroOverlay] audio unavailable, continuing silently:", err);
+      setAudioFailed(true);
+      setAudioReady(false);
+      setMuted(true);
+      // Failure of audio must never block the intro or the navigation.
+    }
   };
 
   const stopHeartbeat = () => {
@@ -215,7 +253,18 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   if (prefersReducedMotion) {
     return (
       <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#0d1218] flex flex-col items-center justify-center gap-6 px-6">
-        <img src={bmcLogo} alt="مجمع باعشن الطبي" loading="eager" decoding="async" onError={(e) => ((e.currentTarget.style.display = "none"))} className="w-40 h-40 object-contain" />
+        {logoFailed ? (
+          <LogoFallback size="w-40 h-40" />
+        ) : (
+          <img
+            src={bmcLogo}
+            alt="مجمع باعشن الطبي"
+            loading="eager"
+            decoding="async"
+            onError={() => setLogoFailed(true)}
+            className="w-40 h-40 object-contain"
+          />
+        )}
         <p className="text-white/80 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>
           مجمع باعشن الطبي — صحتك أولويتنا
         </p>
@@ -226,6 +275,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           الدخول للموقع
         </button>
       </div>
+
     );
   }
 
@@ -260,16 +310,21 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
         <button
           onClick={toggleMute}
-          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition"
-          aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"}
+          disabled={audioFailed}
+          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={audioFailed ? "الصوت غير متاح" : muted ? "تشغيل الصوت" : "كتم الصوت"}
+          title={audioFailed ? "الصوت غير متاح — تستمر المقدمة بصريًا" : undefined}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full ${audioReady ? "bg-emerald-400" : "bg-white/40"}`}
+            className={`w-1.5 h-1.5 rounded-full ${
+              audioFailed ? "bg-white/20" : audioReady ? "bg-emerald-400" : "bg-white/40"
+            }`}
           />
           <span className="text-[10px] tracking-[0.3em] uppercase text-white/80">
-            {muted ? "الصوت" : "كتم"}
+            {audioFailed ? "بدون صوت" : muted ? "الصوت" : "كتم"}
           </span>
         </button>
+
 
         <button
           onClick={finish}
@@ -432,14 +487,20 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
               className="absolute -inset-8 rounded-full"
               style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}55` }}
             />
-            <img
-              src={bmcLogo}
-              alt="مجمع باعشن الطبي"
-              loading="eager"
-              decoding="async"
-              onError={(e) => ((e.currentTarget.style.display = "none"))}
-              className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-            />
+            {logoFailed ? (
+              <div className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center">
+                <LogoFallback size="w-52 h-52 md:w-64 md:h-64" />
+              </div>
+            ) : (
+              <img
+                src={bmcLogo}
+                alt="مجمع باعشن الطبي"
+                loading="eager"
+                decoding="async"
+                onError={() => setLogoFailed(true)}
+                className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+              />
+            )}
             {/* light sweep */}
             <motion.div
               className="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
