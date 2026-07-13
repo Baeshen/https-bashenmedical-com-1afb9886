@@ -170,6 +170,44 @@ function IntroSettingsAdmin() {
 
       <Card>
         <CardHeader>
+          <CardTitle>الأداء والتحميل المسبق</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2 flex items-center gap-3">
+            <Switch
+              checked={row.prefetch_enabled}
+              onCheckedChange={(v) => setRow({ ...row, prefetch_enabled: v })}
+            />
+            <Label>تفعيل التحميل المسبق لوسائط المشهد التالي</Label>
+          </div>
+          <div className="md:col-span-2">
+            <Label>
+              التأخير قبل بدء المشهد (بالمللي ثانية): {row.prefetch_lead_ms}
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              max={10000}
+              step={100}
+              value={row.prefetch_lead_ms}
+              disabled={!row.prefetch_enabled}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n)) {
+                  setRow({ ...row, prefetch_lead_ms: Math.max(0, Math.min(10000, Math.round(n))) });
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              كم من الوقت قبل بدء المشهد يبدأ تحميل صوره/فيديوهاته (0–10000 مللي ثانية، الافتراضي 1500).
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader>
           <CardTitle>ترتيب المشاهد</CardTitle>
         </CardHeader>
         <CardContent>
