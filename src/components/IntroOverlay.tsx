@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
-import bmcLogo from "@/assets/baeshen-logo.png";
+import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+
+const bmcLogo = bmcLogoAsset.url;
 
 const STORAGE_KEY = "baeshen_intro_seen_v2";
 

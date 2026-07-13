@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import bmcLogo from "@/assets/baeshen-logo.png";
+import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+
+const bmcLogo = bmcLogoAsset.url;
 
 const KEY = "baeshen_welcome_seen_v1";
 
