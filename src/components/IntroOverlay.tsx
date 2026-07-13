@@ -317,7 +317,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 // ---------------------------------------------------------------------------
 // Scenes
 // ---------------------------------------------------------------------------
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const fadeSwap = {
   initial: { opacity: 0, scale: 0.98 },
   animate: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: EASE } },
