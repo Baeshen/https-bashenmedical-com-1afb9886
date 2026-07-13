@@ -222,6 +222,58 @@ export function StepSuccess({
         </div>
       )}
 
+      {reference && state.date && state.time && (
+        <div className="mt-6 rounded-xl border border-border bg-card p-4 text-start">
+          <div className="text-sm font-semibold flex items-center gap-2 mb-1">
+            <CalendarPlus className="h-4 w-4 text-primary" />
+            {lang === "ar" ? "أضف الموعد إلى تقويمك" : "Add to your calendar"}
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            {lang === "ar"
+              ? `يتضمّن تذكيرات تلقائية${state.patient.reminder24h ? " قبل 24 ساعة" : ""}${state.patient.reminder24h && state.patient.reminder2h ? " و" : ""}${state.patient.reminder2h ? "قبل ساعتين" : ""} من الموعد.`
+              : `Includes automatic reminders${state.patient.reminder24h ? " 24h" : ""}${state.patient.reminder24h && state.patient.reminder2h ? " &" : ""}${state.patient.reminder2h ? " 2h" : ""} before.`}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(() => {
+              const share: ShareBooking = {
+                ref: reference,
+                patient_name: state.patient.name,
+                patient_phone: phone,
+                appointment_date: state.date,
+                appointment_time: state.time,
+                doctor: doc ? (lang === "ar" ? doc.name_ar : doc.name_en) : null,
+                specialty: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : null,
+                reminder_24h: state.patient.reminder24h,
+                reminder_2h: state.patient.reminder2h,
+              };
+              return (
+                <>
+                  <a
+                    href={googleCalendarUrl(share)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    {lang === "ar" ? "أضِف إلى تقويم Google" : "Add to Google Calendar"}
+                  </a>
+                  <Button variant="outline" size="sm" onClick={() => downloadIcs(share)} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    {lang === "ar" ? "تحميل ملف .ics" : "Download .ics"}
+                  </Button>
+                </>
+              );
+            })()}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {lang === "ar"
+              ? "ملف .ics يعمل مع Apple Calendar وOutlook وأي تقويم متوافق."
+              : "The .ics file works with Apple Calendar, Outlook, and any compatible app."}
+          </p>
+        </div>
+      )}
+
+
       <div className="mt-6 flex items-center justify-between gap-2">
         <div className="text-sm font-semibold">
           {lang === "ar" ? "تفاصيل الحجز" : "Booking details"}
