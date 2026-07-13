@@ -463,7 +463,20 @@ function HomePage() {
 
           <SkeletonSwap
             loading={doctorsLoading}
+            error={doctorsError}
             skeleton={<DoctorsSkeleton count={4} />}
+            errorFallback={
+              <SectionError
+                title={isAr ? "تعذّر تحميل الأطباء" : "Could not load doctors"}
+                hint={
+                  isAr
+                    ? "حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك ثم أعد المحاولة."
+                    : "A network error occurred. Check your connection and try again."
+                }
+                retryLabel={isAr ? "إعادة المحاولة" : "Try again"}
+                onRetry={() => refetchDoctors()}
+              />
+            }
           >
             <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {doctors?.map((d) => (
