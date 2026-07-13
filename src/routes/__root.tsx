@@ -11,14 +11,16 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 
+import { lazy, Suspense } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "sonner";
-import { IntroOverlay } from "@/components/IntroOverlay";
-import { WelcomeSplash } from "@/components/WelcomeSplash";
+import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+const IntroOverlay = lazy(() => import("@/components/IntroOverlay").then((m) => ({ default: m.IntroOverlay })));
+const WelcomeSplash = lazy(() => import("@/components/WelcomeSplash").then((m) => ({ default: m.WelcomeSplash })));
 import { ChatbotBubble } from "@/components/ChatbotBubble";
 import { MotionToggle } from "@/components/MotionToggle";
 import { PageTransition } from "@/components/motion/PageTransition";
