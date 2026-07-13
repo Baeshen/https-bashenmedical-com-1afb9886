@@ -24,6 +24,7 @@ import {
   SkeletonSwap,
   SpecialtiesSkeleton,
   DoctorsSkeleton,
+  SectionError,
 } from "@/components/home/HomeSkeletons";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
