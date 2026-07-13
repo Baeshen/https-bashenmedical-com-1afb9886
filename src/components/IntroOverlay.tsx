@@ -721,7 +721,7 @@ function SceneServices({ services }: { services: IntroService[] }) {
   const waves: IntroService[][] = [];
   for (let i = 0; i < services.length; i += 3) waves.push(services.slice(i, i + 3));
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="services" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <p className="text-white/90 text-lg md:text-xl tracking-wide">خدماتنا الطبية</p>
       <div className="flex flex-col gap-6 w-full max-w-4xl">
         {waves.map((wave, wi) => (
