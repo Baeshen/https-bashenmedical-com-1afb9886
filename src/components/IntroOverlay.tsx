@@ -424,7 +424,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   };
 
   // Timeline windows (ms)
-  const T = useMemo(() => ({
+  const T = useMemo<Record<SceneKey, number[]>>(() => ({
     pulse:   [0,     4000],
     brand:   [4000,  8000],
     services:[8000,  16000],
