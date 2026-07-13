@@ -55,7 +55,7 @@ export const listOutboundNotifications = createServerFn({ method: "POST" })
     let q = context.supabase
       .from("notifications")
       .select(
-        "id, channel, send_status, recipient, title, body, kind, appointment_id, branch_id, created_at, sent_at, last_error",
+        "id, channel, send_status, recipient, title, body, kind, appointment_id, branch_id, created_at, sent_at, last_error, metadata",
       )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
