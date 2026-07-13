@@ -637,6 +637,41 @@ html.reduce-motion .skeleton-neon::after {
   animation: fut-pulse 1.8s ease-out infinite;
 }
 
+/* ---------------------------------------------------------------
+   pulse-soft — subtle attention pulse for INDIVIDUAL elements only.
+   Opt-in per element (add the class). Keep usage sparse (1-2 per view)
+   so it never becomes ambient noise. Honors both the system
+   prefers-reduced-motion pref and the app-level `html.reduce-motion`
+   toggle (MotionToggle) — the pulse fully stops in both cases.
+   --------------------------------------------------------------- */
+@keyframes fut-pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--neon-teal) 35%, transparent);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--neon-teal) 0%, transparent);
+  }
+}
+@utility pulse-soft {
+  animation: fut-pulse-soft 2.8s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+.pulse-soft:hover,
+.pulse-soft:focus-visible {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-soft { animation: none !important; transform: none !important; box-shadow: none !important; }
+}
+html.reduce-motion .pulse-soft {
+  animation: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+
 /* Subtle grid overlay — for hero "tech" feel. */
 @utility grid-overlay {
   position: relative;

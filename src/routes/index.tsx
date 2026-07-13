@@ -211,7 +211,7 @@ function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link to="/book" className="btn-magnetic">
+              <Link to="/book" className="btn-magnetic pulse-soft">
                 <CalendarCheck2 className="h-4 w-4" />
                 {isAr ? "احجز موعدك الآن" : "Book an appointment"}
               </Link>
