@@ -4,12 +4,29 @@ import { useEffect, useRef, useState } from "react";
  * Lazy media renderer for the intro overlay.
  *
  * - Uses IntersectionObserver so the browser only starts fetching the
- *   asset when its scene actually reaches the viewport (scenes mount
- *   just-in-time, but this defers the network request even further).
+ *   asset when its scene actually reaches the viewport.
  * - Adds native `loading="lazy"` / `decoding="async"` hints for images.
  * - Uses `preload="none"` on <video> and only sets `src` after intersection,
  *   so no bytes are transferred until the scene is visible.
+ * - Shows an animated shimmer skeleton until the asset finishes loading,
+ *   so scenes never flash with an empty box.
  */
+
+const SKELETON_CLASS =
+  "absolute inset-0 rounded-[inherit] overflow-hidden bg-white/[0.06] " +
+  "before:absolute before:inset-0 before:-translate-x-full " +
+  "before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent " +
+  "before:animate-[shimmer_1.4s_infinite]";
+
+function Skeleton({ rounded = "rounded-lg" }: { rounded?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`${SKELETON_CLASS} ${rounded}`}
+    />
+  );
+}
+
 type LazyImageProps = {
   src: string;
   alt: string;
@@ -17,12 +34,17 @@ type LazyImageProps = {
   width?: number;
   height?: number;
   eager?: boolean;
+  rounded?: string;
   onError?: () => void;
 };
 
-export function LazyImage({ src, alt, className, width, height, eager, onError }: LazyImageProps) {
+export function LazyImage({
+  src, alt, className, width, height, eager, rounded = "rounded-lg", onError,
+}: LazyImageProps) {
   const ref = useRef<HTMLImageElement | null>(null);
   const [ready, setReady] = useState(!!eager);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (eager || ready) return;
@@ -48,18 +70,22 @@ export function LazyImage({ src, alt, className, width, height, eager, onError }
   }, [eager, ready]);
 
   return (
-    <img
-      ref={ref}
-      src={ready ? src : undefined}
-      alt={alt}
-      className={className}
-      width={width}
-      height={height}
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      fetchPriority={eager ? "high" : "low"}
-      onError={onError}
-    />
+    <span className={`relative inline-block ${className ?? ""}`} style={{ width, height }}>
+      {!loaded && !failed && <Skeleton rounded={rounded} />}
+      <img
+        ref={ref}
+        src={ready ? src : undefined}
+        alt={alt}
+        className={`${className ?? ""} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+        width={width}
+        height={height}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={eager ? "high" : "low"}
+        onLoad={() => setLoaded(true)}
+        onError={() => { setFailed(true); onError?.(); }}
+      />
+    </span>
   );
 }
 
@@ -69,11 +95,15 @@ type LazyVideoProps = {
   className?: string;
   width?: number;
   height?: number;
+  rounded?: string;
 };
 
-export function LazyVideo({ src, poster, className, width, height }: LazyVideoProps) {
+export function LazyVideo({
+  src, poster, className, width, height, rounded = "rounded-lg",
+}: LazyVideoProps) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const [ready, setReady] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -98,19 +128,23 @@ export function LazyVideo({ src, poster, className, width, height }: LazyVideoPr
   }, []);
 
   return (
-    <video
-      ref={ref}
-      className={className}
-      width={width}
-      height={height}
-      poster={poster}
-      preload={ready ? "metadata" : "none"}
-      muted
-      playsInline
-      autoPlay={ready}
-      loop
-    >
-      {ready ? <source src={src} /> : null}
-    </video>
+    <span className={`relative inline-block ${className ?? ""}`} style={{ width, height }}>
+      {!loaded && <Skeleton rounded={rounded} />}
+      <video
+        ref={ref}
+        className={`${className ?? ""} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+        width={width}
+        height={height}
+        poster={poster}
+        preload={ready ? "metadata" : "none"}
+        muted
+        playsInline
+        autoPlay={ready}
+        loop
+        onLoadedData={() => setLoaded(true)}
+      >
+        {ready ? <source src={src} /> : null}
+      </video>
+    </span>
   );
 }
