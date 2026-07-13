@@ -107,9 +107,41 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [fading, setFading] = useState(false);
   const [muted, setMuted] = useState(true);
   const [audioReady, setAudioReady] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
+
+  // Textual/SVG fallback shown when the logo image fails to load
+  const LogoFallback = ({ size = "w-40 h-40" }: { size?: string }) => (
+    <div
+      role="img"
+      aria-label="مجمع باعشن الطبي — Baeshen Medical Complex"
+      className={`${size} flex flex-col items-center justify-center rounded-full text-center`}
+      style={{
+        background: `radial-gradient(circle at 50% 45%, ${BAESHEN_BLUE} 0%, ${CHARCOAL_SOFT} 75%)`,
+        border: `1px solid ${GOLD}55`,
+        boxShadow: `0 0 40px ${BAESHEN_BLUE}66`,
+      }}
+    >
+      <span
+        className="text-white text-2xl md:text-3xl font-bold leading-tight"
+        style={{ fontFamily: "Cairo, sans-serif" }}
+      >
+        باعشن
+      </span>
+      <span
+        className="mt-1 text-[10px] md:text-xs tracking-[0.3em] uppercase"
+        style={{ color: GOLD }}
+      >
+        B · M · C
+      </span>
+      <span className="mt-1 text-[9px] md:text-[10px] text-white/60">
+        Baeshen Medical
+      </span>
+    </div>
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
