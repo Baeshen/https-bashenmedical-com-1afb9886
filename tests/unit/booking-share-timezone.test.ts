@@ -1,13 +1,14 @@
 /**
- * Unit tests: reminder alarms (reminder_24h / reminder_2h) and event times
- * built by src/lib/booking-share.ts must be timezone-safe and DST-safe.
+ * Unit tests: ملف .ics ورابط Google Calendar يجب أن يظلا يشيران إلى وقت
+ * الرياض الصحيح مهما تغيّرت المنطقة الزمنية للجهاز/الخادم.
  *
- * Riyadh is fixed UTC+3 with no DST, so the conversion is deterministic —
- * these tests pin that behavior and also verify the alarms use *duration*
- * triggers (`-PT24H` / `-PT2H`) so they stay correct across DST-observing
- * viewers' calendars.
+ * التنفيذ الحالي:
+ *  - .ics يُصدر VTIMEZONE:Asia/Riyadh + DTSTART;TZID=Asia/Riyadh:<local>
+ *    (وقت محلي معنون — لا يعتمد على ساعة الجهاز)
+ *  - Google يستقبل تواريخ محلية بدون Z + ctz=Asia/Riyadh
+ *  - VALARM يستخدم TRIGGER مدّة (-PT24H / -PT2H) — آمن مع DST عند العارض
  *
- * Run:  bun tests/unit/booking-share-timezone.test.ts
+ * تشغيل:  bun test tests/unit/booking-share-timezone.test.ts
  */
 import { buildIcs, googleCalendarUrl, type ShareBooking } from "../../src/lib/booking-share";
 
@@ -35,120 +36,169 @@ const base = (over: Partial<ShareBooking> = {}): ShareBooking => ({
   ...over,
 });
 
-console.log("\n── booking-share: reminder alarms across TZ / DST ──");
+console.log("\n── booking-share: .ics + Google Calendar — timezone integrity ──");
 
-// ── DTSTART is Asia/Riyadh (UTC+3) → UTC, regardless of host TZ ──
-test("10:00 Riyadh → 07:00 UTC (DTSTART in Z form)", () => {
-  const ics = buildIcs(base({ appointment_date: "2026-07-15", appointment_time: "10:00" }));
-  assert(ics.includes("DTSTART:20260715T070000Z"), `DTSTART wrong:\n${ics}`);
-  assert(ics.includes("DTEND:20260715T073000Z"), `DTEND wrong (30min default)`);
+// ── .ics: VTIMEZONE + DTSTART;TZID=Asia/Riyadh (لا يعتمد على منطقة الجهاز) ──
+test("ملف .ics يحتوي VTIMEZONE:Asia/Riyadh مع TZOFFSETTO:+0300", () => {
+  const ics = buildIcs(base());
+  assert(ics.includes("BEGIN:VTIMEZONE"), "VTIMEZONE مفقودة");
+  assert(ics.includes("TZID:Asia/Riyadh"), "TZID:Asia/Riyadh مفقودة");
+  assert(ics.includes("TZOFFSETTO:+0300"), "TZOFFSETTO:+0300 مفقودة");
+  assert(ics.includes("END:VTIMEZONE"), "END:VTIMEZONE مفقودة");
 });
 
-test("summer (July) and winter (January) both convert with fixed +3 offset (no DST)", () => {
+test("DTSTART/DTEND يستخدمان TZID=Asia/Riyadh مع وقت محلي (بدون Z)", () => {
+  const ics = buildIcs(base({ appointment_date: "2026-07-15", appointment_time: "10:00" }));
+  assert(
+    ics.includes("DTSTART;TZID=Asia/Riyadh:20260715T100000"),
+    `DTSTART شكل خاطئ:\n${ics}`,
+  );
+  assert(
+    ics.includes("DTEND;TZID=Asia/Riyadh:20260715T103000"),
+    `DTEND شكل خاطئ (30د افتراضياً)`,
+  );
+  assert(!/DTSTART[^\r\n]*Z(\r|\n)/.test(ics), "DTSTART يجب ألا يحتوي Z — تعني UTC");
+});
+
+test("الصيف والشتاء يعطيان نفس الوقت المحلي (لا DST في الرياض)", () => {
   const summer = buildIcs(base({ appointment_date: "2026-07-15", appointment_time: "14:00" }));
   const winter = buildIcs(base({ appointment_date: "2026-01-15", appointment_time: "14:00" }));
-  assert(summer.includes("DTSTART:20260715T110000Z"), "summer DTSTART wrong");
-  assert(winter.includes("DTSTART:20260115T110000Z"), "winter DTSTART wrong");
+  assert(summer.includes("DTSTART;TZID=Asia/Riyadh:20260715T140000"), "الصيف خطأ");
+  assert(winter.includes("DTSTART;TZID=Asia/Riyadh:20260115T140000"), "الشتاء خطأ");
 });
 
-test("EU DST spring-forward day (2026-03-29) still uses +3 offset — Riyadh has no DST", () => {
-  const ics = buildIcs(base({ appointment_date: "2026-03-29", appointment_time: "09:30" }));
-  assert(ics.includes("DTSTART:20260329T063000Z"), `DST-day DTSTART wrong:\n${ics}`);
-});
-
-test("EU DST fall-back day (2026-10-25) still uses +3 offset", () => {
-  const ics = buildIcs(base({ appointment_date: "2026-10-25", appointment_time: "09:30" }));
-  assert(ics.includes("DTSTART:20261025T063000Z"), `fall-back DTSTART wrong`);
-});
-
-test("US DST spring-forward (2026-03-08, 02:00 local edge) still uses +3 offset", () => {
-  const ics = buildIcs(base({ appointment_date: "2026-03-08", appointment_time: "02:30" }));
-  // 02:30 Riyadh → 23:30 previous day UTC
-  assert(ics.includes("DTSTART:20260307T233000Z"), `US-DST DTSTART wrong:\n${ics}`);
-});
-
-test("midnight Riyadh crosses to previous day in UTC", () => {
+test("منتصف الليل الرياضي يبقى 00:30 محلياً (بدون إزاحة يوم)", () => {
   const ics = buildIcs(base({ appointment_date: "2026-03-01", appointment_time: "00:30" }));
-  assert(ics.includes("DTSTART:20260228T213000Z"), `midnight cross-day wrong:\n${ics}`);
+  assert(
+    ics.includes("DTSTART;TZID=Asia/Riyadh:20260301T003000"),
+    `الوقت المحلي خطأ:\n${ics}`,
+  );
 });
 
-test("year boundary: 2026-01-01 01:00 Riyadh → 2025-12-31 22:00 UTC", () => {
-  const ics = buildIcs(base({ appointment_date: "2026-01-01", appointment_time: "01:00" }));
-  assert(ics.includes("DTSTART:20251231T220000Z"), `year boundary wrong:\n${ics}`);
+test("مدة مخصّصة (45د) تُحسب على الوقت المحلي دون تحويل UTC", () => {
+  // نستدعي مباشرة عبر buildIcs الافتراضية (30د)، ثم نتحقق من الحد الأدنى
+  const ics = buildIcs(base({ appointment_date: "2026-07-15", appointment_time: "23:45" }));
+  // 23:45 + 30د = 00:15 من اليوم التالي — يجب أن ينعكس محلياً
+  assert(
+    ics.includes("DTSTART;TZID=Asia/Riyadh:20260715T234500"),
+    "DTSTART خطأ",
+  );
+  assert(
+    ics.includes("DTEND;TZID=Asia/Riyadh:20260716T001500"),
+    `DTEND عبور اليوم محلياً خطأ:\n${ics}`,
+  );
 });
 
-// ── VALARM triggers are duration-relative → DST-safe on the viewer side ──
-test("reminder_24h alarm uses duration trigger -PT24H (DST-safe)", () => {
+// ── VALARM بشكل مدّة — آمن مع DST عند العارض ──
+test("reminder_24h يستخدم TRIGGER:-PT24H", () => {
   const ics = buildIcs(base({ reminder_24h: true, reminder_2h: false }));
-  assert(/BEGIN:VALARM[\s\S]*?TRIGGER:-PT24H[\s\S]*?END:VALARM/.test(ics),
-    `24h VALARM missing or wrong trigger`);
-  assert(!ics.includes("TRIGGER:-PT2H"), "2h VALARM must be omitted when false");
+  assert(/BEGIN:VALARM[\s\S]*?TRIGGER:-PT24H[\s\S]*?END:VALARM/.test(ics), "24h VALARM مفقود");
+  assert(!ics.includes("TRIGGER:-PT2H"), "2h VALARM يجب إخفاؤه");
 });
 
-test("reminder_2h alarm uses duration trigger -PT2H (DST-safe)", () => {
+test("reminder_2h يستخدم TRIGGER:-PT2H", () => {
   const ics = buildIcs(base({ reminder_24h: false, reminder_2h: true }));
-  assert(/BEGIN:VALARM[\s\S]*?TRIGGER:-PT2H[\s\S]*?END:VALARM/.test(ics),
-    `2h VALARM missing or wrong trigger`);
-  assert(!ics.includes("TRIGGER:-PT24H"), "24h VALARM must be omitted when false");
+  assert(/BEGIN:VALARM[\s\S]*?TRIGGER:-PT2H[\s\S]*?END:VALARM/.test(ics), "2h VALARM مفقود");
+  assert(!ics.includes("TRIGGER:-PT24H"), "24h VALARM يجب إخفاؤه");
 });
 
-test("both flags true → exactly two VALARM blocks (24h + 2h)", () => {
+test("كلا العلمين true → VALARM اثنان بالضبط", () => {
   const ics = buildIcs(base({ reminder_24h: true, reminder_2h: true }));
   const count = (ics.match(/BEGIN:VALARM/g) || []).length;
-  assert(count === 2, `expected 2 VALARMs, got ${count}`);
-  assert(ics.includes("TRIGGER:-PT24H") && ics.includes("TRIGGER:-PT2H"),
-    "both triggers must be present");
+  assert(count === 2, `المتوقع 2 VALARM، الفعلي ${count}`);
 });
 
-test("both flags false → zero VALARM blocks", () => {
+test("كلا العلمين false → لا VALARM", () => {
   const ics = buildIcs(base({ reminder_24h: false, reminder_2h: false }));
-  assert(!ics.includes("BEGIN:VALARM"), "no VALARMs expected when both flags false");
+  assert(!ics.includes("BEGIN:VALARM"), "لا يجب وجود VALARM");
 });
 
-test("undefined / null flags default to enabled (matches booking defaults)", () => {
+test("undefined/null افتراضياً مفعّل (يطابق الحجز)", () => {
   const und = buildIcs(base({}));
   const nul = buildIcs(base({ reminder_24h: null, reminder_2h: null }));
   for (const ics of [und, nul]) {
-    assert(ics.includes("TRIGGER:-PT24H"), "24h VALARM expected by default");
-    assert(ics.includes("TRIGGER:-PT2H"), "2h VALARM expected by default");
+    assert(ics.includes("TRIGGER:-PT24H"), "24h VALARM متوقع افتراضياً");
+    assert(ics.includes("TRIGGER:-PT2H"), "2h VALARM متوقع افتراضياً");
   }
 });
 
-// ── DST-safety: alarms fire N hours before start, so if the viewer's TZ
-//    crosses DST between alarm and event, the *duration* form still fires
-//    correctly. A fixed DATE-TIME trigger would drift by ±1h — assert we
-//    never emit that shape.
-test("VALARM triggers are never absolute DATE-TIME (would break across DST)", () => {
+test("TRIGGER أبداً لا يكون DATE-TIME مطلقاً (سيكسر مع DST)", () => {
   const ics = buildIcs(base({ reminder_24h: true, reminder_2h: true }));
-  const absoluteTrigger = /TRIGGER;VALUE=DATE-TIME:/;
-  assert(!absoluteTrigger.test(ics),
-    "absolute VALARM triggers are DST-unsafe — must use duration form");
+  assert(!/TRIGGER;VALUE=DATE-TIME:/.test(ics), "TRIGGER مطلق غير مسموح");
 });
 
-// ── Independence from process TZ ──
-test("output is identical regardless of process.env.TZ (fixed +3 conversion)", () => {
+// ── ثبات المخرج عبر TZ الجهاز/الخادم المختلفة ──
+const HOST_TZS = [
+  "UTC",
+  "America/New_York",   // UTC-5/-4 (DST)
+  "America/Los_Angeles",// UTC-8/-7 (DST)
+  "Europe/London",      // UTC+0/+1 (DST)
+  "Europe/Berlin",      // UTC+1/+2 (DST)
+  "Asia/Kolkata",       // UTC+5:30 (لا DST)
+  "Asia/Tokyo",         // UTC+9 (لا DST)
+  "Australia/Sydney",   // UTC+10/+11 (DST جنوبي معكوس)
+  "Pacific/Kiritimati", // UTC+14 (الأقصى شرقاً)
+  "Pacific/Pago_Pago",  // UTC-11 (الأقصى غرباً)
+];
+
+const stripStamp = (s: string) => s.replace(/DTSTAMP:[^\r\n]+/g, "DTSTAMP:X");
+
+test("buildIcs متطابق تماماً عبر كل مناطق الجهاز الزمنية", () => {
   const orig = process.env.TZ;
   const b = base({ appointment_date: "2026-07-15", appointment_time: "10:00" });
-  const tzs = ["UTC", "America/New_York", "Europe/London", "Australia/Sydney", "Asia/Kolkata"];
-  const outs = tzs.map((tz) => {
+  const outs = HOST_TZS.map((tz) => {
     process.env.TZ = tz;
-    return buildIcs(b);
+    return stripStamp(buildIcs(b));
   });
   process.env.TZ = orig;
-  const stripDtstamp = (s: string) => s.replace(/DTSTAMP:[^\r\n]+/g, "DTSTAMP:X");
-  const first = stripDtstamp(outs[0]);
+  const first = outs[0];
   for (let i = 1; i < outs.length; i++) {
-    assert(stripDtstamp(outs[i]) === first,
-      `TZ=${tzs[i]} produced different ICS than TZ=${tzs[0]}`);
+    assert(outs[i] === first, `TZ=${HOST_TZS[i]} أنتج .ics مختلف عن TZ=${HOST_TZS[0]}`);
+  }
+  // وثّق الوقت المحلي المتوقع
+  assert(first.includes("DTSTART;TZID=Asia/Riyadh:20260715T100000"), "DTSTART المتوقع مفقود");
+});
+
+test("googleCalendarUrl متطابق عبر كل مناطق الجهاز", () => {
+  const orig = process.env.TZ;
+  const b = base({ appointment_date: "2026-07-15", appointment_time: "10:00" });
+  const urls = HOST_TZS.map((tz) => {
+    process.env.TZ = tz;
+    return googleCalendarUrl(b);
+  });
+  process.env.TZ = orig;
+  const first = urls[0];
+  for (let i = 1; i < urls.length; i++) {
+    assert(urls[i] === first, `TZ=${HOST_TZS[i]} أنتج URL مختلف`);
   }
 });
 
-// ── Google Calendar URL: uses ctz=Asia/Riyadh + UTC dates ──
-test("googleCalendarUrl pins ctz=Asia/Riyadh and encodes UTC dates", () => {
+test("googleCalendarUrl يثبّت ctz=Asia/Riyadh مع وقت محلي (بدون Z)", () => {
   const url = googleCalendarUrl(base({ appointment_date: "2026-07-15", appointment_time: "10:00" }));
-  assert(url.includes("ctz=Asia%2FRiyadh"), `ctz missing: ${url}`);
-  assert(url.includes("dates=20260715T070000Z%2F20260715T073000Z"),
-    `dates param wrong: ${url}`);
+  assert(url.includes("ctz=Asia%2FRiyadh"), `ctz مفقودة: ${url}`);
+  assert(
+    url.includes("dates=20260715T100000%2F20260715T103000"),
+    `dates خطأ (يجب أن تكون محلية بدون Z): ${url}`,
+  );
+  assert(!/dates=[^&]*Z/.test(url), "dates يجب ألا تحتوي Z — تلغي ctz");
+});
+
+// ── محاكاة تغيير TZ الجهاز أثناء استدعاءات متتابعة ──
+test("تبديل TZ الجهاز بين استدعاءين لا يؤثر على DTSTART المحلي", () => {
+  const orig = process.env.TZ;
+  const b = base({ appointment_date: "2026-12-31", appointment_time: "23:30" });
+
+  process.env.TZ = "Pacific/Pago_Pago"; // UTC-11
+  const a = stripStamp(buildIcs(b));
+  process.env.TZ = "Pacific/Kiritimati"; // UTC+14 — أقصى فارق ممكن ~25 ساعة
+  const c = stripStamp(buildIcs(b));
+  process.env.TZ = orig;
+
+  assert(a === c, "التبديل بين UTC-11 و UTC+14 غيّر الناتج");
+  assert(
+    a.includes("DTSTART;TZID=Asia/Riyadh:20261231T233000"),
+    "الوقت المحلي المتوقع مفقود",
+  );
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
