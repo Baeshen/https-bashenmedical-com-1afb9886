@@ -42,6 +42,7 @@ import { StepPatient } from "@/components/booking/StepPatient";
 import { StepReview } from "@/components/booking/StepReview";
 import { StepSuccess } from "@/components/booking/StepSuccess";
 import { SummarySidebar } from "@/components/booking/SummarySidebar";
+import { WaitlistCTA } from "@/components/booking/WaitlistCTA";
 
 const search = z.object({
   specialty: z.string().optional(),
