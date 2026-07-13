@@ -14,7 +14,7 @@ const GOLD = "#c9a84c";
 
 type Scene = {
   key: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   ar: string;
   en: string;
 };
