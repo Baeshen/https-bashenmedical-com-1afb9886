@@ -5,7 +5,9 @@ import { NAME_MAX, PHONE_MAX, REASON_MAX, type PatientErrors, type State } from 
 
 export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "en"; value: State["patient"]; errors: PatientErrors; onChange: (p: Partial<State["patient"]>) => void }) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const mark = (k: string) => setTouched((t) => ({ ...t, [k]: true }));
+  const mark = (k: string) => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  // Inline validation: show the error as soon as the user starts typing in a
+  // field (touch on first change), instead of waiting for blur.
   const show = (k: keyof PatientErrors) => (touched[k] ? errors[k] : undefined);
   const allValid = Object.keys(errors).length === 0;
 
@@ -15,7 +17,7 @@ export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "e
         <Field label={lang === "ar" ? "الاسم الرباعي" : "Full name"} required error={show("name")}>
           <input
             value={value.name}
-            onChange={(e) => onChange({ name: e.target.value.slice(0, NAME_MAX) })}
+            onChange={(e) => { onChange({ name: e.target.value.slice(0, NAME_MAX) }); mark("name"); }}
             onBlur={() => mark("name")}
             aria-invalid={!!show("name")}
             className={`input ${show("name") ? "input-error" : ""}`}
@@ -26,7 +28,7 @@ export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "e
         <Field label={lang === "ar" ? "رقم الجوال" : "Mobile"} required error={show("phone")}>
           <input
             value={value.phone}
-            onChange={(e) => onChange({ phone: e.target.value.slice(0, PHONE_MAX) })}
+            onChange={(e) => { onChange({ phone: e.target.value.slice(0, PHONE_MAX) }); mark("phone"); }}
             onBlur={() => mark("phone")}
             aria-invalid={!!show("phone")}
             className={`input ${show("phone") ? "input-error" : ""}`}
@@ -39,7 +41,7 @@ export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "e
         <Field label={lang === "ar" ? "رقم الهوية / الإقامة (اختياري)" : "National ID (optional)"} error={show("nationalId")}>
           <input
             value={value.nationalId}
-            onChange={(e) => onChange({ nationalId: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+            onChange={(e) => { onChange({ nationalId: e.target.value.replace(/\D/g, "").slice(0, 10) }); mark("nationalId"); }}
             onBlur={() => mark("nationalId")}
             aria-invalid={!!show("nationalId")}
             className={`input ${show("nationalId") ? "input-error" : ""}`}

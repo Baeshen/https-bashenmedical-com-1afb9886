@@ -17,7 +17,7 @@
  * Wizard step components live in src/components/booking/*.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -109,6 +109,7 @@ function BookPage() {
   const searchParams = Route.useSearch();
   const { lang } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     loadDraft({
@@ -218,13 +219,13 @@ function BookPage() {
     } catch {/* ignore */}
   }, [result]);
 
-  const { data: branches = [] }    = useQuery({ queryKey: ["branches"], queryFn: fetchBranches, staleTime: 5 * 60_000 });
-  const { data: specialties = [] } = useQuery({ queryKey: ["specialties-active"], queryFn: fetchSpecialties, staleTime: 5 * 60_000 });
+  const { data: branches = [] }    = useQuery({ queryKey: ["branches"], queryFn: fetchBranches, staleTime: 30 * 60_000 });
+  const { data: specialties = [] } = useQuery({ queryKey: ["specialties-active"], queryFn: fetchSpecialties, staleTime: 30 * 60_000 });
   const { data: doctors = [] } = useQuery({
     queryKey: ["doctors-for-book", state.specialtyId, state.branchId],
     queryFn: () => fetchDoctors(state.specialtyId, state.branchId),
     enabled: state.step >= 4,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   // If the user picked a doctor via deep link, auto-fill branch & specialty
@@ -243,6 +244,33 @@ function BookPage() {
   });
 
   const patientValidation = useMemo(() => validatePatient(state.patient), [state.patient]);
+
+  // Warn before losing an unsent draft: any patient input on step ≥ 4 counts.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasDraft =
+      state.step >= 4 && state.step < 9 &&
+      (state.patient.name.trim() !== "" || state.patient.phone.trim() !== "" || state.patient.nationalId.trim() !== "" || state.patient.reason.trim() !== "");
+    if (!hasDraft) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [state.step, state.patient.name, state.patient.phone, state.patient.nationalId, state.patient.reason]);
+
+  // Prefetch today's availability the moment a doctor is picked, so StepTime
+  // renders instantly when the user reaches step 6.
+  useEffect(() => {
+    if (!state.doctorId) return;
+    const today = new Date().toISOString().slice(0, 10);
+    queryClient.prefetchQuery({
+      queryKey: ["avail", today, state.doctorId, state.specialtyId, state.branchId],
+      queryFn: () => fetchAvailability(today, state.doctorId, state.specialtyId, state.branchId),
+      staleTime: 20_000,
+    });
+  }, [state.doctorId, state.specialtyId, state.branchId, queryClient]);
 
   // Consistency guard: clamp state.step to the highest step whose
   // prerequisites are actually met. Runs on every state change so a
@@ -286,6 +314,23 @@ function BookPage() {
       return;
     }
     setSubmitting(true);
+    // Pre-submit slot re-check: guard against the wall-clock case where the
+    // slot got booked between step 6 and step 8. Cheaper than a full round-trip
+    // to /create + friendly Arabic conflict message.
+    try {
+      const fresh = await fetchAvailability(state.date!, state.doctorId, state.specialtyId, state.branchId);
+      if (fresh.ok && fresh.booked?.includes(state.time!)) {
+        setSubmitting(false);
+        setErrorMsg(lang === "ar"
+          ? "هذا الموعد لم يعد متاحًا. اختر وقتًا آخر."
+          : "This slot is no longer available. Please pick another time.");
+        // Refresh the availability query so StepTime shows the updated state.
+        queryClient.setQueryData(["avail", state.date, state.doctorId, state.specialtyId, state.branchId], fresh);
+        dispatch({ t: "set", p: { time: null } });
+        goto(6);
+        return;
+      }
+    } catch {/* network hiccup — let the real submit surface the error */}
     const p = state.patient;
     const res = await submitBooking({
       patient_name: p.name.trim(),
@@ -312,6 +357,13 @@ function BookPage() {
   }
 
   function handleReset() {
+    // Guard against accidental taps that would drop the reference/QR forever.
+    if (typeof window !== "undefined" && result?.reference) {
+      const msg = lang === "ar"
+        ? "سيتم مسح تفاصيل الحجز الحالي من الشاشة. تأكد أنك احتفظت برقم الحجز. هل تريد المتابعة؟"
+        : "The current booking details will be cleared from this screen. Make sure you saved the reference. Continue?";
+      if (!window.confirm(msg)) return;
+    }
     setResult(null);
     setErrorMsg(null);
     dispatch({ t: "reset" });
