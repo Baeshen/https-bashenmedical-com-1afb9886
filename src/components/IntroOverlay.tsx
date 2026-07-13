@@ -673,7 +673,7 @@ function ScenePulse() {
 
 function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () => void }) {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
+    <motion.div data-scene="brand" className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
       <div className="relative">
         <div className="absolute -inset-10 rounded-full" style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}66` }} />
         {logoFailed ? <LogoTextFallback size="w-48 h-48 md:w-56 md:h-56" /> : (
