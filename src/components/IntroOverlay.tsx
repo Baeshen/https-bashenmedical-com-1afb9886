@@ -756,7 +756,7 @@ function SceneServices({ services }: { services: IntroService[] }) {
 function SceneStats({ stats }: { stats: Stat[] }) {
   const visible = stats.filter((s) => s.value > 0).slice(0, 4);
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="stats" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <motion.p
         className="text-white/70 text-xs md:text-sm tracking-[0.35em] uppercase"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}
