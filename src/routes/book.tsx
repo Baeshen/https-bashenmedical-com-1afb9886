@@ -246,6 +246,35 @@ function BookPage() {
     staleTime: 20_000,
   });
 
+  // Week-scan for the current doctor — used to decide whether to emphasize
+  // the waitlist CTA. Uses the month-availability endpoint so it's one call.
+  const { data: weekDates } = useQuery({
+    queryKey: ["week-avail", state.doctorId, state.branchId],
+    queryFn: async () => {
+      const today = new Date();
+      const y = today.getFullYear(); const m = today.getMonth() + 1;
+      const p = new URLSearchParams({ year: String(y), month: String(m) });
+      if (state.doctorId) p.set("doctor_id", state.doctorId);
+      if (state.branchId) p.set("branch_id", state.branchId);
+      const res = await fetch(`/api/public/book/month-availability?${p.toString()}`);
+      if (!res.ok) return [] as string[];
+      const j = await res.json();
+      return (j?.dates ?? []) as string[];
+    },
+    enabled: !!state.doctorId && state.step >= 6,
+    staleTime: 60_000,
+  });
+
+  const noWeekAvailability = useMemo(() => {
+    if (!weekDates) return false;
+    const today = new Date();
+    const in7 = new Date(today.getTime() + 7 * 86400_000);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const from = iso(today), to = iso(in7);
+    return !weekDates.some((d) => d >= from && d <= to);
+  }, [weekDates]);
+
+
   const patientValidation = useMemo(() => validatePatient(state.patient), [state.patient]);
 
   // Warn before losing an unsent draft: any patient input on step ≥ 4 counts.
