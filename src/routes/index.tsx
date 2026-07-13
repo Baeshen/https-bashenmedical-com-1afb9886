@@ -364,7 +364,20 @@ function HomePage() {
 
           <SkeletonSwap
             loading={specialtiesLoading}
+            error={specialtiesError}
             skeleton={<SpecialtiesSkeleton count={8} />}
+            errorFallback={
+              <SectionError
+                title={isAr ? "تعذّر تحميل التخصصات" : "Could not load specialties"}
+                hint={
+                  isAr
+                    ? "حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك ثم أعد المحاولة."
+                    : "A network error occurred. Check your connection and try again."
+                }
+                retryLabel={isAr ? "إعادة المحاولة" : "Try again"}
+                onRetry={() => refetchSpecialties()}
+              />
+            }
           >
             <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {specialties?.slice(0, 12).map((s) => (
