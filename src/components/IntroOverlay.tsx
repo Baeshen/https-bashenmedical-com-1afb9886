@@ -9,7 +9,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
-import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+import bmcLogoAsset from "@/assets/baeshen-logo-transparent.png.asset.json";
+import introNarrationAsset from "@/assets/intro-narration-ar.mp3.asset.json";
 import {
   DEFAULT_INTRO_SETTINGS, resolveIcon,
   type IntroSettingsRow, type SceneKey,
@@ -18,6 +19,7 @@ import { LazyImage, LazyVideo } from "@/components/LazyMedia";
 import { prefetchMedia, prefetchCompletedBefore, getPrefetchStatus } from "@/lib/media-prefetch";
 
 const bmcLogo = bmcLogoAsset.url;
+const introNarrationUrl = introNarrationAsset.url;
 
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
