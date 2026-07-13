@@ -31,6 +31,7 @@ export type OutboundNotification = {
   created_at: string;
   sent_at: string | null;
   last_error: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 const ListInput = z
