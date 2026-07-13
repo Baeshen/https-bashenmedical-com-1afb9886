@@ -76,32 +76,9 @@ const GOLD = "#c9a84c";
 const TOTAL_MS = 30_000;
 
 // ---------------------------------------------------------------------------
-// Data-driven service list
+// Resolved service / stat shapes used by the scene components
 // ---------------------------------------------------------------------------
-type IntroService = {
-  id: string;
-  titleAr: string;
-  titleEn: string;
-  Icon: LucideIcon;
-};
-
-const SERVICES: IntroService[] = [
-  { id: "clinics",     titleAr: "العيادات التخصصية", titleEn: "Specialty Clinics", Icon: Stethoscope },
-  { id: "internal",    titleAr: "الباطنية",          titleEn: "Internal Medicine", Icon: HeartPulse },
-  { id: "pediatrics",  titleAr: "طب الأطفال",        titleEn: "Pediatrics",        Icon: Baby },
-  { id: "obgyn",       titleAr: "النساء والولادة",   titleEn: "OB-GYN",            Icon: Users },
-  { id: "dental",      titleAr: "طب الأسنان",        titleEn: "Dentistry",         Icon: Tooth },
-  { id: "eye",         titleAr: "طب العيون",         titleEn: "Ophthalmology",     Icon: Eye },
-  { id: "lab",         titleAr: "المختبر",           titleEn: "Laboratory",        Icon: FlaskConical },
-  { id: "pharmacy",    titleAr: "الصيدلية",          titleEn: "Pharmacy",          Icon: Pill },
-  { id: "home",        titleAr: "الرعاية المنزلية",  titleEn: "Home Care",         Icon: Home },
-  { id: "telemed",     titleAr: "الاستشارات عن بُعد", titleEn: "Telemedicine",      Icon: Video },
-  { id: "booking",     titleAr: "حجز إلكتروني",      titleEn: "Online Booking",    Icon: CalendarCheck },
-];
-
-// ---------------------------------------------------------------------------
-// Public statistics — quietly hides any value that fails to load
-// ---------------------------------------------------------------------------
+type IntroService = { id: string; titleAr: string; titleEn: string; Icon: LucideIcon };
 type Stat = {
   id: string;
   labelAr: string;
@@ -109,9 +86,9 @@ type Stat = {
   suffix?: string;
   prefix?: string;
   Icon: LucideIcon;
-  source: string;      // Arabic, user-facing source description
-  updatedAt: number;   // epoch ms
-  live?: boolean;      // true = pulled from live database this session
+  source: string;
+  updatedAt: number;
+  live?: boolean;
 };
 
 function useIntroPreferences() {
@@ -122,47 +99,81 @@ function useIntroPreferences() {
   return { disabled };
 }
 
-// Static values — reviewed & approved for public display
-const STATIC_STAT_REVIEW_DATE = Date.parse("2026-01-15T00:00:00Z");
-
-function usePublicClinicStatistics(enabled: boolean) {
-  const [stats, setStats] = useState<Stat[]>([]);
+// Fetch admin-editable intro settings. Falls back to hardcoded defaults on
+// error so the overlay never blocks the visitor.
+function useIntroSettings(enabled: boolean): IntroSettingsRow {
+  const [settings, setSettings] = useState<IntroSettingsRow>(DEFAULT_INTRO_SETTINGS);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     (async () => {
-      const results = await Promise.allSettled([
-        supabase.from("doctors").select("id", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("doctors").select("specialty_id", { count: "exact", head: true }).eq("is_active", true),
-      ]);
-      if (cancelled) return;
-      const now = Date.now();
-      const out: Stat[] = [];
-      const doctors = results[0].status === "fulfilled" ? results[0].value.count ?? null : null;
-      if (doctors && doctors > 0) {
-        out.push({
-          id: "doctors", labelAr: "طبيبًا واستشاريًا", value: doctors, prefix: "+", Icon: Users,
-          source: "قاعدة بيانات المجمع — الأطباء النشطون",
-          updatedAt: now, live: true,
-        });
-      }
-      // Fallback / evergreen public values
-      out.push({
-        id: "years", labelAr: "سنوات من الخبرة", value: 15, prefix: "+", Icon: Award,
-        source: "بيانات معتمدة من إدارة المجمع", updatedAt: STATIC_STAT_REVIEW_DATE,
+      const { data, error } = await supabase
+        .from("intro_settings")
+        .select("*")
+        .eq("id", "default")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (cancelled || error || !data) return;
+      setSettings({
+        ...DEFAULT_INTRO_SETTINGS,
+        ...(data as unknown as IntroSettingsRow),
+        services: Array.isArray((data as { services?: unknown }).services) && (data as { services: unknown[] }).services.length
+          ? (data as { services: IntroSettingsRow["services"] }).services
+          : DEFAULT_INTRO_SETTINGS.services,
+        stat_metrics: Array.isArray((data as { stat_metrics?: unknown }).stat_metrics) && (data as { stat_metrics: unknown[] }).stat_metrics.length
+          ? (data as { stat_metrics: IntroSettingsRow["stat_metrics"] }).stat_metrics
+          : DEFAULT_INTRO_SETTINGS.stat_metrics,
+        scene_order: Array.isArray((data as { scene_order?: unknown }).scene_order) && (data as { scene_order: unknown[] }).scene_order.length
+          ? (data as { scene_order: IntroSettingsRow["scene_order"] }).scene_order
+          : DEFAULT_INTRO_SETTINGS.scene_order,
       });
-      out.push({
-        id: "sat",   labelAr: "رضا المرضى",       value: 98, suffix: "%", Icon: Star,
-        source: "استبيانات رضا المرضى الداخلية", updatedAt: STATIC_STAT_REVIEW_DATE,
-      });
-      out.push({
-        id: "care",  labelAr: "رعاية طوال الأسبوع", value: 7, suffix: " أيام", Icon: Clock,
-        source: "جدول عمل المجمع الرسمي", updatedAt: STATIC_STAT_REVIEW_DATE,
-      });
-      setStats(out);
     })();
     return () => { cancelled = true; };
   }, [enabled]);
+  return settings;
+}
+
+function usePublicClinicStatistics(enabled: boolean, settings: IntroSettingsRow) {
+  const [stats, setStats] = useState<Stat[]>([]);
+  const updatedAtMs = Date.parse(settings.updated_at) || Date.now();
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    (async () => {
+      // For any `live` metric, look it up in the DB. Currently only "doctors" is wired.
+      const needsDoctors = settings.stat_metrics.some((m) => m.live && m.id === "doctors");
+      const doctorsCount = needsDoctors
+        ? await supabase
+            .from("doctors")
+            .select("id", { count: "exact", head: true })
+            .eq("is_active", true)
+            .then((r) => (r.error ? null : r.count ?? null))
+            .catch(() => null)
+        : null;
+      if (cancelled) return;
+      const now = Date.now();
+      const out: Stat[] = [];
+      for (const m of settings.stat_metrics) {
+        let value: number | null = m.value ?? null;
+        let updated = updatedAtMs;
+        if (m.live && m.id === "doctors") { value = doctorsCount; updated = now; }
+        if (value == null || value <= 0) continue;
+        out.push({
+          id: m.id,
+          labelAr: m.labelAr,
+          value,
+          prefix: m.prefix,
+          suffix: m.suffix,
+          Icon: resolveIcon(m.icon, Award),
+          source: m.source,
+          updatedAt: updated,
+          live: !!m.live,
+        });
+      }
+      setStats(out);
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, settings, updatedAtMs]);
   return stats;
 }
 
@@ -175,6 +186,7 @@ function formatUpdatedAt(ms: number): string {
     return new Date(ms).toLocaleDateString();
   }
 }
+
 
 
 // ---------------------------------------------------------------------------
