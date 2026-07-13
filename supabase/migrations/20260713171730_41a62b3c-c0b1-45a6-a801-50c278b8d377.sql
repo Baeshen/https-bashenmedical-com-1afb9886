@@ -1,0 +1,1 @@
+INSERT INTO public.user_roles (user_id, role, is_global) VALUES ('93d93cf5-8dde-47cf-84ee-f8e85cc69fe9', 'super_admin', true) ON CONFLICT (user_id, role) DO UPDATE SET is_global = true, branch_id = NULL;
