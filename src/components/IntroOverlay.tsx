@@ -698,6 +698,27 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         </AnimatePresence>
       </div>
 
+      {/* Caption bar (Arabic narration subtitles) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-14 md:bottom-16 z-20 flex justify-center px-4">
+        <AnimatePresence mode="wait">
+          {caption && !muted ? (
+            <motion.div
+              key={caption}
+              role="status"
+              aria-live="polite"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              className="max-w-[92%] md:max-w-2xl rounded-2xl bg-black/55 backdrop-blur-md border border-white/10 px-5 py-2.5 text-center text-white text-base md:text-xl font-medium shadow-[0_10px_40px_rgba(0,0,0,0.55)]"
+              style={{ fontFamily: "Cairo, sans-serif" }}
+            >
+              {caption}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+
       {/* Progress bar */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-[2px] bg-white/10 overflow-hidden rounded-full">
         <div className="h-full" style={{ width: `${progress * 100}%`, background: `linear-gradient(90deg, ${GOLD}, ${SILVER})`, transition: "width 100ms linear" }} />
