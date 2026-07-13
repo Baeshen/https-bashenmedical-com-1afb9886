@@ -712,7 +712,11 @@ function SceneStats({ stats }: { stats: Stat[] }) {
                   </p>
                 </TooltipContent>
               </Tooltip>
-              <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+              {s.image ? (
+                <LazyImage src={s.image} alt={s.labelAr} className="w-12 h-12 object-cover rounded-full" width={48} height={48} />
+              ) : (
+                <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+              )}
               <div className="text-white text-2xl md:text-4xl font-bold">
                 <Counter value={s.value} prefix={s.prefix} suffix={s.suffix} />
               </div>
