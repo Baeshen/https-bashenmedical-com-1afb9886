@@ -424,7 +424,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   };
 
   // Timeline windows (ms)
-  const T = useMemo(() => ({
+  const T = useMemo<Record<SceneKey, number[]>>(() => ({
     pulse:   [0,     4000],
     brand:   [4000,  8000],
     services:[8000,  16000],
@@ -435,30 +435,83 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const inWindow = (w: number[]) => ms >= w[0] && ms < w[1];
 
-  // Prefetch upcoming scene media before it appears, during idle time.
-  // Enable/disable and lead time are admin-controllable via intro_settings.
+  // ------------------------------------------------------------------
+  // Prefetch upcoming scene media.
+  //
+  // Primary mechanism: IntersectionObserver on every mounted scene root
+  // (`[data-scene]`). When a scene enters the viewport, we look up the
+  // NEXT scene in `settings.scene_order` and warm its media in idle time.
+  // Fallback: per-scene setTimeout that fires `prefetch_lead_ms` before
+  // the scene starts, so coverage still works if IO doesn't fire (rare).
+  // Both paths call `prefetchMedia`, which dedupes and honors Save-Data.
+  // ------------------------------------------------------------------
   const prefetchEnabled = settings.prefetch_enabled;
   const LEAD_MS = Math.max(0, Math.min(10000, settings.prefetch_lead_ms ?? 1500));
-  const servicesPrefetched = useRef(false);
-  const statsPrefetched = useRef(false);
+  const scenesContainerRef = useRef<HTMLDivElement | null>(null);
+  const prefetchedScenes = useRef<Set<SceneKey>>(new Set());
+
+  const sceneMediaFor = (key: SceneKey): Array<{ url: string; kind: "image" | "video" }> => {
+    if (key === "services") {
+      const out: Array<{ url: string; kind: "image" | "video" }> = [];
+      for (const s of services) {
+        if (s.video) out.push({ url: s.video, kind: "video" });
+        else if (s.image) out.push({ url: s.image, kind: "image" });
+      }
+      return out;
+    }
+    if (key === "stats") {
+      return stats.filter((s) => s.image).map((s) => ({ url: s.image as string, kind: "image" as const }));
+    }
+    return [];
+  };
+
+  const runPrefetch = (key: SceneKey) => {
+    if (prefetchedScenes.current.has(key)) return;
+    prefetchedScenes.current.add(key);
+    const urls = sceneMediaFor(key);
+    if (urls.length) prefetchMedia(urls);
+  };
+
+  // IntersectionObserver + MutationObserver: prefetch the NEXT scene when
+  // the current scene enters the viewport.
   useEffect(() => {
     if (!visible || prefersReducedMotion || !prefetchEnabled) return;
-    if (!servicesPrefetched.current && ms >= T.services[0] - LEAD_MS && ms < T.services[0]) {
-      servicesPrefetched.current = true;
-      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
-      for (const s of services) {
-        if (s.video) urls.push({ url: s.video, kind: "video" });
-        else if (s.image) urls.push({ url: s.image, kind: "image" });
+    const container = scenesContainerRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") return;
+    const order = settings.scene_order;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const key = (e.target as HTMLElement).dataset.scene as SceneKey | undefined;
+        if (!key) continue;
+        const idx = order.indexOf(key);
+        const next = order[idx + 1];
+        if (next) runPrefetch(next);
+        io.unobserve(e.target);
       }
-      prefetchMedia(urls);
+    }, { root: null, threshold: 0.1 });
+    const observeAll = () => {
+      container.querySelectorAll<HTMLElement>("[data-scene]").forEach((el) => io.observe(el));
+    };
+    observeAll();
+    const mo = new MutationObserver(() => observeAll());
+    mo.observe(container, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion, prefetchEnabled, settings.scene_order, services, stats]);
+
+  // Time-based safety net: prefetch each scene LEAD_MS before its start.
+  const sceneWindows: Record<SceneKey, number[]> = T;
+  useEffect(() => {
+    if (!visible || prefersReducedMotion || !prefetchEnabled) return;
+    for (const key of settings.scene_order) {
+      const win = sceneWindows[key];
+      if (!win) continue;
+      if (ms >= win[0] - LEAD_MS && ms < win[1]) runPrefetch(key);
     }
-    if (!statsPrefetched.current && ms >= T.stats[0] - LEAD_MS && ms < T.stats[0]) {
-      statsPrefetched.current = true;
-      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
-      for (const s of stats) if (s.image) urls.push({ url: s.image, kind: "image" });
-      prefetchMedia(urls);
-    }
-  }, [visible, prefersReducedMotion, prefetchEnabled, LEAD_MS, ms, T, services, stats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion, prefetchEnabled, LEAD_MS, ms, settings.scene_order, services, stats]);
+
 
 
 
@@ -551,7 +604,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       </div>
 
       {/* ============ SCENES ============ */}
-      <div className="relative z-10 h-full w-full">
+      <div ref={scenesContainerRef} className="relative z-10 h-full w-full">
         <AnimatePresence>
           {inWindow(T.pulse)     && <ScenePulse    key="pulse" />}
           {inWindow(T.brand)     && <SceneBrand    key="brand" logoFailed={logoFailed} onError={() => setLogoFailed(true)} />}
@@ -582,7 +635,7 @@ const fadeSwap = {
 
 function ScenePulse() {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8" {...fadeSwap}>
+    <motion.div data-scene="pulse" className="absolute inset-0 flex flex-col items-center justify-center gap-8" {...fadeSwap}>
       <svg viewBox="0 0 600 200" className="w-[90%] max-w-3xl h-40">
         <defs>
           <filter id="pulseGlow"><feGaussianBlur stdDeviation="3" /></filter>
@@ -620,7 +673,7 @@ function ScenePulse() {
 
 function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () => void }) {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
+    <motion.div data-scene="brand" className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
       <div className="relative">
         <div className="absolute -inset-10 rounded-full" style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}66` }} />
         {logoFailed ? <LogoTextFallback size="w-48 h-48 md:w-56 md:h-56" /> : (
@@ -668,7 +721,7 @@ function SceneServices({ services }: { services: IntroService[] }) {
   const waves: IntroService[][] = [];
   for (let i = 0; i < services.length; i += 3) waves.push(services.slice(i, i + 3));
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="services" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <p className="text-white/90 text-lg md:text-xl tracking-wide">خدماتنا الطبية</p>
       <div className="flex flex-col gap-6 w-full max-w-4xl">
         {waves.map((wave, wi) => (
@@ -703,7 +756,7 @@ function SceneServices({ services }: { services: IntroService[] }) {
 function SceneStats({ stats }: { stats: Stat[] }) {
   const visible = stats.filter((s) => s.value > 0).slice(0, 4);
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="stats" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <motion.p
         className="text-white/70 text-xs md:text-sm tracking-[0.35em] uppercase"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}
@@ -773,7 +826,7 @@ function SceneBooking() {
     { Icon: ClipboardList, ar: "استلام التفاصيل" },
   ];
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="booking" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <motion.p
         className="text-white text-2xl md:text-3xl font-semibold text-center"
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
@@ -821,7 +874,7 @@ function SceneFinal({
   logoFailed, onError, onBook, onServices,
 }: { logoFailed: boolean; onError: () => void; onBook: () => void; onServices: () => void }) {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6" {...fadeSwap}>
+    <motion.div data-scene="final" className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6" {...fadeSwap}>
       <div className="relative">
         <motion.div
           className="absolute -inset-10 rounded-full"
