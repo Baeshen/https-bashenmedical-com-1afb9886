@@ -435,30 +435,83 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const inWindow = (w: number[]) => ms >= w[0] && ms < w[1];
 
-  // Prefetch upcoming scene media before it appears, during idle time.
-  // Enable/disable and lead time are admin-controllable via intro_settings.
+  // ------------------------------------------------------------------
+  // Prefetch upcoming scene media.
+  //
+  // Primary mechanism: IntersectionObserver on every mounted scene root
+  // (`[data-scene]`). When a scene enters the viewport, we look up the
+  // NEXT scene in `settings.scene_order` and warm its media in idle time.
+  // Fallback: per-scene setTimeout that fires `prefetch_lead_ms` before
+  // the scene starts, so coverage still works if IO doesn't fire (rare).
+  // Both paths call `prefetchMedia`, which dedupes and honors Save-Data.
+  // ------------------------------------------------------------------
   const prefetchEnabled = settings.prefetch_enabled;
   const LEAD_MS = Math.max(0, Math.min(10000, settings.prefetch_lead_ms ?? 1500));
-  const servicesPrefetched = useRef(false);
-  const statsPrefetched = useRef(false);
+  const scenesContainerRef = useRef<HTMLDivElement | null>(null);
+  const prefetchedScenes = useRef<Set<SceneKey>>(new Set());
+
+  const sceneMediaFor = (key: SceneKey): Array<{ url: string; kind: "image" | "video" }> => {
+    if (key === "services") {
+      const out: Array<{ url: string; kind: "image" | "video" }> = [];
+      for (const s of services) {
+        if (s.video) out.push({ url: s.video, kind: "video" });
+        else if (s.image) out.push({ url: s.image, kind: "image" });
+      }
+      return out;
+    }
+    if (key === "stats") {
+      return stats.filter((s) => s.image).map((s) => ({ url: s.image as string, kind: "image" as const }));
+    }
+    return [];
+  };
+
+  const runPrefetch = (key: SceneKey) => {
+    if (prefetchedScenes.current.has(key)) return;
+    prefetchedScenes.current.add(key);
+    const urls = sceneMediaFor(key);
+    if (urls.length) prefetchMedia(urls);
+  };
+
+  // IntersectionObserver + MutationObserver: prefetch the NEXT scene when
+  // the current scene enters the viewport.
   useEffect(() => {
     if (!visible || prefersReducedMotion || !prefetchEnabled) return;
-    if (!servicesPrefetched.current && ms >= T.services[0] - LEAD_MS && ms < T.services[0]) {
-      servicesPrefetched.current = true;
-      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
-      for (const s of services) {
-        if (s.video) urls.push({ url: s.video, kind: "video" });
-        else if (s.image) urls.push({ url: s.image, kind: "image" });
+    const container = scenesContainerRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") return;
+    const order = settings.scene_order;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const key = (e.target as HTMLElement).dataset.scene as SceneKey | undefined;
+        if (!key) continue;
+        const idx = order.indexOf(key);
+        const next = order[idx + 1];
+        if (next) runPrefetch(next);
+        io.unobserve(e.target);
       }
-      prefetchMedia(urls);
+    }, { root: null, threshold: 0.1 });
+    const observeAll = () => {
+      container.querySelectorAll<HTMLElement>("[data-scene]").forEach((el) => io.observe(el));
+    };
+    observeAll();
+    const mo = new MutationObserver(() => observeAll());
+    mo.observe(container, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion, prefetchEnabled, settings.scene_order, services, stats]);
+
+  // Time-based safety net: prefetch each scene LEAD_MS before its start.
+  const sceneWindows: Record<SceneKey, number[]> = T;
+  useEffect(() => {
+    if (!visible || prefersReducedMotion || !prefetchEnabled) return;
+    for (const key of settings.scene_order) {
+      const win = sceneWindows[key];
+      if (!win) continue;
+      if (ms >= win[0] - LEAD_MS && ms < win[1]) runPrefetch(key);
     }
-    if (!statsPrefetched.current && ms >= T.stats[0] - LEAD_MS && ms < T.stats[0]) {
-      statsPrefetched.current = true;
-      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
-      for (const s of stats) if (s.image) urls.push({ url: s.image, kind: "image" });
-      prefetchMedia(urls);
-    }
-  }, [visible, prefersReducedMotion, prefetchEnabled, LEAD_MS, ms, T, services, stats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion, prefetchEnabled, LEAD_MS, ms, settings.scene_order, services, stats]);
+
 
 
 
