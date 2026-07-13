@@ -24,7 +24,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { submitBooking } from "@/lib/booking-submit";
+import { submitBooking, clearBookingIdempotencyKey } from "@/lib/booking-submit";
 import { Button } from "@/components/ui/button";
 
 import { fallback } from "@tanstack/zod-adapter";
