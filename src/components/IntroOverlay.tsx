@@ -78,7 +78,10 @@ const TOTAL_MS = 30_000;
 // ---------------------------------------------------------------------------
 // Resolved service / stat shapes used by the scene components
 // ---------------------------------------------------------------------------
-type IntroService = { id: string; titleAr: string; titleEn: string; Icon: LucideIcon };
+type IntroService = {
+  id: string; titleAr: string; titleEn: string; Icon: LucideIcon;
+  image?: string; video?: string;
+};
 type Stat = {
   id: string;
   labelAr: string;
@@ -89,6 +92,7 @@ type Stat = {
   source: string;
   updatedAt: number;
   live?: boolean;
+  image?: string;
 };
 
 function useIntroPreferences() {
