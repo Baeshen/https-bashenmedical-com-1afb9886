@@ -126,8 +126,25 @@ export function LazyVideo({
   src, poster, className, width, height, rounded = "rounded-lg",
 }: LazyVideoProps) {
   const ref = useRef<HTMLVideoElement | null>(null);
+  const mountedAt = useRef<number>(performance.now());
   const [ready, setReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const handleLoad = () => {
+    setLoaded(true);
+    const now = performance.now();
+    const status = getPrefetchStatus(src);
+    trackEvent("intro_media_load", {
+      kind: "video",
+      url: src,
+      display_ms: Math.round(now - mountedAt.current),
+      prefetched: !!status,
+      prefetch_completed_before_mount: prefetchCompletedBefore(src, mountedAt.current),
+      prefetch_duration_ms: status?.completedAt
+        ? Math.round(status.completedAt - status.startedAt)
+        : null,
+    });
+  };
 
   useEffect(() => {
     const el = ref.current;
