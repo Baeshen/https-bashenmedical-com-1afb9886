@@ -328,7 +328,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
         )}
         <p className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
-        <button onClick={() => finish()} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
+        <button onClick={() => finish("reduced_motion_close")} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
       </div>
     );
   }
@@ -374,7 +374,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         </div>
 
         <button
-          onClick={() => finish()}
+          onClick={() => finish("skip")}
           className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition"
           aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية"
         >
@@ -393,7 +393,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           {inWindow(T.services)  && <SceneServices key="services" />}
           {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
           {inWindow(T.booking)   && <SceneBooking  key="booking" />}
-          {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("/book")} onServices={() => finish("/services")} />}
+          {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("cta_book", "/book")} onServices={() => finish("cta_services", "/services")} />}
         </AnimatePresence>
       </div>
 
