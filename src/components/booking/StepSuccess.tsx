@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { AlertCircle, Calendar as CalIcon, CalendarPlus, CheckCircle2, ClipboardList, Download, MessageCircle, QrCode } from "lucide-react";
+import { AlertCircle, Bell, Calendar as CalIcon, CalendarPlus, CheckCircle2, ClipboardList, Download, MessageCircle, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/lib/site";
 import { downloadBookingConfirmationPdf } from "@/lib/booking-pdf";
@@ -272,6 +272,82 @@ export function StepSuccess({
           </p>
         </div>
       )}
+
+      {reference && state.date && state.time && (state.patient.reminder24h || state.patient.reminder2h) && (() => {
+        const [y, mo, d] = state.date.split("-").map(Number);
+        const [h, mi] = state.time.split(":").map(Number);
+        // Appointment time is local Asia/Riyadh (UTC+3) — subtract 3h to get UTC.
+        const apptUTC = new Date(Date.UTC(y, mo - 1, d, h - 3, mi));
+        const fmt = (dt: Date) =>
+          dt.toLocaleString(lang === "ar" ? "ar-SA-u-ca-gregory" : "en-US", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric",
+            hour: "2-digit", minute: "2-digit", hour12: true,
+            timeZone: "Asia/Riyadh",
+          });
+        const items: Array<{ offsetMin: number; labelAr: string; labelEn: string; channelsAr: string; channelsEn: string }> = [];
+        if (state.patient.reminder24h) items.push({
+          offsetMin: 1440,
+          labelAr: "قبل 24 ساعة",
+          labelEn: "24 hours before",
+          channelsAr: "واتساب + إشعار داخل الموقع",
+          channelsEn: "WhatsApp + in-app push",
+        });
+        if (state.patient.reminder2h) items.push({
+          offsetMin: 120,
+          labelAr: "قبل ساعتين",
+          labelEn: "2 hours before",
+          channelsAr: "إشعار داخل الموقع",
+          channelsEn: "In-app push",
+        });
+        return (
+          <div className="mt-6 rounded-xl border border-border bg-card p-4 text-start">
+            <div className="text-sm font-semibold flex items-center gap-2 mb-1">
+              <Bell className="h-4 w-4 text-primary" />
+              {lang === "ar" ? "معاينة التذكيرات قبل إرسالها" : "Reminder preview"}
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              {lang === "ar"
+                ? "ستُرسَل هذه التذكيرات تلقائيًا في المواعيد المحدّدة أدناه (بتوقيت الرياض)."
+                : "These reminders will be sent automatically at the times below (Riyadh time)."}
+            </p>
+            <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+              {items.map((it) => {
+                const when = new Date(apptUTC.getTime() - it.offsetMin * 60000);
+                const past = when.getTime() < Date.now();
+                return (
+                  <li key={it.offsetMin} className="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${past ? "bg-muted-foreground/40" : "bg-emerald-500"}`} />
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {lang === "ar" ? it.labelAr : it.labelEn}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {lang === "ar" ? it.channelsAr : it.channelsEn}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs tabular-nums text-muted-foreground sm:text-end">
+                      {fmt(when)}
+                      {past && (
+                        <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          {lang === "ar" ? "انقضى" : "past"}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {lang === "ar"
+                ? "يمكنك تعديل تفضيلات التذكير من صفحة إدارة الحجز في أي وقت."
+                : "You can change reminder preferences from the manage-booking page anytime."}
+            </p>
+          </div>
+        );
+      })()}
+
 
 
       <div className="mt-6 flex items-center justify-between gap-2">
