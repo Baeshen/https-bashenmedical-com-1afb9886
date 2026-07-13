@@ -202,7 +202,13 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       cycle();
       heartbeatTimerRef.current = window.setInterval(cycle, 1000);
       setAudioReady(true);
-    } catch {}
+    } catch (err) {
+      console.warn("[IntroOverlay] audio unavailable, continuing silently:", err);
+      setAudioFailed(true);
+      setAudioReady(false);
+      setMuted(true);
+      // Failure of audio must never block the intro or the navigation.
+    }
   };
 
   const stopHeartbeat = () => {
