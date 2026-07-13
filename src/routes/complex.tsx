@@ -24,7 +24,9 @@ import heroImg from "@/assets/complex-hero.jpg";
 import lobbyImg from "@/assets/complex-lobby.jpg";
 import clinicImg from "@/assets/complex-clinic.jpg";
 import pharmacyImg from "@/assets/complex-pharmacy.jpg";
-import logoImg from "@/assets/baeshen-logo.png";
+import logoAsset from "@/assets/baeshen-logo.asset.json";
+
+const logoImg = logoAsset.url;
 
 import {
   buildLocalBusinessSchema,

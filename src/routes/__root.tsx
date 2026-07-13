@@ -11,14 +11,16 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 
+import { lazy, Suspense } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "sonner";
-import { IntroOverlay } from "@/components/IntroOverlay";
-import { WelcomeSplash } from "@/components/WelcomeSplash";
+import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+const IntroOverlay = lazy(() => import("@/components/IntroOverlay").then((m) => ({ default: m.IntroOverlay })));
+const WelcomeSplash = lazy(() => import("@/components/WelcomeSplash").then((m) => ({ default: m.WelcomeSplash })));
 import { ChatbotBubble } from "@/components/ChatbotBubble";
 import { MotionToggle } from "@/components/MotionToggle";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -112,6 +114,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // Preload the Baeshen logo so the intro overlay renders instantly without a network wait
+      { rel: "preload", as: "image", href: bmcLogoAsset.url, fetchpriority: "high" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&display=swap",
@@ -146,8 +150,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <IntroOverlay theme="dark" />
-        <WelcomeSplash />
+        <Suspense fallback={null}>
+          <IntroOverlay theme="dark" />
+        </Suspense>
+        <Suspense fallback={null}>
+          <WelcomeSplash />
+        </Suspense>
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-1">
