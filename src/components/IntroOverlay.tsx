@@ -2,17 +2,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Stethoscope, Baby, HeartPulse, Bluetooth as Tooth, Eye, FlaskConical, Pill,
-  Home, Video, CalendarCheck, ShieldCheck, Users, Activity, Award, Building2,
-  Clock, Star, ClipboardList, Info,
+  ShieldCheck, Users, Activity, Award, Building2,
+  Clock, Star, ClipboardList, Info, Stethoscope, CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+import {
+  DEFAULT_INTRO_SETTINGS, resolveIcon,
+  type IntroSettingsRow, type SceneKey,
+} from "@/lib/intro-config";
 
 const bmcLogo = bmcLogoAsset.url;
+
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
 const DISABLE_KEY = "baeshen_intro_disabled";
@@ -72,32 +76,9 @@ const GOLD = "#c9a84c";
 const TOTAL_MS = 30_000;
 
 // ---------------------------------------------------------------------------
-// Data-driven service list
+// Resolved service / stat shapes used by the scene components
 // ---------------------------------------------------------------------------
-type IntroService = {
-  id: string;
-  titleAr: string;
-  titleEn: string;
-  Icon: LucideIcon;
-};
-
-const SERVICES: IntroService[] = [
-  { id: "clinics",     titleAr: "العيادات التخصصية", titleEn: "Specialty Clinics", Icon: Stethoscope },
-  { id: "internal",    titleAr: "الباطنية",          titleEn: "Internal Medicine", Icon: HeartPulse },
-  { id: "pediatrics",  titleAr: "طب الأطفال",        titleEn: "Pediatrics",        Icon: Baby },
-  { id: "obgyn",       titleAr: "النساء والولادة",   titleEn: "OB-GYN",            Icon: Users },
-  { id: "dental",      titleAr: "طب الأسنان",        titleEn: "Dentistry",         Icon: Tooth },
-  { id: "eye",         titleAr: "طب العيون",         titleEn: "Ophthalmology",     Icon: Eye },
-  { id: "lab",         titleAr: "المختبر",           titleEn: "Laboratory",        Icon: FlaskConical },
-  { id: "pharmacy",    titleAr: "الصيدلية",          titleEn: "Pharmacy",          Icon: Pill },
-  { id: "home",        titleAr: "الرعاية المنزلية",  titleEn: "Home Care",         Icon: Home },
-  { id: "telemed",     titleAr: "الاستشارات عن بُعد", titleEn: "Telemedicine",      Icon: Video },
-  { id: "booking",     titleAr: "حجز إلكتروني",      titleEn: "Online Booking",    Icon: CalendarCheck },
-];
-
-// ---------------------------------------------------------------------------
-// Public statistics — quietly hides any value that fails to load
-// ---------------------------------------------------------------------------
+type IntroService = { id: string; titleAr: string; titleEn: string; Icon: LucideIcon };
 type Stat = {
   id: string;
   labelAr: string;
@@ -105,9 +86,9 @@ type Stat = {
   suffix?: string;
   prefix?: string;
   Icon: LucideIcon;
-  source: string;      // Arabic, user-facing source description
-  updatedAt: number;   // epoch ms
-  live?: boolean;      // true = pulled from live database this session
+  source: string;
+  updatedAt: number;
+  live?: boolean;
 };
 
 function useIntroPreferences() {
@@ -118,47 +99,75 @@ function useIntroPreferences() {
   return { disabled };
 }
 
-// Static values — reviewed & approved for public display
-const STATIC_STAT_REVIEW_DATE = Date.parse("2026-01-15T00:00:00Z");
-
-function usePublicClinicStatistics(enabled: boolean) {
-  const [stats, setStats] = useState<Stat[]>([]);
+// Fetch admin-editable intro settings. Falls back to hardcoded defaults on
+// error so the overlay never blocks the visitor.
+function useIntroSettings(enabled: boolean): IntroSettingsRow {
+  const [settings, setSettings] = useState<IntroSettingsRow>(DEFAULT_INTRO_SETTINGS);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     (async () => {
-      const results = await Promise.allSettled([
-        supabase.from("doctors").select("id", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("doctors").select("specialty_id", { count: "exact", head: true }).eq("is_active", true),
-      ]);
-      if (cancelled) return;
-      const now = Date.now();
-      const out: Stat[] = [];
-      const doctors = results[0].status === "fulfilled" ? results[0].value.count ?? null : null;
-      if (doctors && doctors > 0) {
-        out.push({
-          id: "doctors", labelAr: "طبيبًا واستشاريًا", value: doctors, prefix: "+", Icon: Users,
-          source: "قاعدة بيانات المجمع — الأطباء النشطون",
-          updatedAt: now, live: true,
-        });
-      }
-      // Fallback / evergreen public values
-      out.push({
-        id: "years", labelAr: "سنوات من الخبرة", value: 15, prefix: "+", Icon: Award,
-        source: "بيانات معتمدة من إدارة المجمع", updatedAt: STATIC_STAT_REVIEW_DATE,
+      const { data, error } = await supabase
+        .from("intro_settings")
+        .select("*")
+        .eq("id", "default")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (cancelled || error || !data) return;
+      const row = data as unknown as Partial<IntroSettingsRow>;
+      setSettings({
+        ...DEFAULT_INTRO_SETTINGS,
+        ...row,
+        services: Array.isArray(row.services) && row.services.length ? row.services : DEFAULT_INTRO_SETTINGS.services,
+        stat_metrics: Array.isArray(row.stat_metrics) && row.stat_metrics.length ? row.stat_metrics : DEFAULT_INTRO_SETTINGS.stat_metrics,
+        scene_order: Array.isArray(row.scene_order) && row.scene_order.length ? row.scene_order : DEFAULT_INTRO_SETTINGS.scene_order,
       });
-      out.push({
-        id: "sat",   labelAr: "رضا المرضى",       value: 98, suffix: "%", Icon: Star,
-        source: "استبيانات رضا المرضى الداخلية", updatedAt: STATIC_STAT_REVIEW_DATE,
-      });
-      out.push({
-        id: "care",  labelAr: "رعاية طوال الأسبوع", value: 7, suffix: " أيام", Icon: Clock,
-        source: "جدول عمل المجمع الرسمي", updatedAt: STATIC_STAT_REVIEW_DATE,
-      });
-      setStats(out);
     })();
     return () => { cancelled = true; };
   }, [enabled]);
+  return settings;
+}
+
+function usePublicClinicStatistics(enabled: boolean, settings: IntroSettingsRow) {
+  const [stats, setStats] = useState<Stat[]>([]);
+  const updatedAtMs = Date.parse(settings.updated_at) || Date.now();
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    (async () => {
+      // For any `live` metric, look it up in the DB. Currently only "doctors" is wired.
+      const needsDoctors = settings.stat_metrics.some((m) => m.live && m.id === "doctors");
+      let doctorsCount: number | null = null;
+      if (needsDoctors) {
+        try {
+          const r = await supabase.from("doctors").select("id", { count: "exact", head: true }).eq("is_active", true);
+          doctorsCount = r.error ? null : r.count ?? null;
+        } catch { doctorsCount = null; }
+      }
+      if (cancelled) return;
+      const now = Date.now();
+      const out: Stat[] = [];
+      for (const m of settings.stat_metrics) {
+        let value: number | null = m.value ?? null;
+        let updated = updatedAtMs;
+        if (m.live && m.id === "doctors") { value = doctorsCount; updated = now; }
+        if (value == null || value <= 0) continue;
+        out.push({
+          id: m.id,
+          labelAr: m.labelAr,
+          value,
+          prefix: m.prefix,
+          suffix: m.suffix,
+          Icon: resolveIcon(m.icon, Award),
+          source: m.source,
+          updatedAt: updated,
+          live: !!m.live,
+        });
+      }
+      setStats(out);
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, settings, updatedAtMs]);
   return stats;
 }
 
@@ -171,6 +180,7 @@ function formatUpdatedAt(ms: number): string {
     return new Date(ms).toLocaleDateString();
   }
 }
+
 
 
 // ---------------------------------------------------------------------------
@@ -253,7 +263,12 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const ms = useTicker(visible && !prefersReducedMotion);
   useEffect(() => { msRef.current = ms; }, [ms]);
-  const stats = usePublicClinicStatistics(visible);
+  const settings = useIntroSettings(visible);
+  const services: IntroService[] = useMemo(
+    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope) })),
+    [settings],
+  );
+  const stats = usePublicClinicStatistics(visible, settings);
 
   // Sync aria-live announcements with scene changes
   const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(ms);
@@ -506,7 +521,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         <AnimatePresence>
           {inWindow(T.pulse)     && <ScenePulse    key="pulse" />}
           {inWindow(T.brand)     && <SceneBrand    key="brand" logoFailed={logoFailed} onError={() => setLogoFailed(true)} />}
-          {inWindow(T.services)  && <SceneServices key="services" />}
+          {inWindow(T.services)  && <SceneServices key="services" services={services} />}
           {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
           {inWindow(T.booking)   && <SceneBooking  key="booking" />}
           {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("cta_book", "/book")} onServices={() => finish("cta_services", "/services")} />}
@@ -610,10 +625,10 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
   );
 }
 
-function SceneServices() {
+function SceneServices({ services }: { services: IntroService[] }) {
   // Show services in waves of 3
   const waves: IntroService[][] = [];
-  for (let i = 0; i < SERVICES.length; i += 3) waves.push(SERVICES.slice(i, i + 3));
+  for (let i = 0; i < services.length; i += 3) waves.push(services.slice(i, i + 3));
   return (
     <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <p className="text-white/90 text-lg md:text-xl tracking-wide">خدماتنا الطبية</p>

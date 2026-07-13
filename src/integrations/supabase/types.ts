@@ -1257,6 +1257,51 @@ export type Database = {
           },
         ]
       }
+      intro_settings: {
+        Row: {
+          created_at: string
+          headline_ar: string | null
+          headline_en: string | null
+          id: string
+          is_active: boolean
+          scene_order: Json
+          services: Json
+          stat_metrics: Json
+          tagline_ar: string | null
+          tagline_en: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          headline_ar?: string | null
+          headline_en?: string | null
+          id: string
+          is_active?: boolean
+          scene_order?: Json
+          services?: Json
+          stat_metrics?: Json
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          headline_ar?: string | null
+          headline_en?: string | null
+          id?: string
+          is_active?: boolean
+          scene_order?: Json
+          services?: Json
+          stat_metrics?: Json
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           barcode: string | null
