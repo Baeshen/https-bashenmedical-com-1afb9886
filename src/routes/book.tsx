@@ -308,8 +308,44 @@ function BookPage() {
     }
   }, [state, patientValidation]);
 
+  // Find an alternative doctor in the same specialty/branch with the earliest
+  // slot on the same date (>= originally requested time when possible).
+  async function findAlternativeDoctor(date: string, preferredTime: string | null) {
+    if (!state.specialtyId) return null;
+    const candidates = (doctors as any[])
+      .filter((d) => d.id !== state.doctorId && d.specialty_id === state.specialtyId)
+      .slice(0, 6);
+    if (!candidates.length) return null;
+    const results = await Promise.all(
+      candidates.map(async (d) => {
+        const a = await fetchAvailability(date, d.id, state.specialtyId, state.branchId);
+        if (!a.ok || !a.times?.length) return null;
+        const booked = new Set(a.booked ?? []);
+        const free = a.times.filter((t) => !booked.has(t));
+        if (!free.length) return null;
+        const pick = (preferredTime && free.find((t) => t >= preferredTime)) || free[0];
+        return { doctor: d, time: pick };
+      }),
+    );
+    const found = results.filter(Boolean) as { doctor: any; time: string }[];
+    if (!found.length) return null;
+    found.sort((a, b) => a.time.localeCompare(b.time));
+    const best = found[0];
+    const name = lang === "ar" ? (best.doctor.name_ar || best.doctor.name_en) : (best.doctor.name_en || best.doctor.name_ar);
+    return { doctorId: best.doctor.id as string, doctorName: name as string, time: best.time, date };
+  }
+
+  function acceptSuggestion() {
+    if (!suggestion) return;
+    dispatch({ t: "set", p: { doctorId: suggestion.doctorId, date: suggestion.date, time: suggestion.time } });
+    setSuggestion(null);
+    setErrorMsg(null);
+    goto(7);
+  }
+
   async function handleSubmit() {
     setErrorMsg(null);
+    setSuggestion(null);
     if (!patientValidation.ok) {
       setErrorMsg(lang === "ar" ? "يرجى تصحيح بيانات المريض قبل التأكيد" : "Please fix patient info before confirming");
       goto(7);
