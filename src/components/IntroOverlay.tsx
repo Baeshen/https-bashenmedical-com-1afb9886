@@ -450,12 +450,13 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         </div>
 
         <button
+          ref={skipBtnRef}
           onClick={() => finish("skip")}
-          className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition"
-          aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية"
+          className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+          aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية (اضغط Escape)"
         >
           <span className="text-xs tracking-[0.3em] uppercase text-white/90">تخطي المقدمة</span>
-          <svg className="w-3.5 h-3.5 text-white/80 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <svg aria-hidden="true" className="w-3.5 h-3.5 text-white/80 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
           </svg>
         </button>
