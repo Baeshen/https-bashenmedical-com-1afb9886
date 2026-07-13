@@ -182,7 +182,7 @@ export function LazyVideo({
         playsInline
         autoPlay={ready}
         loop
-        onLoadedData={() => setLoaded(true)}
+        onLoadedData={handleLoad}
       >
         {ready ? <source src={src} /> : null}
       </video>
