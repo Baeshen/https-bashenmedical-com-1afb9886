@@ -44,6 +44,40 @@ jobs:
       - name: TypeScript check
         run: bun run typecheck
 
+  perf-budget:
+    name: Intro performance budget
+    runs-on: ubuntu-latest
+    # Runs on every PR and on push to main. Fails the check when the
+    # IntroOverlay bundle or logo asset exceeds thresholds defined in
+    # scripts/perf-budget.mjs.
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build app (runs perf:budget automatically)
+        env:
+          # Build-time vars — safe defaults when repo secrets are unset so
+          # forks and first-time setups can still exercise the budget.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'placeholder' }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'placeholder' }}
+        run: bun run build
+
+      - name: Re-run perf budget (explicit, for clear CI logs)
+        run: bun run perf:budget
+
+
+
   rls-tests-main:
     name: RLS integration tests (main — strict)
     runs-on: ubuntu-latest
