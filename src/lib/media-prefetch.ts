@@ -24,6 +24,28 @@ const scheduleIdle = (cb: (d: IdleDeadline) => void): IdleHandle => {
 
 const prefetched = new Set<string>();
 
+type NetworkMode = "off" | "lite" | "full";
+type NetworkInformation = {
+  saveData?: boolean;
+  effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
+};
+
+/**
+ * Inspect the Network Information API to decide how aggressive prefetch
+ * should be. Respects Save-Data (user asked for lighter payloads) and
+ * skips prefetch entirely on slow-2g / 2g. On 3g, drops video prefetch
+ * but keeps image prefetch since images are much smaller.
+ */
+export function getPrefetchMode(): NetworkMode {
+  if (!w) return "off";
+  const conn = (navigator as unknown as { connection?: NetworkInformation }).connection;
+  if (!conn) return "full";
+  if (conn.saveData) return "off";
+  if (conn.effectiveType === "slow-2g" || conn.effectiveType === "2g") return "off";
+  if (conn.effectiveType === "3g") return "lite";
+  return "full";
+}
+
 function prefetchOne(url: string, kind: "image" | "video") {
   if (!w || !url || prefetched.has(url)) return;
   prefetched.add(url);
@@ -47,7 +69,13 @@ function prefetchOne(url: string, kind: "image" | "video") {
 
 export function prefetchMedia(urls: Array<{ url: string; kind: "image" | "video" }>) {
   if (!urls.length) return;
+  const mode = getPrefetchMode();
+  if (mode === "off") return;
+  // On slow connections, drop videos and only warm images.
+  const filtered = mode === "lite" ? urls.filter((u) => u.kind === "image") : urls;
+  if (!filtered.length) return;
   scheduleIdle(() => {
-    for (const u of urls) prefetchOne(u.url, u.kind);
+    for (const u of filtered) prefetchOne(u.url, u.kind);
   });
 }
+
