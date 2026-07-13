@@ -269,7 +269,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   useEffect(() => { msRef.current = ms; }, [ms]);
   const settings = useIntroSettings(visible);
   const services: IntroService[] = useMemo(
-    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope) })),
+    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope), image: s.image, video: s.video })),
     [settings],
   );
   const stats = usePublicClinicStatistics(visible, settings);
