@@ -600,6 +600,10 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
             src={bmcLogo}
             alt="مجمع باعشن الطبي"
             onError={onError}
+            width={224}
+            height={224}
+            loading="lazy"
+            decoding="async"
             className="relative w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
