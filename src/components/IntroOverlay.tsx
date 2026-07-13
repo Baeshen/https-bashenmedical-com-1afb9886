@@ -796,6 +796,10 @@ function SceneFinal({
             src={bmcLogo}
             alt="مجمع باعشن الطبي"
             onError={onError}
+            width={224}
+            height={224}
+            loading="lazy"
+            decoding="async"
             className="relative w-44 h-44 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
           />
         )}
