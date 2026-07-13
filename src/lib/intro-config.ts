@@ -56,6 +56,8 @@ export type IntroSettingsRow = {
   headline_en: string | null;
   tagline_ar: string | null;
   tagline_en: string | null;
+  prefetch_enabled: boolean;
+  prefetch_lead_ms: number;
   updated_at: string;
 };
 
@@ -94,6 +96,8 @@ export const DEFAULT_INTRO_SETTINGS: IntroSettingsRow = {
   headline_en: "Baeshen Medical Complex",
   tagline_ar: "صحتك… أولويتنا",
   tagline_en: "Your Health, Our Priority",
+  prefetch_enabled: true,
+  prefetch_lead_ms: 1500,
   updated_at: new Date(0).toISOString(),
 };
 

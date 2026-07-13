@@ -435,12 +435,14 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const inWindow = (w: number[]) => ms >= w[0] && ms < w[1];
 
-  // Prefetch upcoming scene media ~1.5s before it appears, during idle time.
-  const LEAD_MS = 1500;
+  // Prefetch upcoming scene media before it appears, during idle time.
+  // Enable/disable and lead time are admin-controllable via intro_settings.
+  const prefetchEnabled = settings.prefetch_enabled;
+  const LEAD_MS = Math.max(0, Math.min(10000, settings.prefetch_lead_ms ?? 1500));
   const servicesPrefetched = useRef(false);
   const statsPrefetched = useRef(false);
   useEffect(() => {
-    if (!visible || prefersReducedMotion) return;
+    if (!visible || prefersReducedMotion || !prefetchEnabled) return;
     if (!servicesPrefetched.current && ms >= T.services[0] - LEAD_MS && ms < T.services[0]) {
       servicesPrefetched.current = true;
       const urls: Array<{ url: string; kind: "image" | "video" }> = [];
@@ -456,7 +458,8 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       for (const s of stats) if (s.image) urls.push({ url: s.image, kind: "image" });
       prefetchMedia(urls);
     }
-  }, [visible, prefersReducedMotion, ms, T, services, stats]);
+  }, [visible, prefersReducedMotion, prefetchEnabled, LEAD_MS, ms, T, services, stats]);
+
 
 
   if (!visible) return null;
