@@ -247,7 +247,18 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   if (prefersReducedMotion) {
     return (
       <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#0d1218] flex flex-col items-center justify-center gap-6 px-6">
-        <img src={bmcLogo} alt="مجمع باعشن الطبي" loading="eager" decoding="async" onError={(e) => ((e.currentTarget.style.display = "none"))} className="w-40 h-40 object-contain" />
+        {logoFailed ? (
+          <LogoFallback size="w-40 h-40" />
+        ) : (
+          <img
+            src={bmcLogo}
+            alt="مجمع باعشن الطبي"
+            loading="eager"
+            decoding="async"
+            onError={() => setLogoFailed(true)}
+            className="w-40 h-40 object-contain"
+          />
+        )}
         <p className="text-white/80 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>
           مجمع باعشن الطبي — صحتك أولويتنا
         </p>
@@ -258,6 +269,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           الدخول للموقع
         </button>
       </div>
+
     );
   }
 
