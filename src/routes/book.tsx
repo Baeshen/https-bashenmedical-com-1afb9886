@@ -314,6 +314,23 @@ function BookPage() {
       return;
     }
     setSubmitting(true);
+    // Pre-submit slot re-check: guard against the wall-clock case where the
+    // slot got booked between step 6 and step 8. Cheaper than a full round-trip
+    // to /create + friendly Arabic conflict message.
+    try {
+      const fresh = await fetchAvailability(state.date!, state.doctorId, state.specialtyId, state.branchId);
+      if (fresh.ok && fresh.booked?.includes(state.time!)) {
+        setSubmitting(false);
+        setErrorMsg(lang === "ar"
+          ? "هذا الموعد لم يعد متاحًا. اختر وقتًا آخر."
+          : "This slot is no longer available. Please pick another time.");
+        // Refresh the availability query so StepTime shows the updated state.
+        queryClient.setQueryData(["avail", state.date, state.doctorId, state.specialtyId, state.branchId], fresh);
+        dispatch({ t: "set", p: { time: null } });
+        goto(6);
+        return;
+      }
+    } catch {/* network hiccup — let the real submit surface the error */}
     const p = state.patient;
     const res = await submitBooking({
       patient_name: p.name.trim(),
