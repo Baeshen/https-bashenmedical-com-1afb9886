@@ -394,9 +394,25 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
     setAudioReady(false);
   };
 
-  const toggleMute = () => { if (muted) { startHeartbeat(); setMuted(false); } else { stopHeartbeat(); setMuted(true); } };
+  const playNarration = () => {
+    try {
+      const el = narrationRef.current;
+      if (!el) return;
+      el.currentTime = 0;
+      el.volume = 0.9;
+      void el.play().catch(() => {});
+    } catch { /* noop */ }
+  };
+  const stopNarration = () => {
+    try { narrationRef.current?.pause(); } catch { /* noop */ }
+  };
 
-  useEffect(() => () => stopHeartbeat(), []);
+  const toggleMute = () => {
+    if (muted) { startHeartbeat(); playNarration(); setMuted(false); }
+    else { stopHeartbeat(); stopNarration(); setMuted(true); }
+  };
+
+  useEffect(() => () => { stopHeartbeat(); stopNarration(); }, []);
 
   // Focus management: capture previous focus on open, focus Skip button,
   // restore focus on close. Also close on Escape.
