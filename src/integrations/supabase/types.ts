@@ -1264,6 +1264,8 @@ export type Database = {
           headline_en: string | null
           id: string
           is_active: boolean
+          prefetch_enabled: boolean
+          prefetch_lead_ms: number
           scene_order: Json
           services: Json
           stat_metrics: Json
@@ -1278,6 +1280,8 @@ export type Database = {
           headline_en?: string | null
           id: string
           is_active?: boolean
+          prefetch_enabled?: boolean
+          prefetch_lead_ms?: number
           scene_order?: Json
           services?: Json
           stat_metrics?: Json
@@ -1292,6 +1296,8 @@ export type Database = {
           headline_en?: string | null
           id?: string
           is_active?: boolean
+          prefetch_enabled?: boolean
+          prefetch_lead_ms?: number
           scene_order?: Json
           services?: Json
           stat_metrics?: Json
