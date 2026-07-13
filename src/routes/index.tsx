@@ -24,6 +24,7 @@ import {
   SkeletonSwap,
   SpecialtiesSkeleton,
   DoctorsSkeleton,
+  SectionError,
 } from "@/components/home/HomeSkeletons";
 import ogHomeAsset from "@/assets/og-home.jpg.asset.json";
 
@@ -152,7 +153,12 @@ function HomePage() {
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
 
-  const { data: specialties, isPending: specialtiesLoading } = useQuery({
+  const {
+    data: specialties,
+    isPending: specialtiesLoading,
+    error: specialtiesError,
+    refetch: refetchSpecialties,
+  } = useQuery({
     queryKey: ["specialties"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -163,8 +169,17 @@ function HomePage() {
       if (error) throw error;
       return data;
     },
+    // Fail fast on permanent errors (e.g. 401) instead of retrying and
+    // keeping the skeleton visible for many seconds.
+    retry: 1,
+    retryDelay: 400,
   });
-  const { data: doctors, isPending: doctorsLoading } = useQuery({
+  const {
+    data: doctors,
+    isPending: doctorsLoading,
+    error: doctorsError,
+    refetch: refetchDoctors,
+  } = useQuery({
     queryKey: ["doctors_featured"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -175,6 +190,8 @@ function HomePage() {
       if (error) throw error;
       return data;
     },
+    retry: 1,
+    retryDelay: 400,
   });
 
   const onQuickBook = (e: React.FormEvent) => {
@@ -347,7 +364,20 @@ function HomePage() {
 
           <SkeletonSwap
             loading={specialtiesLoading}
+            error={specialtiesError}
             skeleton={<SpecialtiesSkeleton count={8} />}
+            errorFallback={
+              <SectionError
+                title={isAr ? "تعذّر تحميل التخصصات" : "Could not load specialties"}
+                hint={
+                  isAr
+                    ? "حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك ثم أعد المحاولة."
+                    : "A network error occurred. Check your connection and try again."
+                }
+                retryLabel={isAr ? "إعادة المحاولة" : "Try again"}
+                onRetry={() => refetchSpecialties()}
+              />
+            }
           >
             <StaggerReveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {specialties?.slice(0, 12).map((s) => (
@@ -433,7 +463,20 @@ function HomePage() {
 
           <SkeletonSwap
             loading={doctorsLoading}
+            error={doctorsError}
             skeleton={<DoctorsSkeleton count={4} />}
+            errorFallback={
+              <SectionError
+                title={isAr ? "تعذّر تحميل الأطباء" : "Could not load doctors"}
+                hint={
+                  isAr
+                    ? "حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك ثم أعد المحاولة."
+                    : "A network error occurred. Check your connection and try again."
+                }
+                retryLabel={isAr ? "إعادة المحاولة" : "Try again"}
+                onRetry={() => refetchDoctors()}
+              />
+            }
           >
             <StaggerReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {doctors?.map((d) => (
