@@ -245,6 +245,33 @@ function BookPage() {
 
   const patientValidation = useMemo(() => validatePatient(state.patient), [state.patient]);
 
+  // Warn before losing an unsent draft: any patient input on step ≥ 4 counts.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasDraft =
+      state.step >= 4 && state.step < 9 &&
+      (state.patient.name.trim() !== "" || state.patient.phone.trim() !== "" || state.patient.nationalId.trim() !== "" || state.patient.reason.trim() !== "");
+    if (!hasDraft) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [state.step, state.patient.name, state.patient.phone, state.patient.nationalId, state.patient.reason]);
+
+  // Prefetch today's availability the moment a doctor is picked, so StepTime
+  // renders instantly when the user reaches step 6.
+  useEffect(() => {
+    if (!state.doctorId) return;
+    const today = new Date().toISOString().slice(0, 10);
+    queryClient.prefetchQuery({
+      queryKey: ["avail", today, state.doctorId, state.specialtyId, state.branchId],
+      queryFn: () => fetchAvailability(today, state.doctorId, state.specialtyId, state.branchId),
+      staleTime: 20_000,
+    });
+  }, [state.doctorId, state.specialtyId, state.branchId, queryClient]);
+
   // Consistency guard: clamp state.step to the highest step whose
   // prerequisites are actually met. Runs on every state change so a
   // deep link (?step=8 with no doctor), a stale sessionStorage draft, or
