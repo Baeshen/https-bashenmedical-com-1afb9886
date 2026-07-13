@@ -194,8 +194,6 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
 
-  // Track current scene for aria-live announcements
-  const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(msRef.current);
   const [announcedScene, setAnnouncedScene] = useState<string>("");
   const sceneLabels: Record<string, string> = useMemo(() => ({
     pulse: "المشهد الأول: نبض من قلب جازان",
@@ -217,6 +215,25 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const ms = useTicker(visible && !prefersReducedMotion);
   useEffect(() => { msRef.current = ms; }, [ms]);
   const stats = usePublicClinicStatistics(visible);
+
+  // Sync aria-live announcements with scene changes
+  const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(ms);
+  useEffect(() => {
+    if (!visible) return;
+    setAnnouncedScene(sceneLabels[currentScene] ?? "");
+  }, [visible, currentScene, sceneLabels]);
+
+  // Announce when live statistics finish loading
+  const [statsAnnouncement, setStatsAnnouncement] = useState<string>("");
+  useEffect(() => {
+    if (!visible || currentScene !== "stats" || stats.length === 0) return;
+    const parts = stats
+      .filter((s) => s.value > 0)
+      .slice(0, 4)
+      .map((s) => `${s.prefix ?? ""}${s.value}${s.suffix ?? ""} ${s.labelAr}`);
+    if (parts.length) setStatsAnnouncement(`تحديث الإحصائيات: ${parts.join("، ")}`);
+  }, [visible, currentScene, stats]);
+
 
   // Fire `intro_shown` once per session when the overlay first appears
   useEffect(() => {
