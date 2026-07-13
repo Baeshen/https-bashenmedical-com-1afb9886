@@ -379,12 +379,26 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   // Reduced motion: 3-second logo reveal
   if (prefersReducedMotion) {
     return (
-      <div dir="rtl" className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 px-6" style={{ background: CHARCOAL }}>
+      <div
+        dir="rtl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="intro-reduced-title"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 px-6"
+        style={{ background: CHARCOAL }}
+      >
         {logoFailed ? <LogoTextFallback /> : (
           <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
         )}
-        <p className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
-        <button onClick={() => finish("reduced_motion_close")} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
+        <p id="intro-reduced-title" className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
+        <button
+          ref={reducedCloseBtnRef}
+          onClick={() => finish("reduced_motion_close")}
+          className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        >
+          الدخول للموقع
+        </button>
+        <span className="sr-only" aria-live="polite">{announcedScene}</span>
       </div>
     );
   }
@@ -395,13 +409,19 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
     <div
       dir="rtl"
       role="dialog"
-      aria-label="مقدمة مجمع باعشن الطبي"
+      aria-modal="true"
+      aria-labelledby="intro-dialog-title"
+      aria-describedby="intro-scene-live"
       className={`fixed inset-0 z-[9999] overflow-hidden transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
       style={{
         background: `radial-gradient(ellipse at 50% 40%, ${CHARCOAL_SOFT} 0%, ${CHARCOAL} 70%)`,
         fontFamily: "Cairo, sans-serif",
       }}
     >
+      <h2 id="intro-dialog-title" className="sr-only">مقدمة مجمع باعشن الطبي</h2>
+      {/* Live regions: scene changes and stat counters */}
+      <div id="intro-scene-live" className="sr-only" aria-live="polite" aria-atomic="true">{announcedScene}</div>
+      <div className="sr-only" aria-live="polite" aria-atomic="true">{statsAnnouncement}</div>
       {/* Ambient blue glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 55%, rgba(30,58,95,0.35), transparent 60%)` }} />
       {/* Subtle grid */}
