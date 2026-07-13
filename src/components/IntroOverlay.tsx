@@ -947,6 +947,14 @@ function SceneFinal({
           animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-6 rounded-full pointer-events-none"
+          style={{ border: `1px solid ${GOLD}66`, boxShadow: `inset 0 0 30px ${GOLD}22, 0 0 40px ${GOLD}33` }}
+          initial={{ opacity: 0, rotate: 0 }}
+          animate={{ opacity: 1, rotate: 360 }}
+          transition={{ opacity: { duration: 1.2 }, rotate: { duration: 30, repeat: Infinity, ease: "linear" } }}
+        />
         {logoFailed ? <LogoTextFallback size="w-44 h-44 md:w-56 md:h-56" /> : (
           <img
             src={bmcLogo}
