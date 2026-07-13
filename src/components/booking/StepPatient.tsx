@@ -5,7 +5,9 @@ import { NAME_MAX, PHONE_MAX, REASON_MAX, type PatientErrors, type State } from 
 
 export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "en"; value: State["patient"]; errors: PatientErrors; onChange: (p: Partial<State["patient"]>) => void }) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const mark = (k: string) => setTouched((t) => ({ ...t, [k]: true }));
+  const mark = (k: string) => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  // Inline validation: show the error as soon as the user starts typing in a
+  // field (touch on first change), instead of waiting for blur.
   const show = (k: keyof PatientErrors) => (touched[k] ? errors[k] : undefined);
   const allValid = Object.keys(errors).length === 0;
 
