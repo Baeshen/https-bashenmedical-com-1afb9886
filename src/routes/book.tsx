@@ -370,6 +370,7 @@ function BookPage() {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(RESULT_KEY);
+      clearBookingIdempotencyKey();
     } catch {}
     // Explicit step=1 — otherwise the zod validator defaults `step` to 0.
     navigate({ to: "/book", search: { step: 1 } });
