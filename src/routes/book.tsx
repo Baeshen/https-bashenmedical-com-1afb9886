@@ -24,7 +24,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { submitBooking } from "@/lib/booking-submit";
+import { submitBooking, clearBookingIdempotencyKey } from "@/lib/booking-submit";
 import { Button } from "@/components/ui/button";
 
 import { fallback } from "@tanstack/zod-adapter";
@@ -370,6 +370,7 @@ function BookPage() {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(RESULT_KEY);
+      clearBookingIdempotencyKey();
     } catch {}
     // Explicit step=1 — otherwise the zod validator defaults `step` to 0.
     navigate({ to: "/book", search: { step: 1 } });

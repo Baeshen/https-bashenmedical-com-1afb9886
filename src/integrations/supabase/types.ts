@@ -149,6 +149,7 @@ export type Database = {
           doctor_id: string | null
           gender: string | null
           id: string
+          idempotency_key: string | null
           national_id: string | null
           notes: string | null
           patient_email: string | null
@@ -173,6 +174,7 @@ export type Database = {
           doctor_id?: string | null
           gender?: string | null
           id?: string
+          idempotency_key?: string | null
           national_id?: string | null
           notes?: string | null
           patient_email?: string | null
@@ -197,6 +199,7 @@ export type Database = {
           doctor_id?: string | null
           gender?: string | null
           id?: string
+          idempotency_key?: string | null
           national_id?: string | null
           notes?: string | null
           patient_email?: string | null

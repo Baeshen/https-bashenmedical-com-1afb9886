@@ -89,6 +89,16 @@ export const Route = createFileRoute("/api/public/book/create")({
           return json(400, { ok: false, kind: "validation", message });
         }
 
+        // Optional Idempotency-Key: same key → same result. Guards against
+        // duplicate bookings from double-clicks, retries after a timeout,
+        // or navigation-triggered resends. Accept 8–128 chars, letters/
+        // digits/dash/underscore only; silently ignore anything else so a
+        // garbage header can't create keyless rows or break the request.
+        const rawKey = request.headers.get("idempotency-key")?.trim() ?? "";
+        const idempotencyKey =
+          /^[A-Za-z0-9_-]{8,128}$/.test(rawKey) ? rawKey : null;
+
+
         const url = process.env.SUPABASE_URL;
         const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
         if (!url || !anonKey) {
@@ -106,6 +116,32 @@ export const Route = createFileRoute("/api/public/book/create")({
             autoRefreshToken: false,
           },
         });
+
+        // Helper: derive the tracking reference from a UUID.
+        const refFromId = (id: string) =>
+          "BAA-" + String(id).replace(/-/g, "").slice(0, 8).toUpperCase();
+
+        // Idempotent replay: same key already produced a row → return the
+        // same success response. Guards against double-clicks and network
+        // retries. Runs BEFORE the slot conflict check so a retry after a
+        // 200-that-never-reached-the-client still returns 200.
+        if (idempotencyKey) {
+          try {
+            const { supabaseAdmin } = await import(
+              "@/integrations/supabase/client.server"
+            );
+            const { data: existing } = await supabaseAdmin
+              .from("appointments")
+              .select("id")
+              .eq("idempotency_key", idempotencyKey)
+              .maybeSingle();
+            if (existing?.id) {
+              return json(200, { ok: true, reference: refFromId(existing.id) });
+            }
+          } catch {
+            // Fall through — worst case the unique index below catches it.
+          }
+        }
 
         // Fast-path conflict check: same-doctor slot already taken by a
         // non-cancelled appointment. This is just for a nice 409 message —
@@ -157,6 +193,7 @@ export const Route = createFileRoute("/api/public/book/create")({
           appointment_date: parsed.data.appointment_date,
           appointment_time: parsed.data.appointment_time,
           reason: parsed.data.reason ?? null,
+          ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
           ...(parsed.data.reminder_24h !== undefined
             ? { reminder_24h: parsed.data.reminder_24h }
             : {}),
@@ -167,12 +204,39 @@ export const Route = createFileRoute("/api/public/book/create")({
 
         if (error) {
           const err = error as { message?: string; code?: string };
-          // Concurrent-booking race: unique index fired between fast-path
-          // check and insert. Return the same conflict shape as above.
-          if (
+          const isDup =
             err.code === "23505" ||
-            (err.message ?? "").includes("duplicate key")
+            (err.message ?? "").includes("duplicate key");
+
+          // Concurrent replay with the same Idempotency-Key: another request
+          // won the insert race. Look the row up and return its reference so
+          // the client sees the same success it would have seen the first
+          // time. This is different from a slot clash (below) — same key
+          // means intentionally the same booking.
+          if (
+            isDup &&
+            idempotencyKey &&
+            (err.message ?? "").includes("idempotency_key")
           ) {
+            try {
+              const { supabaseAdmin } = await import(
+                "@/integrations/supabase/client.server"
+              );
+              const { data: existing } = await supabaseAdmin
+                .from("appointments")
+                .select("id")
+                .eq("idempotency_key", idempotencyKey)
+                .maybeSingle();
+              if (existing?.id) {
+                return json(200, {
+                  ok: true,
+                  reference: refFromId(existing.id),
+                });
+              }
+            } catch {/* fall through to generic conflict */}
+          }
+
+          if (isDup) {
             return json(409, {
               ok: false,
               kind: "conflict",
@@ -187,25 +251,35 @@ export const Route = createFileRoute("/api/public/book/create")({
         }
 
         // Follow-up admin read to derive the tracking reference from the
-        // just-inserted row. Filter narrowly (phone + date + time) and take
-        // the newest match. Failure here must not fail the whole request —
-        // the booking is already persisted; the reference is a convenience.
+        // just-inserted row. Prefer the idempotency key (exact match); fall
+        // back to phone+date+time when the client didn't send a key. Failure
+        // here must not fail the whole request — the booking is already
+        // persisted; the reference is a convenience.
         let reference: string | null = null;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: found } = await supabaseAdmin
-            .from("appointments")
-            .select("id")
-            .eq("patient_phone", parsed.data.patient_phone)
-            .eq("appointment_date", parsed.data.appointment_date)
-            .eq("appointment_time", parsed.data.appointment_time)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (found?.id) {
-            reference =
-              "BAA-" + String(found.id).replace(/-/g, "").slice(0, 8).toUpperCase();
+          let foundId: string | undefined;
+          if (idempotencyKey) {
+            const { data } = await supabaseAdmin
+              .from("appointments")
+              .select("id")
+              .eq("idempotency_key", idempotencyKey)
+              .maybeSingle();
+            foundId = data?.id;
           }
+          if (!foundId) {
+            const { data } = await supabaseAdmin
+              .from("appointments")
+              .select("id")
+              .eq("patient_phone", parsed.data.patient_phone)
+              .eq("appointment_date", parsed.data.appointment_date)
+              .eq("appointment_time", parsed.data.appointment_time)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            foundId = data?.id;
+          }
+          if (foundId) reference = refFromId(foundId);
         } catch {
           // Ignore — booking is already saved; reference simply won't be returned.
         }
@@ -215,3 +289,4 @@ export const Route = createFileRoute("/api/public/book/create")({
     },
   },
 });
+

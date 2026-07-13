@@ -51,15 +51,57 @@ const FALLBACK_MESSAGES: Record<Exclude<BookingSubmitKind, "success">, string> =
   unknown: "تعذّر إرسال الطلب. حاول مرة أخرى.",
 };
 
+const IDEMPOTENCY_KEY_STORAGE = "booking:idempotency-key";
+
+/**
+ * Return the current in-flight booking's idempotency key, creating one on
+ * first use. Persisted in sessionStorage so a retry after a timeout — or
+ * even after a page reload — sends the same key and the server replays the
+ * original success instead of creating a duplicate.
+ * Cleared with clearBookingIdempotencyKey() after a successful submit or
+ * when the user starts a brand-new booking.
+ */
+function getOrCreateIdempotencyKey(): string {
+  if (typeof window === "undefined") {
+    return `srv-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+  try {
+    const existing = sessionStorage.getItem(IDEMPOTENCY_KEY_STORAGE);
+    if (existing && /^[A-Za-z0-9_-]{8,128}$/.test(existing)) return existing;
+  } catch {/* ignore */}
+  const fresh =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `k-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+  try { sessionStorage.setItem(IDEMPOTENCY_KEY_STORAGE, fresh); } catch {/* ignore */}
+  return fresh;
+}
+
+export function clearBookingIdempotencyKey(): void {
+  if (typeof window === "undefined") return;
+  try { sessionStorage.removeItem(IDEMPOTENCY_KEY_STORAGE); } catch {/* ignore */}
+}
+
+
 export async function submitBooking(payload: BookingSubmitPayload): Promise<BookingSubmitResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  // Idempotency-Key: stable per in-flight booking attempt. Persisted in
+  // sessionStorage so a retry after a network timeout — or after the user
+  // hits reload before the response arrived — sends the SAME key and the
+  // server returns the same reference instead of creating a duplicate row.
+  // Cleared by the caller (see /book handleSubmit success + handleReset).
+  const idempotencyKey = getOrCreateIdempotencyKey();
 
   let res: Response;
   try {
     res = await fetch("/api/public/book/create", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -92,8 +134,20 @@ export async function submitBooking(payload: BookingSubmitPayload): Promise<Book
   }
 
   if (res.ok && body.ok) {
+    // Success — retire the current key so the next booking gets a fresh one.
+    clearBookingIdempotencyKey();
     return { ok: true, kind: "success", reference: body.reference ?? null };
   }
+
+  // Validation and conflict errors also retire the key: the payload will
+  // change before the next attempt (fixed field, new slot), so reusing the
+  // same key would incorrectly replay the OLD attempt if it had ever
+  // partially succeeded. `network`/`timeout`/`server` KEEP the key so an
+  // immediate retry is idempotent against a possibly-persisted row.
+  if (body.kind === "validation" || body.kind === "conflict") {
+    clearBookingIdempotencyKey();
+  }
+
 
   const kind: Exclude<BookingSubmitKind, "success"> =
     body.kind === "validation" ||
