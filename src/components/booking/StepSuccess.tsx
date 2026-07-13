@@ -309,8 +309,37 @@ export function StepSuccess({
             return (
               <>
                 <div className="mb-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
-                  <div className="mb-2 text-xs font-semibold text-primary">
-                    {lang === "ar" ? "معاينة تفاصيل الحدث" : "Event preview"}
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-primary">
+                      {lang === "ar" ? "معاينة تفاصيل الحدث" : "Event preview"}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      onClick={async () => {
+                        const shareText = [
+                          eventTitle,
+                          "────────────────",
+                          ...previewRows
+                            .filter((r) => r.label !== (lang === "ar" ? "عنوان الحدث" : "Event title"))
+                            .map((r) => `${r.label}: ${r.value}`),
+                          "",
+                          lang === "ar"
+                            ? `للاستفسار: ${SITE.phoneDisplay}`
+                            : `Contact: ${SITE.phoneDisplay}`,
+                        ].join("\n");
+                        try {
+                          await navigator.clipboard.writeText(shareText);
+                          toast.success(lang === "ar" ? "تم نسخ تفاصيل الموعد" : "Appointment details copied");
+                        } catch {
+                          toast.error(lang === "ar" ? "تعذّر النسخ" : "Copy failed");
+                        }
+                      }}
+                    >
+                      <ClipboardList className="h-3.5 w-3.5" />
+                      {lang === "ar" ? "نسخ للمشاركة" : "Copy to share"}
+                    </Button>
                   </div>
                   <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-xs">
                     {previewRows.map((r) => (
