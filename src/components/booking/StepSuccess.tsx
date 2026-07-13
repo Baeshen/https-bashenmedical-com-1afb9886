@@ -6,6 +6,7 @@ import { AlertCircle, Calendar as CalIcon, CalendarPlus, CheckCircle2, Clipboard
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/lib/site";
 import { downloadBookingConfirmationPdf } from "@/lib/booking-pdf";
+import { downloadIcs, googleCalendarUrl, type ShareBooking } from "@/lib/booking-share";
 import { formatArDate, type State } from "./types";
 
 export function StepSuccess({
