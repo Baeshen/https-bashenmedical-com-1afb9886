@@ -625,10 +625,10 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
   );
 }
 
-function SceneServices() {
+function SceneServices({ services }: { services: IntroService[] }) {
   // Show services in waves of 3
   const waves: IntroService[][] = [];
-  for (let i = 0; i < SERVICES.length; i += 3) waves.push(SERVICES.slice(i, i + 3));
+  for (let i = 0; i < services.length; i += 3) waves.push(services.slice(i, i + 3));
   return (
     <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <p className="text-white/90 text-lg md:text-xl tracking-wide">خدماتنا الطبية</p>
