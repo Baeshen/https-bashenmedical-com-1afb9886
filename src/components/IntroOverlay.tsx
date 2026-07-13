@@ -726,6 +726,21 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
     <motion.div data-scene="brand" className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
       <div className="relative">
         <div className="absolute -inset-10 rounded-full" style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}66` }} />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-6 rounded-full pointer-events-none"
+          style={{ border: `1px solid ${GOLD}66`, boxShadow: `inset 0 0 30px ${GOLD}22, 0 0 40px ${GOLD}33` }}
+          initial={{ opacity: 0, scale: 0.9, rotate: 0 }}
+          animate={{ opacity: 1, scale: 1, rotate: 360 }}
+          transition={{ opacity: { duration: 1.2 }, scale: { duration: 1.2 }, rotate: { duration: 40, repeat: Infinity, ease: "linear" } }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-16 rounded-full pointer-events-none"
+          style={{ border: `1px dashed ${GOLD}33` }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        />
         {logoFailed ? <LogoTextFallback size="w-48 h-48 md:w-56 md:h-56" /> : (
           <motion.img
             src={bmcLogo}
