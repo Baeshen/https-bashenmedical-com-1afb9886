@@ -17,7 +17,7 @@ export function StepPatient({ lang, value, errors, onChange }: { lang: "ar" | "e
         <Field label={lang === "ar" ? "الاسم الرباعي" : "Full name"} required error={show("name")}>
           <input
             value={value.name}
-            onChange={(e) => onChange({ name: e.target.value.slice(0, NAME_MAX) })}
+            onChange={(e) => { onChange({ name: e.target.value.slice(0, NAME_MAX) }); mark("name"); }}
             onBlur={() => mark("name")}
             aria-invalid={!!show("name")}
             className={`input ${show("name") ? "input-error" : ""}`}
