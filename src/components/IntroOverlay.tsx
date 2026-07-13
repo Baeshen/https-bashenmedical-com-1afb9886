@@ -15,7 +15,7 @@ import {
   type IntroSettingsRow, type SceneKey,
 } from "@/lib/intro-config";
 import { LazyImage, LazyVideo } from "@/components/LazyMedia";
-import { prefetchMedia } from "@/lib/media-prefetch";
+import { prefetchMedia, prefetchCompletedBefore, getPrefetchStatus } from "@/lib/media-prefetch";
 
 const bmcLogo = bmcLogoAsset.url;
 
@@ -484,6 +484,36 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         if (!e.isIntersecting) continue;
         const key = (e.target as HTMLElement).dataset.scene as SceneKey | undefined;
         if (!key) continue;
+
+        // Report how this scene's own media was prefetched vs mount time.
+        const mountAt = performance.now();
+        const urls = sceneMediaFor(key);
+        if (urls.length) {
+          let completed = 0;
+          let inFlight = 0;
+          let notStarted = 0;
+          let maxPrefetchMs = 0;
+          for (const u of urls) {
+            const st = getPrefetchStatus(u.url);
+            if (!st) { notStarted += 1; continue; }
+            if (prefetchCompletedBefore(u.url, mountAt)) {
+              completed += 1;
+              if (st.completedAt) maxPrefetchMs = Math.max(maxPrefetchMs, st.completedAt - st.startedAt);
+            } else {
+              inFlight += 1;
+            }
+          }
+          trackEvent("intro_scene_prefetch_report", {
+            scene: key,
+            total: urls.length,
+            completed,
+            in_flight: inFlight,
+            not_started: notStarted,
+            all_ready_before_mount: completed === urls.length,
+            max_prefetch_ms: Math.round(maxPrefetchMs),
+          });
+        }
+
         const idx = order.indexOf(key);
         const next = order[idx + 1];
         if (next) runPrefetch(next);

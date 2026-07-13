@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { getPrefetchStatus, prefetchCompletedBefore } from "@/lib/media-prefetch";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * Lazy media renderer for the intro overlay.
@@ -42,6 +44,7 @@ export function LazyImage({
   src, alt, className, width, height, eager, rounded = "rounded-lg", onError,
 }: LazyImageProps) {
   const ref = useRef<HTMLImageElement | null>(null);
+  const mountedAt = useRef<number>(performance.now());
   const [ready, setReady] = useState(!!eager);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -69,6 +72,22 @@ export function LazyImage({
     return () => io.disconnect();
   }, [eager, ready]);
 
+  const handleLoad = () => {
+    setLoaded(true);
+    const now = performance.now();
+    const status = getPrefetchStatus(src);
+    trackEvent("intro_media_load", {
+      kind: "image",
+      url: src,
+      display_ms: Math.round(now - mountedAt.current),
+      prefetched: !!status,
+      prefetch_completed_before_mount: prefetchCompletedBefore(src, mountedAt.current),
+      prefetch_duration_ms: status?.completedAt
+        ? Math.round(status.completedAt - status.startedAt)
+        : null,
+    });
+  };
+
   return (
     <span className={`relative inline-block ${className ?? ""}`} style={{ width, height }}>
       {!loaded && !failed && <Skeleton rounded={rounded} />}
@@ -82,12 +101,17 @@ export function LazyImage({
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={eager ? "high" : "low"}
-        onLoad={() => setLoaded(true)}
-        onError={() => { setFailed(true); onError?.(); }}
+        onLoad={handleLoad}
+        onError={() => {
+          setFailed(true);
+          trackEvent("intro_media_error", { kind: "image", url: src });
+          onError?.();
+        }}
       />
     </span>
   );
 }
+
 
 type LazyVideoProps = {
   src: string;
@@ -102,8 +126,25 @@ export function LazyVideo({
   src, poster, className, width, height, rounded = "rounded-lg",
 }: LazyVideoProps) {
   const ref = useRef<HTMLVideoElement | null>(null);
+  const mountedAt = useRef<number>(performance.now());
   const [ready, setReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const handleLoad = () => {
+    setLoaded(true);
+    const now = performance.now();
+    const status = getPrefetchStatus(src);
+    trackEvent("intro_media_load", {
+      kind: "video",
+      url: src,
+      display_ms: Math.round(now - mountedAt.current),
+      prefetched: !!status,
+      prefetch_completed_before_mount: prefetchCompletedBefore(src, mountedAt.current),
+      prefetch_duration_ms: status?.completedAt
+        ? Math.round(status.completedAt - status.startedAt)
+        : null,
+    });
+  };
 
   useEffect(() => {
     const el = ref.current;
@@ -141,7 +182,7 @@ export function LazyVideo({
         playsInline
         autoPlay={ready}
         loop
-        onLoadedData={() => setLoaded(true)}
+        onLoadedData={handleLoad}
       >
         {ready ? <source src={src} /> : null}
       </video>

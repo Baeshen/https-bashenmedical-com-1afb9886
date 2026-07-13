@@ -46,24 +46,56 @@ export function getPrefetchMode(): NetworkMode {
   return "full";
 }
 
+export type PrefetchStatus = {
+  kind: "image" | "video";
+  startedAt: number;
+  completedAt?: number;
+  ok?: boolean;
+};
+
+const telemetry = new Map<string, PrefetchStatus>();
+
+/** Read the prefetch status for a URL; undefined if it was never scheduled. */
+export function getPrefetchStatus(url: string): PrefetchStatus | undefined {
+  return telemetry.get(url);
+}
+
+/** True if the prefetch finished (successfully or not) before `at`. */
+export function prefetchCompletedBefore(url: string, at: number): boolean {
+  const t = telemetry.get(url);
+  return !!(t && t.completedAt !== undefined && t.completedAt <= at);
+}
+
+function markComplete(url: string, ok: boolean) {
+  const t = telemetry.get(url);
+  if (!t || t.completedAt !== undefined) return;
+  t.completedAt = performance.now();
+  t.ok = ok;
+}
+
 function prefetchOne(url: string, kind: "image" | "video") {
   if (!w || !url || prefetched.has(url)) return;
   prefetched.add(url);
+  telemetry.set(url, { kind, startedAt: performance.now() });
   try {
     if (kind === "image") {
       const img = new Image();
       img.decoding = "async";
       (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = "low";
+      img.onload = () => markComplete(url, true);
+      img.onerror = () => markComplete(url, false);
       img.src = url;
     } else {
       const link = document.createElement("link");
       link.rel = "prefetch";
       link.as = "video";
       link.href = url;
+      link.onload = () => markComplete(url, true);
+      link.onerror = () => markComplete(url, false);
       document.head.appendChild(link);
     }
   } catch {
-    /* prefetch is best-effort */
+    markComplete(url, false);
   }
 }
 
@@ -78,4 +110,5 @@ export function prefetchMedia(urls: Array<{ url: string; kind: "image" | "video"
     for (const u of filtered) prefetchOne(u.url, u.kind);
   });
 }
+
 
