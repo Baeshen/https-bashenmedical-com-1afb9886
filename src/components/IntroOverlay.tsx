@@ -8,12 +8,57 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
 
 const bmcLogo = bmcLogoAsset.url;
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
 const DISABLE_KEY = "baeshen_intro_disabled";
+const ANALYTICS_STATE_KEY = "baeshen_intro_analytics_v1";
+
+type IntroOutcome =
+  | "skip"
+  | "complete"
+  | "cta_book"
+  | "cta_services"
+  | "disabled_forever"
+  | "reduced_motion_close";
+
+type IntroAnalyticsState = {
+  shown_at: number;
+  outcome?: IntroOutcome;
+  outcome_at?: number;
+  elapsed_ms?: number;
+  scene?: string;
+  variant?: "full" | "reduced";
+};
+
+function readAnalyticsState(): IntroAnalyticsState | null {
+  try {
+    const raw = sessionStorage.getItem(ANALYTICS_STATE_KEY);
+    return raw ? (JSON.parse(raw) as IntroAnalyticsState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAnalyticsState(state: IntroAnalyticsState) {
+  try {
+    sessionStorage.setItem(ANALYTICS_STATE_KEY, JSON.stringify(state));
+  } catch {
+    /* noop */
+  }
+}
+
+function sceneFromMs(ms: number): string {
+  if (ms < 4000) return "pulse";
+  if (ms < 8000) return "brand";
+  if (ms < 16000) return "services";
+  if (ms < 23000) return "stats";
+  if (ms < 27000) return "booking";
+  return "final";
+}
 
 const CHARCOAL = "#0a0f16";
 const CHARCOAL_SOFT = "#111823";
@@ -140,6 +185,10 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
+  const shownAtRef = useRef<number>(0);
+  const shownFiredRef = useRef(false);
+  const outcomeFiredRef = useRef(false);
+  const msRef = useRef(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -150,13 +199,55 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   }, [disabled]);
 
   const ms = useTicker(visible && !prefersReducedMotion);
+  useEffect(() => { msRef.current = ms; }, [ms]);
   const stats = usePublicClinicStatistics(visible);
 
-  const finish = (target?: string) => {
+  // Fire `intro_shown` once per session when the overlay first appears
+  useEffect(() => {
+    if (!visible || shownFiredRef.current) return;
+    shownFiredRef.current = true;
+    shownAtRef.current = Date.now();
+    const variant: "full" | "reduced" = prefersReducedMotion ? "reduced" : "full";
+    writeAnalyticsState({ shown_at: shownAtRef.current, variant });
+    trackEvent("intro_shown", {
+      variant,
+      audio_muted_default: true,
+      total_duration_ms: prefersReducedMotion ? 2500 : TOTAL_MS,
+    });
+  }, [visible, prefersReducedMotion]);
+
+  const finish = (reason: IntroOutcome = "complete", target?: string) => {
     if (fading) return;
     setFading(true);
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* noop */ }
     stopHeartbeat();
+
+    if (!outcomeFiredRef.current) {
+      outcomeFiredRef.current = true;
+      const elapsed = shownAtRef.current ? Date.now() - shownAtRef.current : msRef.current;
+      const scene = prefersReducedMotion ? "reduced" : sceneFromMs(msRef.current);
+      const eventName = reason === "complete" ? "intro_completed" : "intro_skipped";
+      const props = {
+        reason,
+        scene,
+        elapsed_ms: elapsed,
+        variant: prefersReducedMotion ? "reduced" : "full",
+        audio_enabled: !muted,
+        target: target ?? null,
+      };
+      trackEvent(eventName, props);
+      // Persist the outcome so later code (or a debug panel) can see what happened this session
+      const prev = readAnalyticsState() ?? { shown_at: shownAtRef.current || Date.now() };
+      writeAnalyticsState({
+        ...prev,
+        outcome: reason,
+        outcome_at: Date.now(),
+        elapsed_ms: elapsed,
+        scene,
+        variant: prefersReducedMotion ? "reduced" : "full",
+      });
+    }
+
     setTimeout(() => {
       setVisible(false);
       if (target) navigate({ to: target }).catch(() => {});
@@ -167,7 +258,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   useEffect(() => {
     if (!visible) return;
     const dur = prefersReducedMotion ? 2500 : TOTAL_MS + 200;
-    const t = window.setTimeout(() => finish(), dur);
+    const t = window.setTimeout(() => finish("complete"), dur);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, prefersReducedMotion]);
@@ -212,7 +303,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const disableForever = () => {
     try { localStorage.setItem(DISABLE_KEY, "1"); } catch { /* noop */ }
-    finish();
+    finish("disabled_forever");
   };
 
   // Timeline windows (ms)
@@ -237,7 +328,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
         )}
         <p className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
-        <button onClick={() => finish()} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
+        <button onClick={() => finish("reduced_motion_close")} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
       </div>
     );
   }
@@ -283,7 +374,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         </div>
 
         <button
-          onClick={() => finish()}
+          onClick={() => finish("skip")}
           className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition"
           aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية"
         >
@@ -302,7 +393,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           {inWindow(T.services)  && <SceneServices key="services" />}
           {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
           {inWindow(T.booking)   && <SceneBooking  key="booking" />}
-          {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("/book")} onServices={() => finish("/services")} />}
+          {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("cta_book", "/book")} onServices={() => finish("cta_services", "/services")} />}
         </AnimatePresence>
       </div>
 
