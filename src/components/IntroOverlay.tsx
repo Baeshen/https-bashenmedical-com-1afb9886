@@ -303,7 +303,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const disableForever = () => {
     try { localStorage.setItem(DISABLE_KEY, "1"); } catch { /* noop */ }
-    finish();
+    finish("disabled_forever");
   };
 
   // Timeline windows (ms)
