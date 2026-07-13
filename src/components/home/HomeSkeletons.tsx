@@ -1,33 +1,90 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
 /**
- * Wraps skeletons and real content, cross-fading between them.
- * Renders {loading ? skeleton : children} — same DOM slot for both.
- * Skeleton block sizes intentionally mirror the real layout so the swap
- * is dimensionally stable (no content jump when data arrives).
+ * Wraps skeletons, an error fallback, and real content — cross-fading between
+ * the three states in a single DOM slot. Skeleton block sizes intentionally
+ * mirror the real layout so the swap is dimensionally stable.
+ *
+ * State precedence: error → loading → content.
+ * When `error` is provided, we render the fallback even if `loading` is still
+ * true — prevents a stuck skeleton when a query keeps retrying on a permanent
+ * failure (e.g. Supabase 401 in test environments).
  */
 export function SkeletonSwap({
   loading,
+  error,
   skeleton,
+  errorFallback,
   children,
 }: {
   loading: boolean;
+  error?: unknown;
   skeleton: ReactNode;
+  errorFallback?: ReactNode;
   children: ReactNode;
 }) {
+  const state: "error" | "skeleton" | "content" = error
+    ? "error"
+    : loading
+      ? "skeleton"
+      : "content";
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
-        key={loading ? "skeleton" : "content"}
+        key={state}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
-        {loading ? skeleton : children}
+        {state === "error" ? errorFallback ?? <SectionError /> : null}
+        {state === "skeleton" ? skeleton : null}
+        {state === "content" ? children : null}
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+/** Default error fallback for a home section (Supabase 401 / network). */
+export function SectionError({
+  title,
+  hint,
+  onRetry,
+  retryLabel,
+}: {
+  title?: string;
+  hint?: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+} = {}) {
+  return (
+    <div
+      role="alert"
+      aria-live="polite"
+      className="glass-fut flex flex-col items-center justify-center gap-3 p-8 text-center"
+    >
+      <div className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--fut-border-strong)] bg-white/[0.04] text-[color:var(--neon-teal)]">
+        <AlertTriangle className="h-5 w-5" />
+      </div>
+      <div className="text-sm font-semibold text-[color:var(--fut-ink)]">
+        {title ?? "تعذّر تحميل البيانات"}
+      </div>
+      <div className="max-w-sm text-xs text-[color:var(--fut-ink-muted)]">
+        {hint ?? "حدث خطأ مؤقت أثناء الاتصال بالخادم. يمكنك إعادة المحاولة."}
+      </div>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-1 inline-flex items-center gap-2 rounded-full border border-[var(--fut-border)] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-[color:var(--fut-ink)] transition hover:border-[var(--neon-teal)]"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {retryLabel ?? "إعادة المحاولة"}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
