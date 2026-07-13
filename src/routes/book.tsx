@@ -219,13 +219,13 @@ function BookPage() {
     } catch {/* ignore */}
   }, [result]);
 
-  const { data: branches = [] }    = useQuery({ queryKey: ["branches"], queryFn: fetchBranches, staleTime: 5 * 60_000 });
-  const { data: specialties = [] } = useQuery({ queryKey: ["specialties-active"], queryFn: fetchSpecialties, staleTime: 5 * 60_000 });
+  const { data: branches = [] }    = useQuery({ queryKey: ["branches"], queryFn: fetchBranches, staleTime: 30 * 60_000 });
+  const { data: specialties = [] } = useQuery({ queryKey: ["specialties-active"], queryFn: fetchSpecialties, staleTime: 30 * 60_000 });
   const { data: doctors = [] } = useQuery({
     queryKey: ["doctors-for-book", state.specialtyId, state.branchId],
     queryFn: () => fetchDoctors(state.specialtyId, state.branchId),
     enabled: state.step >= 4,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   // If the user picked a doctor via deep link, auto-fill branch & specialty
