@@ -375,7 +375,7 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
             className="relative w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1, ease: EASE }}
           />
         )}
         {/* Silver sweep */}
