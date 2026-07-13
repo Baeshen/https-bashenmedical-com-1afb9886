@@ -826,7 +826,7 @@ function SceneBooking() {
     { Icon: ClipboardList, ar: "استلام التفاصيل" },
   ];
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+    <motion.div data-scene="booking" className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
       <motion.p
         className="text-white text-2xl md:text-3xl font-semibold text-center"
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
