@@ -538,6 +538,17 @@ function BookPage() {
                   </div>
                 )}
                 <StepTime lang={lang} value={state.time} avail={avail} onPick={(v) => { dispatch({ t: "set", p: { time: v } }); goto(7); }}/>
+                <div className="mt-4">
+                  <WaitlistCTA
+                    lang={lang}
+                    doctorId={state.doctorId}
+                    specialtyId={state.specialtyId}
+                    branchId={state.branchId}
+                    defaultName={state.patient.name}
+                    defaultPhone={state.patient.phone}
+                    emphasized={noWeekAvailability}
+                  />
+                </div>
               </>
             )}
             {state.step === 7 && <StepPatient lang={lang} value={state.patient} errors={patientValidation.errors} onChange={(p) => dispatch({ t: "setPatient", p })}/>}
