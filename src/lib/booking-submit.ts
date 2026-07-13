@@ -134,8 +134,20 @@ export async function submitBooking(payload: BookingSubmitPayload): Promise<Book
   }
 
   if (res.ok && body.ok) {
+    // Success — retire the current key so the next booking gets a fresh one.
+    clearBookingIdempotencyKey();
     return { ok: true, kind: "success", reference: body.reference ?? null };
   }
+
+  // Validation and conflict errors also retire the key: the payload will
+  // change before the next attempt (fixed field, new slot), so reusing the
+  // same key would incorrectly replay the OLD attempt if it had ever
+  // partially succeeded. `network`/`timeout`/`server` KEEP the key so an
+  // immediate retry is idempotent against a possibly-persisted row.
+  if (body.kind === "validation" || body.kind === "conflict") {
+    clearBookingIdempotencyKey();
+  }
+
 
   const kind: Exclude<BookingSubmitKind, "success"> =
     body.kind === "validation" ||
