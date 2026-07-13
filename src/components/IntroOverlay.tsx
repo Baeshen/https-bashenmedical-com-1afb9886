@@ -163,6 +163,7 @@ function usePublicClinicStatistics(enabled: boolean, settings: IntroSettingsRow)
           prefix: m.prefix,
           suffix: m.suffix,
           Icon: resolveIcon(m.icon, Award),
+          image: m.image,
           source: m.source,
           updatedAt: updated,
           live: !!m.live,
