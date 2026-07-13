@@ -27,6 +27,10 @@ export type RawService = {
   titleAr: string;
   titleEn: string;
   icon: string;
+  /** Optional service illustration; lazy-loaded when the services scene appears. */
+  image?: string;
+  /** Optional short service video; lazy-loaded (preload="none") when the scene appears. */
+  video?: string;
 };
 
 export type RawStatMetric = {
@@ -38,6 +42,8 @@ export type RawStatMetric = {
   icon: string;
   source: string;
   live?: boolean;
+  /** Optional supporting media, lazy-loaded when the stats scene appears. */
+  image?: string;
 };
 
 export type IntroSettingsRow = {
