@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { getPrefetchStatus, prefetchCompletedBefore } from "@/lib/media-prefetch";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * Lazy media renderer for the intro overlay.
