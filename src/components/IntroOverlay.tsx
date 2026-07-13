@@ -310,16 +310,21 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
         <button
           onClick={toggleMute}
-          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition"
-          aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"}
+          disabled={audioFailed}
+          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={audioFailed ? "الصوت غير متاح" : muted ? "تشغيل الصوت" : "كتم الصوت"}
+          title={audioFailed ? "الصوت غير متاح — تستمر المقدمة بصريًا" : undefined}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full ${audioReady ? "bg-emerald-400" : "bg-white/40"}`}
+            className={`w-1.5 h-1.5 rounded-full ${
+              audioFailed ? "bg-white/20" : audioReady ? "bg-emerald-400" : "bg-white/40"
+            }`}
           />
           <span className="text-[10px] tracking-[0.3em] uppercase text-white/80">
-            {muted ? "الصوت" : "كتم"}
+            {audioFailed ? "بدون صوت" : muted ? "الصوت" : "كتم"}
           </span>
         </button>
+
 
         <button
           onClick={finish}
