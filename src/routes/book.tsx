@@ -109,6 +109,7 @@ function BookPage() {
   const searchParams = Route.useSearch();
   const { lang } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     loadDraft({
