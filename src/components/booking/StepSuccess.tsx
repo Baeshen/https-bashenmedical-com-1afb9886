@@ -29,6 +29,29 @@ export function StepSuccess({
     return `${h12}:${min} ${suffix} (${String(h).padStart(2, "0")}:${min})`;
   }, [state.time, lang]);
 
+  // Calendar reminder choices — persisted in localStorage so future bookings
+  // remember the patient's preference. Falls back to what was chosen in the
+  // patient step, then to both enabled.
+  const CAL_PREF_KEY = "bm.calReminderPrefs.v1";
+  const [cal24h, setCal24h] = useState<boolean>(state.patient.reminder24h !== false);
+  const [cal2h, setCal2h] = useState<boolean>(state.patient.reminder2h !== false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(CAL_PREF_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as { r24?: boolean; r2?: boolean };
+      if (typeof p.r24 === "boolean") setCal24h(p.r24);
+      if (typeof p.r2 === "boolean") setCal2h(p.r2);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CAL_PREF_KEY, JSON.stringify({ r24: cal24h, r2: cal2h }));
+    } catch { /* ignore */ }
+  }, [cal24h, cal2h]);
+
   const rows = [
     { label: lang === "ar" ? "الفرع" : "Branch", value: branch ? (lang === "ar" ? branch.name_ar : branch.name_en) : "—" },
     { label: lang === "ar" ? "التخصص" : "Specialty", value: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : "—" },
@@ -230,9 +253,29 @@ export function StepSuccess({
           </div>
           <p className="text-xs text-muted-foreground mb-3">
             {lang === "ar"
-              ? `يتضمّن تذكيرات تلقائية${state.patient.reminder24h ? " قبل 24 ساعة" : ""}${state.patient.reminder24h && state.patient.reminder2h ? " و" : ""}${state.patient.reminder2h ? "قبل ساعتين" : ""} من الموعد.`
-              : `Includes automatic reminders${state.patient.reminder24h ? " 24h" : ""}${state.patient.reminder24h && state.patient.reminder2h ? " &" : ""}${state.patient.reminder2h ? " 2h" : ""} before.`}
+              ? "اختر التذكيرات التي تريد تضمينها قبل إنشاء الملف أو فتح تقويم Google. سنحفظ اختيارك للمرات القادمة."
+              : "Choose reminders to include before generating the file or opening Google Calendar. Your choice is saved for next time."}
           </p>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <label className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs cursor-pointer hover:bg-muted">
+              <input
+                type="checkbox"
+                checked={cal24h}
+                onChange={(e) => setCal24h(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              <span>{lang === "ar" ? "تذكير قبل 24 ساعة" : "24h before"}</span>
+            </label>
+            <label className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs cursor-pointer hover:bg-muted">
+              <input
+                type="checkbox"
+                checked={cal2h}
+                onChange={(e) => setCal2h(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              <span>{lang === "ar" ? "تذكير قبل ساعتين" : "2h before"}</span>
+            </label>
+          </div>
           <div className="flex flex-wrap gap-2">
             {(() => {
               const share: ShareBooking = {
@@ -243,8 +286,8 @@ export function StepSuccess({
                 appointment_time: state.time,
                 doctor: doc ? (lang === "ar" ? doc.name_ar : doc.name_en) : null,
                 specialty: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : null,
-                reminder_24h: state.patient.reminder24h,
-                reminder_2h: state.patient.reminder2h,
+                reminder_24h: cal24h,
+                reminder_2h: cal2h,
               };
               return (
                 <>
@@ -273,7 +316,7 @@ export function StepSuccess({
         </div>
       )}
 
-      {reference && state.date && state.time && (state.patient.reminder24h || state.patient.reminder2h) && (() => {
+      {reference && state.date && state.time && (cal24h || cal2h) && (() => {
         const [y, mo, d] = state.date.split("-").map(Number);
         const [h, mi] = state.time.split(":").map(Number);
         // Appointment time is local Asia/Riyadh (UTC+3) — subtract 3h to get UTC.
@@ -285,14 +328,14 @@ export function StepSuccess({
             timeZone: "Asia/Riyadh",
           });
         const items: Array<{ offsetMin: number; labelAr: string; labelEn: string; channelsAr: string; channelsEn: string }> = [];
-        if (state.patient.reminder24h) items.push({
+        if (cal24h) items.push({
           offsetMin: 1440,
           labelAr: "قبل 24 ساعة",
           labelEn: "24 hours before",
           channelsAr: "واتساب + إشعار داخل الموقع",
           channelsEn: "WhatsApp + in-app push",
         });
-        if (state.patient.reminder2h) items.push({
+        if (cal2h) items.push({
           offsetMin: 120,
           labelAr: "قبل ساعتين",
           labelEn: "2 hours before",
