@@ -521,7 +521,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         <AnimatePresence>
           {inWindow(T.pulse)     && <ScenePulse    key="pulse" />}
           {inWindow(T.brand)     && <SceneBrand    key="brand" logoFailed={logoFailed} onError={() => setLogoFailed(true)} />}
-          {inWindow(T.services)  && <SceneServices key="services" />}
+          {inWindow(T.services)  && <SceneServices key="services" services={services} />}
           {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
           {inWindow(T.booking)   && <SceneBooking  key="booking" />}
           {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("cta_book", "/book")} onServices={() => finish("cta_services", "/services")} />}
