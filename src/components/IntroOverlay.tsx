@@ -650,28 +650,55 @@ function SceneStats({ stats }: { stats: Stat[] }) {
       >
         أرقام تنمو بثقتكم · Numbers Made Possible by Your Trust
       </motion.p>
-      <div className={`grid gap-4 md:gap-6 w-full max-w-5xl ${visible.length <= 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
-        {visible.map((s, i) => (
-          <motion.div
-            key={s.id}
-            className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 md:p-6 flex flex-col items-center text-center gap-2"
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + i * 0.15, duration: 0.6 }}
-          >
-            <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
-            <div className="text-white text-2xl md:text-4xl font-bold">
-              <Counter value={s.value} prefix={s.prefix} suffix={s.suffix} />
-            </div>
-            <div className="text-white/70 text-xs md:text-sm">{s.labelAr}</div>
-          </motion.div>
-        ))}
-      </div>
+      <TooltipProvider delayDuration={150}>
+        <div className={`grid gap-4 md:gap-6 w-full max-w-5xl ${visible.length <= 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
+          {visible.map((s, i) => (
+            <motion.div
+              key={s.id}
+              className="relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 md:p-6 flex flex-col items-center text-center gap-2"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.15, duration: 0.6 }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`مصدر الإحصائية: ${s.source}. آخر تحديث: ${formatUpdatedAt(s.updatedAt)}`}
+                    className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] px-2 py-0.5 text-[10px] text-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                  >
+                    <Info className="w-3 h-3" aria-hidden="true" />
+                    <span>{s.live ? "مباشر" : "معتمد"}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-right">
+                  <p className="text-xs font-semibold mb-1">
+                    {s.live ? "بيانات مباشرة" : "بيانات معتمدة"}
+                  </p>
+                  <p className="text-xs opacity-90">المصدر: {s.source}</p>
+                  <p className="text-[11px] opacity-70 mt-1">
+                    آخر تحديث: {formatUpdatedAt(s.updatedAt)}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+              <div className="text-white text-2xl md:text-4xl font-bold">
+                <Counter value={s.value} prefix={s.prefix} suffix={s.suffix} />
+              </div>
+              <div className="text-white/70 text-xs md:text-sm">{s.labelAr}</div>
+              <div className="text-white/40 text-[10px] mt-1">
+                {s.live ? "مباشر من قاعدة بيانات المجمع" : `محدَّث: ${formatUpdatedAt(s.updatedAt)}`}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </TooltipProvider>
       {visible.length === 0 && (
         <p className="text-white/50 text-sm">رعاية طبية متكاملة على مدار الأسبوع</p>
       )}
     </motion.div>
   );
 }
+
 
 function SceneBooking() {
   const steps = [
