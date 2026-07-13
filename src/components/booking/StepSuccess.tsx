@@ -29,6 +29,29 @@ export function StepSuccess({
     return `${h12}:${min} ${suffix} (${String(h).padStart(2, "0")}:${min})`;
   }, [state.time, lang]);
 
+  // Calendar reminder choices — persisted in localStorage so future bookings
+  // remember the patient's preference. Falls back to what was chosen in the
+  // patient step, then to both enabled.
+  const CAL_PREF_KEY = "bm.calReminderPrefs.v1";
+  const [cal24h, setCal24h] = useState<boolean>(state.patient.reminder24h !== false);
+  const [cal2h, setCal2h] = useState<boolean>(state.patient.reminder2h !== false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(CAL_PREF_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as { r24?: boolean; r2?: boolean };
+      if (typeof p.r24 === "boolean") setCal24h(p.r24);
+      if (typeof p.r2 === "boolean") setCal2h(p.r2);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CAL_PREF_KEY, JSON.stringify({ r24: cal24h, r2: cal2h }));
+    } catch { /* ignore */ }
+  }, [cal24h, cal2h]);
+
   const rows = [
     { label: lang === "ar" ? "الفرع" : "Branch", value: branch ? (lang === "ar" ? branch.name_ar : branch.name_en) : "—" },
     { label: lang === "ar" ? "التخصص" : "Specialty", value: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : "—" },
