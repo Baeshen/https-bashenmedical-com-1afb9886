@@ -874,7 +874,7 @@ function SceneFinal({
   logoFailed, onError, onBook, onServices,
 }: { logoFailed: boolean; onError: () => void; onBook: () => void; onServices: () => void }) {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6" {...fadeSwap}>
+    <motion.div data-scene="final" className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6" {...fadeSwap}>
       <div className="relative">
         <motion.div
           className="absolute -inset-10 rounded-full"
