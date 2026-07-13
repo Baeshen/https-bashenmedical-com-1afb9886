@@ -8,12 +8,57 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
 
 const bmcLogo = bmcLogoAsset.url;
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
 const DISABLE_KEY = "baeshen_intro_disabled";
+const ANALYTICS_STATE_KEY = "baeshen_intro_analytics_v1";
+
+type IntroOutcome =
+  | "skip"
+  | "complete"
+  | "cta_book"
+  | "cta_services"
+  | "disabled_forever"
+  | "reduced_motion_close";
+
+type IntroAnalyticsState = {
+  shown_at: number;
+  outcome?: IntroOutcome;
+  outcome_at?: number;
+  elapsed_ms?: number;
+  scene?: string;
+  variant?: "full" | "reduced";
+};
+
+function readAnalyticsState(): IntroAnalyticsState | null {
+  try {
+    const raw = sessionStorage.getItem(ANALYTICS_STATE_KEY);
+    return raw ? (JSON.parse(raw) as IntroAnalyticsState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAnalyticsState(state: IntroAnalyticsState) {
+  try {
+    sessionStorage.setItem(ANALYTICS_STATE_KEY, JSON.stringify(state));
+  } catch {
+    /* noop */
+  }
+}
+
+function sceneFromMs(ms: number): string {
+  if (ms < 4000) return "pulse";
+  if (ms < 8000) return "brand";
+  if (ms < 16000) return "services";
+  if (ms < 23000) return "stats";
+  if (ms < 27000) return "booking";
+  return "final";
+}
 
 const CHARCOAL = "#0a0f16";
 const CHARCOAL_SOFT = "#111823";
