@@ -635,7 +635,7 @@ const fadeSwap = {
 
 function ScenePulse() {
   return (
-    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8" {...fadeSwap}>
+    <motion.div data-scene="pulse" className="absolute inset-0 flex flex-col items-center justify-center gap-8" {...fadeSwap}>
       <svg viewBox="0 0 600 200" className="w-[90%] max-w-3xl h-40">
         <defs>
           <filter id="pulseGlow"><feGaussianBlur stdDeviation="3" /></filter>
