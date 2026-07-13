@@ -618,6 +618,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       <div className="absolute inset-0 pointer-events-none opacity-[0.06]"
         style={{ backgroundImage: `linear-gradient(${SILVER}22 1px, transparent 1px), linear-gradient(90deg, ${SILVER}22 1px, transparent 1px)`, backgroundSize: "48px 48px" }} />
 
+      <audio ref={narrationRef} src={introNarrationUrl} preload="auto" playsInline aria-hidden="true" />
       {/* Top controls: skip always visible from second 1 */}
       <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
         <div className="flex items-center gap-2">
