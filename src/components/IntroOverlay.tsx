@@ -604,7 +604,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       </div>
 
       {/* ============ SCENES ============ */}
-      <div className="relative z-10 h-full w-full">
+      <div ref={scenesContainerRef} className="relative z-10 h-full w-full">
         <AnimatePresence>
           {inWindow(T.pulse)     && <ScenePulse    key="pulse" />}
           {inWindow(T.brand)     && <SceneBrand    key="brand" logoFailed={logoFailed} onError={() => setLogoFailed(true)} />}
