@@ -114,6 +114,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // Preload the Baeshen logo so the intro overlay renders instantly without a network wait
+      { rel: "preload", as: "image", href: bmcLogoAsset.url, fetchpriority: "high" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&display=swap",
@@ -148,8 +150,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <IntroOverlay theme="dark" />
-        <WelcomeSplash />
+        <Suspense fallback={null}>
+          <IntroOverlay theme="dark" />
+        </Suspense>
+        <Suspense fallback={null}>
+          <WelcomeSplash />
+        </Suspense>
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-1">
