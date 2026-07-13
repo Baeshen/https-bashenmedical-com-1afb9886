@@ -1,108 +1,136 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  Stethoscope, Baby, HeartPulse, Bluetooth as Tooth, Eye, FlaskConical, Pill,
+  Home, Video, CalendarCheck, ShieldCheck, Users, Activity, Award, Building2,
+  Clock, Star, ClipboardList,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
 
 const bmcLogo = bmcLogoAsset.url;
 
-const STORAGE_KEY = "baeshen_intro_seen_v2";
+const SESSION_KEY = "baeshen_intro_seen_v3";
+const DISABLE_KEY = "baeshen_intro_disabled";
 
-const CHARCOAL = "#0d1218";
-const CHARCOAL_SOFT = "#141b24";
-const CRESCENT_RED = "#d93a3a";
+const CHARCOAL = "#0a0f16";
+const CHARCOAL_SOFT = "#111823";
+const CRESCENT_RED = "#c8232c";
 const BAESHEN_BLUE = "#1e3a5f";
+const BAESHEN_BLUE_SOFT = "#2f5a8f";
 const SILVER = "#d7dce3";
 const GOLD = "#c9a84c";
 
-type Scene = {
-  key: string;
-  icon: React.ReactNode;
-  ar: string;
-  en: string;
+const TOTAL_MS = 30_000;
+
+// ---------------------------------------------------------------------------
+// Data-driven service list
+// ---------------------------------------------------------------------------
+type IntroService = {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  Icon: React.ComponentType<{ className?: string }>;
 };
 
-const SceneIcon = ({ children }: { children: React.ReactNode }) => (
-  <svg viewBox="0 0 64 64" className="w-16 h-16 md:w-20 md:h-20" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    {children}
-  </svg>
-);
-
-const SCENES: Scene[] = [
-  {
-    key: "consult",
-    ar: "استشارات طبية",
-    en: "Medical Consultations",
-    icon: (
-      <SceneIcon>
-        <path d="M20 44c0-6.6 5.4-12 12-12s12 5.4 12 12" />
-        <circle cx={32} cy={22} r={7} />
-        <path d="M14 52h36" />
-      </SceneIcon>
-    ),
-  },
-  {
-    key: "dental",
-    ar: "طب الأسنان",
-    en: "Dental Care",
-    icon: (
-      <SceneIcon>
-        <path d="M22 14c-5 0-8 3-8 9 0 6 3 10 5 18 1 4 2 7 4 7s2-4 3-9 2-6 6-6 5 1 6 6 1 9 3 9 3-3 4-7c2-8 5-12 5-18 0-6-3-9-8-9-3 0-5 2-9 2s-6-2-11-2z" />
-      </SceneIcon>
-    ),
-  },
-  {
-    key: "pediatrics",
-    ar: "طب الأطفال",
-    en: "Pediatrics",
-    icon: (
-      <SceneIcon>
-        <circle cx={32} cy={22} r={9} />
-        <path d="M27 21h.01M37 21h.01" />
-        <path d="M28 26c1 1.5 2.5 2 4 2s3-.5 4-2" />
-        <path d="M18 52c0-7 6-13 14-13s14 6 14 13" />
-      </SceneIcon>
-    ),
-  },
-  {
-    key: "lab",
-    ar: "المختبرات",
-    en: "Laboratory",
-    icon: (
-      <SceneIcon>
-        <path d="M26 10v14L16 46a4 4 0 003.5 6h25A4 4 0 0048 46L38 24V10" />
-        <path d="M23 10h18" />
-        <path d="M22 36h20" />
-      </SceneIcon>
-    ),
-  },
-  {
-    key: "pharmacy",
-    ar: "الصيدلية",
-    en: "Pharmacy",
-    icon: (
-      <SceneIcon>
-        <rect x={12} y={20} width={40} height={24} rx={12} />
-        <path d="M32 20v24" />
-      </SceneIcon>
-    ),
-  },
-  {
-    key: "booking",
-    ar: "حجز إلكتروني",
-    en: "Online Booking",
-    icon: (
-      <SceneIcon>
-        <rect x={12} y={16} width={40} height={36} rx={4} />
-        <path d="M12 26h40M22 12v8M42 12v8" />
-        <path d="M26 38l4 4 8-8" />
-      </SceneIcon>
-    ),
-  },
+const SERVICES: IntroService[] = [
+  { id: "clinics",     titleAr: "العيادات التخصصية", titleEn: "Specialty Clinics", Icon: Stethoscope },
+  { id: "internal",    titleAr: "الباطنية",          titleEn: "Internal Medicine", Icon: HeartPulse },
+  { id: "pediatrics",  titleAr: "طب الأطفال",        titleEn: "Pediatrics",        Icon: Baby },
+  { id: "obgyn",       titleAr: "النساء والولادة",   titleEn: "OB-GYN",            Icon: Users },
+  { id: "dental",      titleAr: "طب الأسنان",        titleEn: "Dentistry",         Icon: Tooth },
+  { id: "eye",         titleAr: "طب العيون",         titleEn: "Ophthalmology",     Icon: Eye },
+  { id: "lab",         titleAr: "المختبر",           titleEn: "Laboratory",        Icon: FlaskConical },
+  { id: "pharmacy",    titleAr: "الصيدلية",          titleEn: "Pharmacy",          Icon: Pill },
+  { id: "home",        titleAr: "الرعاية المنزلية",  titleEn: "Home Care",         Icon: Home },
+  { id: "telemed",     titleAr: "الاستشارات عن بُعد", titleEn: "Telemedicine",      Icon: Video },
+  { id: "booking",     titleAr: "حجز إلكتروني",      titleEn: "Online Booking",    Icon: CalendarCheck },
 ];
 
+// ---------------------------------------------------------------------------
+// Public statistics — quietly hides any value that fails to load
+// ---------------------------------------------------------------------------
+type Stat = { id: string; labelAr: string; value: number; suffix?: string; prefix?: string; Icon: React.ComponentType<{ className?: string }> };
+
+function useIntroPreferences() {
+  const [disabled, setDisabled] = useState(false);
+  useEffect(() => {
+    try { setDisabled(localStorage.getItem(DISABLE_KEY) === "1"); } catch { /* noop */ }
+  }, []);
+  return { disabled };
+}
+
+function usePublicClinicStatistics(enabled: boolean) {
+  const [stats, setStats] = useState<Stat[]>([]);
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.allSettled([
+        supabase.from("doctors").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("doctors").select("specialty_id", { count: "exact", head: true }).eq("is_active", true),
+      ]);
+      if (cancelled) return;
+      const out: Stat[] = [];
+      const doctors = results[0].status === "fulfilled" ? results[0].value.count ?? null : null;
+      if (doctors && doctors > 0) {
+        out.push({ id: "doctors", labelAr: "طبيبًا واستشاريًا", value: doctors, prefix: "+", Icon: Users });
+      }
+      // Fallback / evergreen public values
+      out.push({ id: "years", labelAr: "سنوات من الخبرة", value: 15, prefix: "+", Icon: Award });
+      out.push({ id: "sat",   labelAr: "رضا المرضى",       value: 98, suffix: "%", Icon: Star });
+      out.push({ id: "care",  labelAr: "رعاية طوال الأسبوع", value: 7, suffix: " أيام", Icon: Clock });
+      setStats(out);
+    })();
+    return () => { cancelled = true; };
+  }, [enabled]);
+  return stats;
+}
+
+// ---------------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------------
+function useTicker(active: boolean) {
+  const [ms, setMs] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const start = performance.now();
+    let raf = 0;
+    const loop = (t: number) => {
+      setMs(t - start);
+      if (t - start < TOTAL_MS) raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [active]);
+  return ms;
+}
+
+function Counter({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    const dur = 1400;
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - start) / dur);
+      setN(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <span>{prefix}{n.toLocaleString("ar-EG")}{suffix}</span>;
+}
+
+// ---------------------------------------------------------------------------
+// Overlay
+// ---------------------------------------------------------------------------
 export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   void theme;
   const prefersReducedMotion = useReducedMotion();
+  const { disabled } = useIntroPreferences();
   const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -113,11 +141,435 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const heartbeatTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // Textual/SVG fallback shown when the logo image fails to load
-  const LogoFallback = ({ size = "w-40 h-40" }: { size?: string }) => (
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (disabled) return;
+    try { if (sessionStorage.getItem(SESSION_KEY)) return; } catch { /* noop */ }
+    setVisible(true);
+  }, [disabled]);
+
+  const ms = useTicker(visible && !prefersReducedMotion);
+  const stats = usePublicClinicStatistics(visible);
+
+  const finish = (target?: string) => {
+    if (fading) return;
+    setFading(true);
+    try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* noop */ }
+    stopHeartbeat();
+    setTimeout(() => {
+      setVisible(false);
+      if (target) navigate({ to: target }).catch(() => {});
+    }, 500);
+  };
+
+  // Auto-finish
+  useEffect(() => {
+    if (!visible) return;
+    const dur = prefersReducedMotion ? 2500 : TOTAL_MS + 200;
+    const t = window.setTimeout(() => finish(), dur);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion]);
+
+  const startHeartbeat = () => {
+    try {
+      const Ctx = (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+      if (!Ctx) return;
+      const ctx = audioCtxRef.current ?? new Ctx();
+      audioCtxRef.current = ctx;
+      const beat = (delay: number, freq = 60, gain = 0.22) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = freq;
+        const now = ctx.currentTime + delay;
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+        o.connect(g).connect(ctx.destination);
+        o.start(now); o.stop(now + 0.3);
+      };
+      const cycle = () => { beat(0, 62, 0.24); beat(0.2, 55, 0.18); };
+      cycle();
+      heartbeatTimerRef.current = window.setInterval(cycle, 1000);
+      setAudioReady(true);
+    } catch (err) {
+      console.warn("[IntroOverlay] audio unavailable:", err);
+      setAudioFailed(true); setAudioReady(false); setMuted(true);
+    }
+  };
+
+  const stopHeartbeat = () => {
+    if (heartbeatTimerRef.current) { window.clearInterval(heartbeatTimerRef.current); heartbeatTimerRef.current = null; }
+    try { audioCtxRef.current?.close(); } catch { /* noop */ }
+    audioCtxRef.current = null;
+    setAudioReady(false);
+  };
+
+  const toggleMute = () => { if (muted) { startHeartbeat(); setMuted(false); } else { stopHeartbeat(); setMuted(true); } };
+
+  useEffect(() => () => stopHeartbeat(), []);
+
+  const disableForever = () => {
+    try { localStorage.setItem(DISABLE_KEY, "1"); } catch { /* noop */ }
+    finish();
+  };
+
+  // Timeline windows (ms)
+  const T = useMemo(() => ({
+    pulse:   [0,     4000],
+    brand:   [4000,  8000],
+    services:[8000,  16000],
+    stats:   [16000, 23000],
+    booking: [23000, 27000],
+    final:   [27000, 30000],
+  }), []);
+
+  const inWindow = (w: number[]) => ms >= w[0] && ms < w[1];
+
+  if (!visible) return null;
+
+  // Reduced motion: 3-second logo reveal
+  if (prefersReducedMotion) {
+    return (
+      <div dir="rtl" className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 px-6" style={{ background: CHARCOAL }}>
+        {logoFailed ? <LogoTextFallback /> : (
+          <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
+        )}
+        <p className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
+        <button onClick={() => finish()} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
+      </div>
+    );
+  }
+
+  const progress = Math.min(1, ms / TOTAL_MS);
+
+  return (
+    <div
+      dir="rtl"
+      role="dialog"
+      aria-label="مقدمة مجمع باعشن الطبي"
+      className={`fixed inset-0 z-[9999] overflow-hidden transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
+      style={{
+        background: `radial-gradient(ellipse at 50% 40%, ${CHARCOAL_SOFT} 0%, ${CHARCOAL} 70%)`,
+        fontFamily: "Cairo, sans-serif",
+      }}
+    >
+      {/* Ambient blue glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 55%, rgba(30,58,95,0.35), transparent 60%)` }} />
+      {/* Subtle grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.06]"
+        style={{ backgroundImage: `linear-gradient(${SILVER}22 1px, transparent 1px), linear-gradient(90deg, ${SILVER}22 1px, transparent 1px)`, backgroundSize: "48px 48px" }} />
+
+      {/* Top controls: skip always visible from second 1 */}
+      <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleMute}
+            disabled={audioFailed}
+            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={audioFailed ? "الصوت غير متاح" : muted ? "تشغيل الصوت" : "كتم الصوت"}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${audioFailed ? "bg-white/20" : audioReady ? "bg-emerald-400" : "bg-white/40"}`} />
+            <span className="text-[10px] tracking-[0.3em] uppercase text-white/80">{audioFailed ? "بدون صوت" : muted ? "الصوت" : "كتم"}</span>
+          </button>
+          <button
+            onClick={disableForever}
+            className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-md px-3 py-2 text-[10px] tracking-[0.25em] uppercase text-white/60"
+            aria-label="عدم عرض المقدمة مرة أخرى"
+          >
+            عدم العرض مجددًا
+          </button>
+        </div>
+
+        <button
+          onClick={() => finish()}
+          className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition"
+          aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية"
+        >
+          <span className="text-xs tracking-[0.3em] uppercase text-white/90">تخطي المقدمة</span>
+          <svg className="w-3.5 h-3.5 text-white/80 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ============ SCENES ============ */}
+      <div className="relative z-10 h-full w-full">
+        <AnimatePresence>
+          {inWindow(T.pulse)     && <ScenePulse    key="pulse" />}
+          {inWindow(T.brand)     && <SceneBrand    key="brand" logoFailed={logoFailed} onError={() => setLogoFailed(true)} />}
+          {inWindow(T.services)  && <SceneServices key="services" />}
+          {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
+          {inWindow(T.booking)   && <SceneBooking  key="booking" />}
+          {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("/book")} onServices={() => finish("/services")} />}
+        </AnimatePresence>
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-[2px] bg-white/10 overflow-hidden rounded-full">
+        <div className="h-full" style={{ width: `${progress * 100}%`, background: `linear-gradient(90deg, ${GOLD}, ${SILVER})`, transition: "width 100ms linear" }} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scenes
+// ---------------------------------------------------------------------------
+const fadeSwap = {
+  initial: { opacity: 0, scale: 0.98 },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  exit:    { opacity: 0, scale: 1.02, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+};
+
+function ScenePulse() {
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8" {...fadeSwap}>
+      <svg viewBox="0 0 600 200" className="w-[90%] max-w-3xl h-40">
+        <defs>
+          <filter id="pulseGlow"><feGaussianBlur stdDeviation="3" /></filter>
+        </defs>
+        <motion.path
+          d="M0 100 L120 100 L150 100 L170 60 L190 140 L210 40 L230 160 L250 100 L600 100"
+          fill="none" stroke={CRESCENT_RED} strokeWidth={3} strokeLinecap="round"
+          filter="url(#pulseGlow)"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ duration: 2.2, ease: "easeInOut" }}
+        />
+        {/* crescent morph in from right */}
+        <motion.path
+          d="M480 100 A55 55 0 1 0 480 100.1 A42 42 0 1 1 480 100 Z"
+          fill={CRESCENT_RED}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 2.0 }}
+          style={{ transformOrigin: "480px 100px" }}
+        />
+      </svg>
+      <motion.div
+        className="text-center space-y-1"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.7 }}
+      >
+        <p className="text-white text-2xl md:text-4xl font-semibold">من قلب جازان… تبدأ رعايتنا</p>
+        <p className="text-white/60 text-sm md:text-base tracking-wide">From the Heart of Jazan, Our Care Begins</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () => void }) {
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
+      <div className="relative">
+        <div className="absolute -inset-10 rounded-full" style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}66` }} />
+        {logoFailed ? <LogoTextFallback size="w-48 h-48 md:w-56 md:h-56" /> : (
+          <motion.img
+            src={bmcLogo}
+            alt="مجمع باعشن الطبي"
+            onError={onError}
+            className="relative w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          />
+        )}
+        {/* Silver sweep */}
+        <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+          <motion.div
+            className="absolute top-0 -left-1/2 w-1/2 h-full"
+            style={{ background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%)", filter: "blur(6px)" }}
+            initial={{ x: "-100%" }}
+            animate={{ x: "350%" }}
+            transition={{ duration: 1.6, delay: 0.9, ease: "easeInOut" }}
+          />
+        </div>
+      </div>
+      <motion.div
+        className="text-center space-y-1"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9, duration: 0.6 }}
+      >
+        <p className="text-white text-2xl md:text-3xl font-bold">مجمع باعشن الطبي</p>
+        <p className="text-white/80 text-sm md:text-base">خبرة طبية متكاملة لرعاية تستحق الثقة</p>
+        <p className="text-white/50 text-xs md:text-sm mt-1">Baeshen Medical Complex — Integrated Medical Expertise. Care You Can Trust.</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function SceneServices() {
+  // Show services in waves of 3
+  const waves: IntroService[][] = [];
+  for (let i = 0; i < SERVICES.length; i += 3) waves.push(SERVICES.slice(i, i + 3));
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+      <p className="text-white/90 text-lg md:text-xl tracking-wide">خدماتنا الطبية</p>
+      <div className="flex flex-col gap-6 w-full max-w-4xl">
+        {waves.map((wave, wi) => (
+          <motion.div
+            key={wi}
+            className="grid grid-cols-3 gap-4 md:gap-6"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [14, 0, 0, -8] }}
+            transition={{ duration: 2.0, delay: wi * 1.9, times: [0, 0.2, 0.85, 1] }}
+            style={{ position: wi === 0 ? "relative" : "absolute", left: 0, right: 0 }}
+          >
+            {wave.map((s) => (
+              <div key={s.id} className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-5 md:px-6 md:py-6">
+                <s.Icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: BAESHEN_BLUE_SOFT }} />
+                <span className="text-white text-sm md:text-base font-medium text-center">{s.titleAr}</span>
+                <span className="text-white/40 text-[10px] md:text-xs tracking-wide">{s.titleEn}</span>
+              </div>
+            ))}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function SceneStats({ stats }: { stats: Stat[] }) {
+  const visible = stats.filter((s) => s.value > 0).slice(0, 4);
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+      <motion.p
+        className="text-white/70 text-xs md:text-sm tracking-[0.35em] uppercase"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}
+      >
+        أرقام تنمو بثقتكم · Numbers Made Possible by Your Trust
+      </motion.p>
+      <div className={`grid gap-4 md:gap-6 w-full max-w-5xl ${visible.length <= 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
+        {visible.map((s, i) => (
+          <motion.div
+            key={s.id}
+            className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 md:p-6 flex flex-col items-center text-center gap-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.15, duration: 0.6 }}
+          >
+            <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+            <div className="text-white text-2xl md:text-4xl font-bold">
+              <Counter value={s.value} prefix={s.prefix} suffix={s.suffix} />
+            </div>
+            <div className="text-white/70 text-xs md:text-sm">{s.labelAr}</div>
+          </motion.div>
+        ))}
+      </div>
+      {visible.length === 0 && (
+        <p className="text-white/50 text-sm">رعاية طبية متكاملة على مدار الأسبوع</p>
+      )}
+    </motion.div>
+  );
+}
+
+function SceneBooking() {
+  const steps = [
+    { Icon: Building2, ar: "اختر الفرع" },
+    { Icon: Stethoscope, ar: "اختر الطبيب" },
+    { Icon: CalendarCheck, ar: "اختر الموعد" },
+    { Icon: ShieldCheck, ar: "تأكيد الحجز" },
+    { Icon: ClipboardList, ar: "استلام التفاصيل" },
+  ];
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6" {...fadeSwap}>
+      <motion.p
+        className="text-white text-2xl md:text-3xl font-semibold text-center"
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+      >
+        موعدك الطبي… بخطوات بسيطة
+      </motion.p>
+      <p className="text-white/60 text-sm md:text-base">Your Appointment in a Few Simple Steps</p>
+      <div className="w-full max-w-4xl">
+        <div className="flex items-center justify-between gap-2 md:gap-4">
+          {steps.map((st, i) => (
+            <motion.div
+              key={i}
+              className="flex-1 flex flex-col items-center gap-2"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.35, duration: 0.5 }}
+            >
+              <div
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center border"
+                style={{ borderColor: `${GOLD}66`, background: `${BAESHEN_BLUE}66` }}
+              >
+                <st.Icon className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-white/85 text-[11px] md:text-sm text-center">{st.ar}</span>
+              <span className="text-white/40 text-[10px]">{i + 1}</span>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div
+          className="mt-6 h-[2px] bg-white/10 overflow-hidden rounded"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+        >
+          <motion.div
+            className="h-full"
+            style={{ background: `linear-gradient(90deg, ${BAESHEN_BLUE}, ${CRESCENT_RED})` }}
+            initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 3.4, ease: "easeInOut" }}
+          />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+function SceneFinal({
+  logoFailed, onError, onBook, onServices,
+}: { logoFailed: boolean; onError: () => void; onBook: () => void; onServices: () => void }) {
+  return (
+    <motion.div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6" {...fadeSwap}>
+      <div className="relative">
+        <motion.div
+          className="absolute -inset-10 rounded-full"
+          style={{ background: `radial-gradient(circle, ${CRESCENT_RED}44, transparent 60%)` }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {logoFailed ? <LogoTextFallback size="w-44 h-44 md:w-56 md:h-56" /> : (
+          <img
+            src={bmcLogo}
+            alt="مجمع باعشن الطبي"
+            onError={onError}
+            className="relative w-44 h-44 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+          />
+        )}
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-white text-2xl md:text-3xl font-bold">مجمع باعشن الطبي</p>
+        <p className="text-white/75 text-sm md:text-base">صحتك… أولويتنا</p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+        <button
+          onClick={onBook}
+          className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm md:text-base font-semibold text-white shadow-lg transition hover:scale-[1.03]"
+          style={{ background: `linear-gradient(135deg, ${BAESHEN_BLUE}, ${CRESCENT_RED})`, boxShadow: `0 10px 30px ${CRESCENT_RED}55` }}
+        >
+          احجز موعدك الآن
+        </button>
+        <button
+          onClick={onServices}
+          className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm md:text-base font-medium text-white/90 border border-white/25 hover:bg-white/10 transition"
+        >
+          اكتشف خدماتنا
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Text fallback for when the logo image fails
+// ---------------------------------------------------------------------------
+function LogoTextFallback({ size = "w-40 h-40" }: { size?: string }) {
+  return (
     <div
       role="img"
-      aria-label="مجمع باعشن الطبي — Baeshen Medical Complex"
+      aria-label="Baeshen Medical Complex"
       className={`${size} flex flex-col items-center justify-center rounded-full text-center`}
       style={{
         background: `radial-gradient(circle at 50% 45%, ${BAESHEN_BLUE} 0%, ${CHARCOAL_SOFT} 75%)`,
@@ -125,444 +577,9 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         boxShadow: `0 0 40px ${BAESHEN_BLUE}66`,
       }}
     >
-      <span
-        className="text-white text-2xl md:text-3xl font-bold leading-tight"
-        style={{ fontFamily: "Cairo, sans-serif" }}
-      >
-        باعشن
-      </span>
-      <span
-        className="mt-1 text-[10px] md:text-xs tracking-[0.3em] uppercase"
-        style={{ color: GOLD }}
-      >
-        B · M · C
-      </span>
-      <span className="mt-1 text-[9px] md:text-[10px] text-white/60">
-        Baeshen Medical
-      </span>
-    </div>
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return;
-    } catch {}
-    setVisible(true);
-  }, []);
-
-  const finish = () => {
-    if (fading) return;
-    setFading(true);
-    try {
-      sessionStorage.setItem(STORAGE_KEY, "1");
-    } catch {}
-    stopHeartbeat();
-    setTimeout(() => setVisible(false), 600);
-  };
-
-  const goBook = () => {
-    finish();
-    setTimeout(() => navigate({ to: "/book" }).catch(() => {}), 620);
-  };
-
-  // Auto-dismiss after 10s
-  useEffect(() => {
-    if (!visible) return;
-    const total = prefersReducedMotion ? 2200 : 10200;
-    const t = window.setTimeout(finish, total);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, prefersReducedMotion]);
-
-  // Web audio heartbeat (only when user unmutes)
-  const startHeartbeat = () => {
-    try {
-      const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-      if (!Ctx) return;
-      const ctx = audioCtxRef.current ?? new Ctx();
-      audioCtxRef.current = ctx;
-      const beat = (delay: number, freq = 60, gain = 0.25) => {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = freq;
-        const now = ctx.currentTime + delay;
-        g.gain.setValueAtTime(0.0001, now);
-        g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-        o.connect(g).connect(ctx.destination);
-        o.start(now);
-        o.stop(now + 0.3);
-      };
-      const cycle = () => {
-        beat(0, 62, 0.28);
-        beat(0.18, 55, 0.22);
-      };
-      cycle();
-      heartbeatTimerRef.current = window.setInterval(cycle, 1000);
-      setAudioReady(true);
-    } catch (err) {
-      console.warn("[IntroOverlay] audio unavailable, continuing silently:", err);
-      setAudioFailed(true);
-      setAudioReady(false);
-      setMuted(true);
-      // Failure of audio must never block the intro or the navigation.
-    }
-  };
-
-  const stopHeartbeat = () => {
-    if (heartbeatTimerRef.current) {
-      window.clearInterval(heartbeatTimerRef.current);
-      heartbeatTimerRef.current = null;
-    }
-    try {
-      audioCtxRef.current?.close();
-    } catch {}
-    audioCtxRef.current = null;
-    setAudioReady(false);
-  };
-
-  const toggleMute = () => {
-    if (muted) {
-      startHeartbeat();
-      setMuted(false);
-    } else {
-      stopHeartbeat();
-      setMuted(true);
-    }
-  };
-
-  useEffect(() => () => stopHeartbeat(), []);
-
-  // Timeline (ms)
-  const T = useMemo(
-    () => ({
-      crescent: 0, // 0-2s
-      bmc: 2000, // 2-4s
-      scenes: 4000, // 4-7s
-      logoReveal: 7000, // 7-9s
-      cta: 9000, // 9-10s
-    }),
-    [],
-  );
-
-  if (!visible) return null;
-
-  // Reduced motion: static fallback with logo + skip
-  if (prefersReducedMotion) {
-    return (
-      <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#0d1218] flex flex-col items-center justify-center gap-6 px-6">
-        {logoFailed ? (
-          <LogoFallback size="w-40 h-40" />
-        ) : (
-          <img
-            src={bmcLogo}
-            alt="مجمع باعشن الطبي"
-            loading="eager"
-            decoding="async"
-            onError={() => setLogoFailed(true)}
-            className="w-40 h-40 object-contain"
-          />
-        )}
-        <p className="text-white/80 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>
-          مجمع باعشن الطبي — صحتك أولويتنا
-        </p>
-        <button
-          onClick={finish}
-          className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm"
-        >
-          الدخول للموقع
-        </button>
-      </div>
-
-    );
-  }
-
-  return (
-    <div
-      dir="rtl"
-      role="dialog"
-      aria-label="مقدمة مجمع باعشن الطبي"
-      className={`fixed inset-0 z-[9999] overflow-hidden transition-opacity duration-700 ${fading ? "opacity-0" : "opacity-100"}`}
-      style={{
-        background: `radial-gradient(ellipse at center, ${CHARCOAL_SOFT} 0%, ${CHARCOAL} 70%)`,
-        fontFamily: "Cairo, sans-serif",
-      }}
-    >
-      {/* Soft ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 50% 55%, rgba(30,58,95,0.35), transparent 55%)`,
-        }}
-      />
-      {/* Grain */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>\")",
-        }}
-      />
-
-      {/* Top controls */}
-      <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
-        <button
-          onClick={toggleMute}
-          disabled={audioFailed}
-          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label={audioFailed ? "الصوت غير متاح" : muted ? "تشغيل الصوت" : "كتم الصوت"}
-          title={audioFailed ? "الصوت غير متاح — تستمر المقدمة بصريًا" : undefined}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              audioFailed ? "bg-white/20" : audioReady ? "bg-emerald-400" : "bg-white/40"
-            }`}
-          />
-          <span className="text-[10px] tracking-[0.3em] uppercase text-white/80">
-            {audioFailed ? "بدون صوت" : muted ? "الصوت" : "كتم"}
-          </span>
-        </button>
-
-
-        <button
-          onClick={finish}
-          className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] backdrop-blur-md px-4 py-2 transition"
-          aria-label="تخطي المقدمة"
-        >
-          <span className="text-[10px] tracking-[0.3em] uppercase text-white/80">تخطي</span>
-          <svg className="w-3 h-3 text-white/70 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Stage */}
-      <div className="relative z-10 h-full w-full flex items-center justify-center">
-        {/* 0-2s: crescent draw */}
-        <motion.div
-          className="absolute"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: [1, 1, 0] }}
-          transition={{ duration: 4, times: [0, 0.5, 1], ease: "easeInOut" }}
-        >
-          <svg viewBox="0 0 200 200" className="w-56 h-56 md:w-72 md:h-72">
-            <defs>
-              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            {/* Crescent shape drawn as a path */}
-            <motion.path
-              d="M140 40 A70 70 0 1 0 140 160 A55 55 0 1 1 140 40 Z"
-              fill="none"
-              stroke={CRESCENT_RED}
-              strokeWidth={4}
-              strokeLinecap="round"
-              filter="url(#glow)"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 1.6, ease: "easeInOut" }}
-            />
-            <motion.path
-              d="M140 40 A70 70 0 1 0 140 160 A55 55 0 1 1 140 40 Z"
-              fill={CRESCENT_RED}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0, 0.9] }}
-              transition={{ duration: 2, times: [0, 0.75, 1] }}
-            />
-          </svg>
-        </motion.div>
-
-        {/* 2-4s: B.M.C letters + silver/blue circle assembly */}
-        <motion.div
-          className="absolute flex flex-col items-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 1, 0] }}
-          transition={{ duration: 3, delay: T.bmc / 1000, times: [0, 0.15, 0.85, 1] }}
-        >
-          <svg viewBox="0 0 220 220" className="w-60 h-60 md:w-80 md:h-80">
-            {/* Silver outer ring */}
-            <motion.circle
-              cx={110}
-              cy={110}
-              r={95}
-              fill="none"
-              stroke={SILVER}
-              strokeWidth={1.5}
-              strokeDasharray="4 6"
-              initial={{ pathLength: 0, rotate: -90, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.7 }}
-              transition={{ duration: 1.4, delay: 0.1 }}
-              style={{ transformOrigin: "50% 50%" }}
-            />
-            {/* Blue inner ring */}
-            <motion.circle
-              cx={110}
-              cy={110}
-              r={80}
-              fill="none"
-              stroke={BAESHEN_BLUE}
-              strokeWidth={2}
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 1.4, delay: 0.4 }}
-            />
-            {/* crescent behind text */}
-            <path
-              d="M148 55 A55 55 0 1 0 148 165 A43 43 0 1 1 148 55 Z"
-              fill={CRESCENT_RED}
-              opacity={0.95}
-            />
-            {/* B.M.C */}
-            <motion.text
-              x={110}
-              y={122}
-              textAnchor="middle"
-              fill="#ffffff"
-              fontSize={28}
-              fontWeight={700}
-              letterSpacing={2}
-              style={{ fontFamily: "Cairo, sans-serif" }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-            >
-              B.M.C
-            </motion.text>
-          </svg>
-        </motion.div>
-
-        {/* 4-7s: Scenes strip */}
-        <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 1, 0] }}
-          transition={{ duration: 3, delay: T.scenes / 1000, times: [0, 0.1, 0.85, 1] }}
-        >
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-5 md:gap-8 text-white/90">
-            {SCENES.map((s, i) => (
-              <motion.div
-                key={s.key}
-                className="flex flex-col items-center gap-2"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: T.scenes / 1000 + 0.1 + i * 0.12, duration: 0.5 }}
-                style={{ color: i % 2 === 0 ? SILVER : "#9ec5e8" }}
-              >
-                {s.icon}
-                <span className="text-[10px] md:text-xs text-white/70 tracking-wide">{s.ar}</span>
-              </motion.div>
-            ))}
-          </div>
-          <motion.div
-            className="text-center space-y-2"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: T.scenes / 1000 + 1, duration: 0.6 }}
-          >
-            <p className="text-white text-2xl md:text-4xl font-semibold" style={{ fontFamily: "Cairo, sans-serif" }}>
-              رعاية متكاملة… بخبرة نثق بها
-            </p>
-            <p className="text-white/60 text-sm md:text-base tracking-wide">
-              Integrated Care. Trusted Expertise.
-            </p>
-          </motion.div>
-        </motion.div>
-
-        {/* 7-9s: full logo reveal with light sweep */}
-        <motion.div
-          className="absolute flex flex-col items-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: [0, 1, 1, 1], scale: [0.92, 1, 1, 1] }}
-          transition={{ duration: 3, delay: T.logoReveal / 1000, times: [0, 0.2, 0.85, 1] }}
-        >
-          <div className="relative">
-            <div
-              className="absolute -inset-8 rounded-full"
-              style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}55` }}
-            />
-            {logoFailed ? (
-              <div className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center">
-                <LogoFallback size="w-52 h-52 md:w-64 md:h-64" />
-              </div>
-            ) : (
-              <img
-                src={bmcLogo}
-                alt="مجمع باعشن الطبي"
-                loading="eager"
-                decoding="async"
-                onError={() => setLogoFailed(true)}
-                className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-              />
-            )}
-            {/* light sweep */}
-            <motion.div
-              className="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ duration: 1.6, delay: T.logoReveal / 1000 + 0.4 }}
-            >
-              <motion.div
-                className="absolute top-0 -left-1/2 w-1/2 h-full"
-                style={{
-                  background:
-                    "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
-                  filter: "blur(6px)",
-                }}
-                initial={{ x: "-100%" }}
-                animate={{ x: "350%" }}
-                transition={{ duration: 1.6, delay: T.logoReveal / 1000 + 0.4, ease: "easeInOut" }}
-              />
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* 9-10s: CTA / titles */}
-        <AnimatePresence>
-          <motion.div
-            key="cta"
-            className="absolute bottom-16 md:bottom-24 inset-x-0 flex flex-col items-center gap-3 px-6 text-center"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: T.cta / 1000, duration: 0.6 }}
-          >
-            <p className="text-white text-xl md:text-3xl font-bold" style={{ fontFamily: "Cairo, sans-serif" }}>
-              مجمع باعشن الطبي
-            </p>
-            <p className="text-white/70 text-sm md:text-base" style={{ fontFamily: "Cairo, sans-serif" }}>
-              صحتك… أولويتنا
-            </p>
-            <button
-              onClick={goBook}
-              className="mt-3 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm md:text-base font-semibold text-white shadow-lg transition hover:scale-[1.03]"
-              style={{
-                background: `linear-gradient(135deg, ${BAESHEN_BLUE}, ${CRESCENT_RED})`,
-                boxShadow: `0 10px 30px ${CRESCENT_RED}55`,
-              }}
-            >
-              احجز موعدك الآن
-              <span className="text-xs text-white/80">· Book Your Appointment</span>
-            </button>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom progress bar */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-56 h-[2px] bg-white/10 overflow-hidden rounded-full">
-        <motion.div
-          className="h-full"
-          style={{ background: `linear-gradient(90deg, ${GOLD}, ${SILVER})` }}
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 10, ease: "linear" }}
-        />
-      </div>
+      <Activity className="w-8 h-8 mb-1" style={{ color: CRESCENT_RED }} />
+      <span className="text-white text-xl md:text-2xl font-bold">B.M.C</span>
+      <span className="mt-0.5 text-[10px] tracking-[0.3em] uppercase" style={{ color: GOLD }}>Baeshen Medical</span>
     </div>
   );
 }
