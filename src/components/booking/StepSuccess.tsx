@@ -293,6 +293,7 @@ export function StepSuccess({
               { label: lang === "ar" ? "عنوان الحدث" : "Event title", value: eventTitle },
               { label: lang === "ar" ? "التاريخ" : "Date", value: formatArDate(state.date, lang) },
               { label: lang === "ar" ? "الوقت" : "Time", value: `${timeReadable} — ${lang === "ar" ? "بتوقيت الرياض" : "Riyadh time"}` },
+              { label: lang === "ar" ? "المنطقة الزمنية" : "Time zone", value: lang === "ar" ? "Asia/Riyadh (توقيت الرياض، UTC+3، بدون توقيت صيفي)" : "Asia/Riyadh (Riyadh time, UTC+3, no DST)" },
               { label: lang === "ar" ? "المدة" : "Duration", value: lang === "ar" ? "30 دقيقة" : "30 minutes" },
             ];
             if (share.specialty) previewRows.push({ label: lang === "ar" ? "التخصص" : "Specialty", value: share.specialty });
