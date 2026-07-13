@@ -696,8 +696,8 @@ function ScenePulse() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2, duration: 0.7 }}
       >
-        <p className="text-white text-2xl md:text-4xl font-semibold">من قلب جازان… تبدأ رعايتنا</p>
-        <p className="text-white/60 text-sm md:text-base tracking-wide">From the Heart of Jazan, Our Care Begins</p>
+        <p className="text-white text-2xl md:text-4xl font-semibold">من قلب صبيا… تبدأ رعايتنا</p>
+        <p className="text-white/60 text-sm md:text-base tracking-wide">From the Heart of Sabya, Our Care Begins</p>
       </motion.div>
     </motion.div>
   );
