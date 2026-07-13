@@ -56,6 +56,8 @@ export type IntroSettingsRow = {
   headline_en: string | null;
   tagline_ar: string | null;
   tagline_en: string | null;
+  prefetch_enabled: boolean;
+  prefetch_lead_ms: number;
   updated_at: string;
 };
 
