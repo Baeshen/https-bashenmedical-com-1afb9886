@@ -153,7 +153,12 @@ function HomePage() {
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
 
-  const { data: specialties, isPending: specialtiesLoading } = useQuery({
+  const {
+    data: specialties,
+    isPending: specialtiesLoading,
+    error: specialtiesError,
+    refetch: refetchSpecialties,
+  } = useQuery({
     queryKey: ["specialties"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -164,8 +169,17 @@ function HomePage() {
       if (error) throw error;
       return data;
     },
+    // Fail fast on permanent errors (e.g. 401) instead of retrying and
+    // keeping the skeleton visible for many seconds.
+    retry: 1,
+    retryDelay: 400,
   });
-  const { data: doctors, isPending: doctorsLoading } = useQuery({
+  const {
+    data: doctors,
+    isPending: doctorsLoading,
+    error: doctorsError,
+    refetch: refetchDoctors,
+  } = useQuery({
     queryKey: ["doctors_featured"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -176,6 +190,8 @@ function HomePage() {
       if (error) throw error;
       return data;
     },
+    retry: 1,
+    retryDelay: 400,
   });
 
   const onQuickBook = (e: React.FormEvent) => {
