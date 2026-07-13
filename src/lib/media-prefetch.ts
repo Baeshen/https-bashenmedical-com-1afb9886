@@ -31,8 +31,7 @@ function prefetchOne(url: string, kind: "image" | "video") {
     if (kind === "image") {
       const img = new Image();
       img.decoding = "async";
-      // @ts-expect-error - fetchPriority is a valid img property in modern browsers
-      img.fetchPriority = "low";
+      (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = "low";
       img.src = url;
     } else {
       const link = document.createElement("link");
