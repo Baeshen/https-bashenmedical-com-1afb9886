@@ -276,21 +276,52 @@ export function StepSuccess({
               <span>{lang === "ar" ? "تذكير قبل ساعتين" : "2h before"}</span>
             </label>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {(() => {
-              const share: ShareBooking = {
-                ref: reference,
-                patient_name: state.patient.name,
-                patient_phone: phone,
-                appointment_date: state.date,
-                appointment_time: state.time,
-                doctor: doc ? (lang === "ar" ? doc.name_ar : doc.name_en) : null,
-                specialty: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : null,
-                reminder_24h: cal24h,
-                reminder_2h: cal2h,
-              };
-              return (
-                <>
+          {(() => {
+            const share: ShareBooking = {
+              ref: reference,
+              patient_name: state.patient.name,
+              patient_phone: phone,
+              appointment_date: state.date,
+              appointment_time: state.time,
+              doctor: doc ? (lang === "ar" ? doc.name_ar : doc.name_en) : null,
+              specialty: spec ? (lang === "ar" ? spec.name_ar : spec.name_en) : null,
+              reminder_24h: cal24h,
+              reminder_2h: cal2h,
+            };
+            const eventTitle = `${SITE.nameAr}${share.doctor ? " — موعد مع " + share.doctor : " — موعد"}`;
+            const previewRows: Array<{ label: string; value: string }> = [
+              { label: lang === "ar" ? "عنوان الحدث" : "Event title", value: eventTitle },
+              { label: lang === "ar" ? "التاريخ" : "Date", value: formatArDate(state.date, lang) },
+              { label: lang === "ar" ? "الوقت" : "Time", value: `${timeReadable} — ${lang === "ar" ? "بتوقيت الرياض" : "Riyadh time"}` },
+              { label: lang === "ar" ? "المدة" : "Duration", value: lang === "ar" ? "30 دقيقة" : "30 minutes" },
+            ];
+            if (share.specialty) previewRows.push({ label: lang === "ar" ? "التخصص" : "Specialty", value: share.specialty });
+            if (share.doctor) previewRows.push({ label: lang === "ar" ? "الطبيب" : "Doctor", value: share.doctor });
+            previewRows.push({ label: lang === "ar" ? "الموقع" : "Location", value: lang === "ar" ? SITE.addressAr : (SITE.addressEn ?? SITE.addressAr) });
+            previewRows.push({ label: lang === "ar" ? "رقم الحجز" : "Reference", value: reference });
+            const remindersText = [cal24h ? (lang === "ar" ? "قبل 24 ساعة" : "24h before") : null,
+                                   cal2h ? (lang === "ar" ? "قبل ساعتين" : "2h before") : null]
+              .filter(Boolean).join(lang === "ar" ? " و" : " & ");
+            previewRows.push({
+              label: lang === "ar" ? "التذكيرات" : "Reminders",
+              value: remindersText || (lang === "ar" ? "بدون تذكيرات" : "None"),
+            });
+            return (
+              <>
+                <div className="mb-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+                  <div className="mb-2 text-xs font-semibold text-primary">
+                    {lang === "ar" ? "معاينة تفاصيل الحدث" : "Event preview"}
+                  </div>
+                  <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-xs">
+                    {previewRows.map((r) => (
+                      <div key={r.label} className="contents">
+                        <dt className="text-muted-foreground whitespace-nowrap">{r.label}</dt>
+                        <dd className="font-medium break-words">{r.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <a
                     href={googleCalendarUrl(share)}
                     target="_blank"
@@ -304,10 +335,10 @@ export function StepSuccess({
                     <Download className="h-4 w-4" />
                     {lang === "ar" ? "تحميل ملف .ics" : "Download .ics"}
                   </Button>
-                </>
-              );
-            })()}
-          </div>
+                </div>
+              </>
+            );
+          })()}
           <p className="mt-2 text-[11px] text-muted-foreground">
             {lang === "ar"
               ? "ملف .ics يعمل مع Apple Calendar وOutlook وأي تقويم متوافق."
