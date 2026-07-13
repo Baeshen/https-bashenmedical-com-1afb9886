@@ -215,7 +215,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   if (prefersReducedMotion) {
     return (
       <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#0d1218] flex flex-col items-center justify-center gap-6 px-6">
-        <img src={bmcLogo} alt="مجمع باعشن الطبي" className="w-40 h-40 object-contain" />
+        <img src={bmcLogo} alt="مجمع باعشن الطبي" loading="eager" decoding="async" onError={(e) => ((e.currentTarget.style.display = "none"))} className="w-40 h-40 object-contain" />
         <p className="text-white/80 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>
           مجمع باعشن الطبي — صحتك أولويتنا
         </p>
@@ -435,6 +435,9 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
             <img
               src={bmcLogo}
               alt="مجمع باعشن الطبي"
+              loading="eager"
+              decoding="async"
+              onError={(e) => ((e.currentTarget.style.display = "none"))}
               className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
             />
             {/* light sweep */}
