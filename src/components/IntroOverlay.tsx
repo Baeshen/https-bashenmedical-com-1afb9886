@@ -14,6 +14,7 @@ import {
   DEFAULT_INTRO_SETTINGS, resolveIcon,
   type IntroSettingsRow, type SceneKey,
 } from "@/lib/intro-config";
+import { LazyImage, LazyVideo } from "@/components/LazyMedia";
 
 const bmcLogo = bmcLogoAsset.url;
 
