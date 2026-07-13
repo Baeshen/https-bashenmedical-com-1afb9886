@@ -357,6 +357,13 @@ function BookPage() {
   }
 
   function handleReset() {
+    // Guard against accidental taps that would drop the reference/QR forever.
+    if (typeof window !== "undefined" && result?.reference) {
+      const msg = lang === "ar"
+        ? "سيتم مسح تفاصيل الحجز الحالي من الشاشة. تأكد أنك احتفظت برقم الحجز. هل تريد المتابعة؟"
+        : "The current booking details will be cleared from this screen. Make sure you saved the reference. Continue?";
+      if (!window.confirm(msg)) return;
+    }
     setResult(null);
     setErrorMsg(null);
     dispatch({ t: "reset" });
