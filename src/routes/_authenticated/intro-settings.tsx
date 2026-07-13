@@ -88,6 +88,8 @@ function IntroSettingsAdmin() {
       headline_en: row.headline_en,
       tagline_ar: row.tagline_ar,
       tagline_en: row.tagline_en,
+      prefetch_enabled: row.prefetch_enabled,
+      prefetch_lead_ms: row.prefetch_lead_ms,
       updated_by: userData.user?.id ?? null,
     };
     const { data, error } = await supabase
