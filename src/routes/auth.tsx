@@ -267,98 +267,119 @@ function AuthPage() {
   }
 
   return (
-    <div dir="rtl" className="portal-root portal-gradient-bg min-h-dvh flex items-center justify-center p-4 md:p-6 relative overflow-hidden">
-      {/* Decorative floating medical motifs */}
-      <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-40 -end-40 w-[500px] h-[500px] rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, #34C8FF 0%, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-40 -start-40 w-[500px] h-[500px] rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, #0F6CBD 0%, transparent 70%)" }}
-        />
-        <svg className="absolute top-10 start-10 w-24 h-24 opacity-10 portal-float" viewBox="0 0 100 200" fill="none" stroke="#0F6CBD" strokeWidth="1.5">
-          <path d="M20 0 Q50 25 80 50 Q50 75 20 100 Q50 125 80 150 Q50 175 20 200" />
-          <path d="M80 0 Q50 25 20 50 Q50 75 80 100 Q50 125 20 150 Q50 175 80 200" />
-        </svg>
+    <div
+      dir="rtl"
+      className="min-h-dvh w-full flex flex-col-reverse lg:flex-row-reverse bg-[#081b2d] text-white font-['Cairo',_system-ui,_sans-serif] overflow-hidden selection:bg-[#1FAEFF]/30 relative"
+    >
+      {/* Ambient background glows */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#1FAEFF]/10 blur-[150px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#0D3B66]/40 blur-[100px] rounded-full" />
       </div>
 
-      <div className="relative grid lg:grid-cols-[1.1fr_1fr] gap-8 max-w-6xl w-full items-center">
-        {/* Left: brand + illustration */}
-        <div className="hidden lg:block text-[color:var(--portal-ink)] space-y-6">
-          <div className="flex items-center gap-3">
-            <div
-              className="h-14 w-14 rounded-2xl grid place-items-center text-white font-bold text-xl shadow-lg"
-              style={{ background: "var(--portal-gradient)" }}
-            >
-              ب
-            </div>
-            <div>
-              <div className="text-lg font-bold">مجمع باعشن الطبي</div>
-              <div className="text-xs text-[color:var(--portal-ink-3)] uppercase tracking-wide">
-                Baashen Medical Complex
-              </div>
+      {/* HERO (right in RTL / visual left) */}
+      <div className="hidden lg:flex lg:w-7/12 relative items-center justify-center overflow-hidden border-r border-white/5 bg-[#0D3B66]">
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,#1FAEFF_0%,transparent_50%)]" />
+          <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#081b2d] to-transparent" />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "radial-gradient(rgba(31,174,255,0.18) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 text-center px-12 max-w-2xl">
+          <div className="mb-8 inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-[#48C7FF] animate-pulse" />
+            <span className="text-xs font-semibold tracking-[0.2em] text-[#48C7FF] uppercase">
+              Trusted Medical Excellence
+            </span>
+          </div>
+
+          <div className="relative">
+            <h1 className="text-[12rem] font-black leading-none tracking-tighter opacity-[0.07] select-none absolute -top-20 left-1/2 -translate-x-1/2 pointer-events-none">
+              40
+            </h1>
+            <div className="relative flex flex-col items-center">
+              <span className="text-2xl font-light mb-2 text-white/70">أكثر من</span>
+              <span className="text-[10rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#1FAEFF] drop-shadow-[0_0_30px_rgba(31,174,255,0.4)]">
+                40
+              </span>
+              <span className="text-3xl font-bold mt-4 tracking-wide">
+                عاماً من العطاء المستمر
+              </span>
             </div>
           </div>
 
-          <h1 className="text-4xl xl:text-5xl font-bold leading-tight">
-            رعايتك الصحية
-            <br />
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "var(--portal-gradient)" }}
-            >
-              بلمسة واحدة.
-            </span>
-          </h1>
-          <p className="text-base text-[color:var(--portal-ink-2)] max-w-md leading-relaxed">
-            إدارة مواعيدك، الاطلاع على سجلاتك الطبية، طلب الاستشارات، ومتابعة نتائج المختبر والأشعة — كل ذلك من مكان واحد.
+          <p className="mt-8 text-lg text-white/60 max-w-lg mx-auto font-light leading-relaxed">
+            أربعة عقود من الخبرة الطبية الراسخة، والريادة في تقديم أفضل الرعاية الصحية وفق أعلى المعايير العالمية.
           </p>
 
-          <ul className="space-y-3 text-sm text-[color:var(--portal-ink-2)]">
-            {[
-              "حجز فوري مع استشاريين معتمدين",
-              "نتائج مختبر وأشعة برسوم بيانية سهلة",
-              "تذكيرات ذكية وإشعارات مباشرة",
-              "مساعد صحي مدعوم بالذكاء الاصطناعي",
-            ].map((t) => (
-              <li key={t} className="flex items-center gap-2">
-                <span
-                  className="h-5 w-5 rounded-full grid place-items-center text-white text-[10px]"
-                  style={{ background: "var(--portal-gradient)" }}
-                >
-                  ✓
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
+          {/* Pulse Animation */}
+          <div className="mt-12 h-24 w-full flex items-center justify-center">
+            <svg className="w-full max-w-md h-full" viewBox="0 0 400 100" preserveAspectRatio="none">
+              <path
+                d="M0 50 L120 50 L135 30 L150 70 L170 10 L190 90 L210 40 L225 55 L400 50"
+                fill="none"
+                stroke="#1FAEFF"
+                strokeWidth="2"
+                strokeLinecap="round"
+                style={{
+                  strokeDasharray: 900,
+                  strokeDashoffset: 900,
+                  animation: "authPulseDash 3.2s linear infinite",
+                }}
+              />
+            </svg>
+          </div>
         </div>
 
-        {/* Right: glass card */}
-        <div className="glass-card p-6 md:p-8">
-          <div className="text-center">
-            <div className="lg:hidden mx-auto mb-3 h-14 w-14 rounded-2xl grid place-items-center text-white font-bold text-xl shadow-lg" style={{ background: "var(--portal-gradient)" }}>
-              ب
+        {/* Bottom stats */}
+        <div className="absolute bottom-10 right-10 flex gap-6 opacity-70 rtl:right-auto rtl:left-10">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] tracking-widest text-[#48C7FF]">HOSPITAL CAPACITY</span>
+            <span className="text-xl font-mono">98.4%</span>
+          </div>
+          <div className="w-px h-10 bg-white/20" />
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] tracking-widest text-[#48C7FF]">PATIENT CARE</span>
+            <span className="text-xl font-mono">24/7</span>
+          </div>
+        </div>
+      </div>
+
+      {/* AUTH CARD (left in RTL / visual right) */}
+      <div className="w-full lg:w-5/12 flex items-center justify-center p-6 lg:p-10 relative z-10">
+        <div className="w-full max-w-md bg-white/[0.04] backdrop-blur-2xl border border-white/10 rounded-[2rem] p-7 md:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] relative overflow-hidden">
+          <div className="absolute -top-24 -left-24 w-52 h-52 bg-[#1FAEFF]/25 blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-52 h-52 bg-[#48C7FF]/10 blur-[80px] pointer-events-none" />
+
+          {/* Header */}
+          <div className="relative text-center mb-8">
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#1FAEFF] to-[#48C7FF] rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(31,174,255,0.55)]">
+                <span className="text-white text-3xl font-black">ب</span>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-[color:var(--portal-ink)]">
-              {mode === "signin" ? "أهلًا بعودتك" : "أنشئ حسابك"}
+            <h2 className="text-2xl font-bold">
+              {mode === "signin" ? "مرحباً بك مجدداً" : "أنشئ حسابك"}
             </h2>
-            <p className="text-sm text-[color:var(--portal-ink-3)] mt-1">
-              {mode === "signin"
-                ? "سجّل الدخول للوصول إلى بوابتك الصحية"
-                : "خطوات بسيطة لبدء تجربتك الصحية"}
+            <p className="text-white/50 text-sm font-light mt-1">
+              بوابة مجمع باعشن الطبي الرقمية
             </p>
           </div>
 
-          {/* Social buttons */}
-          <div className="mt-6 grid grid-cols-2 gap-2.5">
+          {/* Social Auth */}
+          <div className="relative grid grid-cols-2 gap-3 mb-4">
             <button
               type="button"
               onClick={() => handleOAuth("google")}
               disabled={!!oauthLoading}
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white text-sm font-medium text-[color:var(--portal-ink)] hover:bg-[color:var(--portal-gradient-soft)] transition disabled:opacity-60"
+              className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#1FAEFF]/40 transition-all disabled:opacity-60 text-sm font-medium"
             >
               {oauthLoading === "google" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -371,7 +392,7 @@ function AuthPage() {
               type="button"
               onClick={() => handleOAuth("apple")}
               disabled={!!oauthLoading}
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-2xl bg-black text-white text-sm font-medium hover:bg-black/90 transition disabled:opacity-60"
+              className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#1FAEFF]/40 transition-all disabled:opacity-60 text-sm font-medium"
             >
               {oauthLoading === "apple" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -382,42 +403,42 @@ function AuthPage() {
             </button>
           </div>
 
-          {/* Biometric row (visual only in Phase 1) */}
-          <div className="mt-3 grid grid-cols-2 gap-2.5">
+          {/* Biometric row (visual) */}
+          <div className="relative grid grid-cols-2 gap-3 mb-6">
             <button
               type="button"
               onClick={() => toast.info("تسجيل الدخول بالبصمة قيد التطوير")}
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white/60 backdrop-blur text-sm font-medium text-[color:var(--portal-ink-2)] hover:bg-white transition"
+              className="flex items-center justify-center gap-2 h-10 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/10 text-xs font-medium text-white/70 transition-all"
             >
               <Fingerprint className="h-4 w-4" /> البصمة
             </button>
             <button
               type="button"
               onClick={() => toast.info("Face ID قيد التطوير")}
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white/60 backdrop-blur text-sm font-medium text-[color:var(--portal-ink-2)] hover:bg-white transition"
+              className="flex items-center justify-center gap-2 h-10 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/10 text-xs font-medium text-white/70 transition-all"
             >
               <ScanFace className="h-4 w-4" /> Face ID
             </button>
           </div>
 
           {/* Divider */}
-          <div className="my-5 flex items-center gap-3">
-            <div className="flex-1 h-px bg-[color:var(--portal-border)]" />
-            <span className="text-[11px] uppercase tracking-wider text-[color:var(--portal-ink-3)]">
-              {channel === "email" ? "أو استخدم بريدك" : "أو استخدم جوالك"}
+          <div className="relative flex items-center mb-5">
+            <div className="flex-grow border-t border-white/10" />
+            <span className="mx-4 text-[10px] text-white/40 uppercase tracking-[0.2em]">
+              {channel === "email" ? "أو عبر البريد" : "أو عبر الجوال"}
             </span>
-            <div className="flex-1 h-px bg-[color:var(--portal-border)]" />
+            <div className="flex-grow border-t border-white/10" />
           </div>
 
-          {/* Channel tabs: Email vs Phone/OTP */}
-          <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-[color:var(--portal-border)] bg-white/60 p-1">
+          {/* Channel tabs */}
+          <div className="relative mb-5 grid grid-cols-2 gap-1 rounded-xl bg-white/[0.03] border border-white/10 p-1">
             <button
               type="button"
               onClick={() => setChannel("email")}
-              className={`h-9 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
+              className={`h-9 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
                 channel === "email"
-                  ? "bg-white shadow text-[color:var(--portal-ink)]"
-                  : "text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-ink)]"
+                  ? "bg-[#1FAEFF] text-white shadow-[0_4px_15px_rgba(31,174,255,0.35)]"
+                  : "text-white/50 hover:text-white"
               }`}
             >
               <Mail className="h-3.5 w-3.5" /> البريد
@@ -428,10 +449,10 @@ function AuthPage() {
                 setChannel("phone");
                 setOtpStep("enter");
               }}
-              className={`h-9 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
+              className={`h-9 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition ${
                 channel === "phone"
-                  ? "bg-white shadow text-[color:var(--portal-ink)]"
-                  : "text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-ink)]"
+                  ? "bg-[#1FAEFF] text-white shadow-[0_4px_15px_rgba(31,174,255,0.35)]"
+                  : "text-white/50 hover:text-white"
               }`}
             >
               <Phone className="h-3.5 w-3.5" /> الجوال + OTP
@@ -439,7 +460,7 @@ function AuthPage() {
           </div>
 
           {channel === "email" ? (
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="relative space-y-4">
               {mode === "signup" && (
                 <Field
                   icon={<UserIcon className="h-4 w-4" />}
@@ -452,7 +473,7 @@ function AuthPage() {
               )}
               <Field
                 icon={<Mail className="h-4 w-4" />}
-                label="البريد الإلكتروني أو الهوية الوطنية"
+                label="البريد الإلكتروني"
                 type="email"
                 value={email}
                 onChange={setEmail}
@@ -460,11 +481,20 @@ function AuthPage() {
                 dir="ltr"
               />
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
-                  كلمة المرور
-                </label>
+                <div className="flex justify-between items-center px-1 mb-1.5">
+                  <label className="text-xs font-semibold text-[#48C7FF]">كلمة المرور</label>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => toast.info("إعادة تعيين كلمة المرور — قريبًا")}
+                      className="text-[10px] text-white/40 hover:text-white transition-colors"
+                    >
+                      نسيت كلمة المرور؟
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
-                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-white/40">
                     <Lock className="h-4 w-4" />
                   </span>
                   <input
@@ -474,12 +504,13 @@ function AuthPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     dir="ltr"
-                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-10 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                    placeholder="••••••••"
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 ps-10 pe-10 text-sm outline-none placeholder:text-white/20 focus:border-[#1FAEFF] focus:bg-white/10 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
-                    className="absolute inset-y-0 end-2 grid place-items-center text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)] w-8"
+                    className="absolute inset-y-0 end-2 grid place-items-center text-white/40 hover:text-[#48C7FF] w-8"
                     aria-label={showPass ? "إخفاء" : "إظهار"}
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -488,48 +519,41 @@ function AuthPage() {
               </div>
 
               {mode === "signin" && (
-                <div className="flex items-center justify-between text-xs">
-                  <label className="inline-flex items-center gap-2 text-[color:var(--portal-ink-2)] select-none">
-                    <input
-                      type="checkbox"
-                      checked={remember}
-                      onChange={(e) => setRemember(e.target.checked)}
-                      className="rounded border-[color:var(--portal-border)] text-[color:var(--portal-primary)] focus:ring-[color:var(--portal-primary)]/30"
-                    />
-                    تذكرني
+                <div className="flex items-center gap-3 pt-1">
+                  <input
+                    id="remember"
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/20 bg-white/5 accent-[#1FAEFF]"
+                  />
+                  <label htmlFor="remember" className="text-xs text-white/60 cursor-pointer">
+                    تذكر بيانات الدخول
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => toast.info("إعادة تعيين كلمة المرور — قريبًا")}
-                    className="font-semibold text-[color:var(--portal-primary)] hover:underline"
-                  >
-                    نسيت كلمة المرور؟
-                  </button>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
-                style={{ background: "var(--portal-gradient)" }}
+                className="w-full py-4 mt-2 rounded-xl bg-gradient-to-r from-[#1FAEFF] to-[#48C7FF] text-white font-bold text-base shadow-[0_8px_25px_rgba(31,174,255,0.3)] hover:shadow-[0_8px_35px_rgba(31,174,255,0.55)] active:scale-[0.98] transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                {mode === "signin" ? "دخول" : "إنشاء حساب"}
+                {mode === "signin" ? "تسجيل الدخول" : "إنشاء حساب"}
               </button>
             </form>
           ) : otpStep === "enter" ? (
-            <form onSubmit={handleSendOtp} className="space-y-3">
+            <form onSubmit={handleSendOtp} className="relative space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+                <label className="mb-1.5 block text-xs font-semibold text-[#48C7FF] px-1">
                   رقم الجوال
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-white/40">
                     <Phone className="h-4 w-4" />
                   </span>
                   <input
@@ -541,10 +565,10 @@ function AuthPage() {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="05XXXXXXXX"
                     dir="ltr"
-                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-3 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 ps-10 pe-3 text-sm outline-none placeholder:text-white/20 focus:border-[#1FAEFF] focus:bg-white/10 transition-all"
                   />
                 </div>
-                <p className="mt-1.5 text-[11px] text-[color:var(--portal-ink-3)]">
+                <p className="mt-1.5 text-[11px] text-white/40 px-1">
                   سنرسل رمز تحقق (OTP) صالحًا لدقائق قليلة.
                 </p>
               </div>
@@ -552,8 +576,7 @@ function AuthPage() {
               <button
                 type="submit"
                 disabled={otpLoading}
-                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
-                style={{ background: "var(--portal-gradient)" }}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#1FAEFF] to-[#48C7FF] text-white font-bold text-base shadow-[0_8px_25px_rgba(31,174,255,0.3)] hover:shadow-[0_8px_35px_rgba(31,174,255,0.55)] active:scale-[0.98] transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
               >
                 {otpLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -564,10 +587,13 @@ function AuthPage() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-3">
-              <div className="rounded-2xl border border-[color:var(--portal-border)] bg-[color:var(--portal-gradient-soft)] p-3 text-xs text-[color:var(--portal-ink-2)] flex items-center justify-between">
+            <form onSubmit={handleVerifyOtp} className="relative space-y-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70 flex items-center justify-between">
                 <span>
-                  الرمز أُرسل إلى <span dir="ltr" className="font-semibold">{normalizeSaPhone(phone) ?? phone}</span>
+                  الرمز أُرسل إلى{" "}
+                  <span dir="ltr" className="font-semibold text-white">
+                    {normalizeSaPhone(phone) ?? phone}
+                  </span>
                 </span>
                 <button
                   type="button"
@@ -575,18 +601,18 @@ function AuthPage() {
                     setOtp("");
                     setOtpStep("enter");
                   }}
-                  className="text-[color:var(--portal-primary)] font-semibold hover:underline"
+                  className="text-[#48C7FF] font-semibold hover:underline"
                 >
                   تغيير
                 </button>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+                <label className="mb-1.5 block text-xs font-semibold text-[#48C7FF] px-1">
                   رمز التحقق
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+                  <span className="absolute inset-y-0 start-3 grid place-items-center text-white/40">
                     <KeyRound className="h-4 w-4" />
                   </span>
                   <input
@@ -599,7 +625,7 @@ function AuthPage() {
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                     placeholder="——————"
                     dir="ltr"
-                    className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-3 text-center tracking-[0.4em] text-lg font-semibold outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 ps-10 pe-3 text-center tracking-[0.4em] text-lg font-bold outline-none placeholder:text-white/20 focus:border-[#1FAEFF] focus:bg-white/10 transition-all"
                   />
                 </div>
               </div>
@@ -607,8 +633,7 @@ function AuthPage() {
               <button
                 type="submit"
                 disabled={otpLoading}
-                className="w-full h-11 rounded-2xl text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(15,108,189,0.55)] hover:shadow-[0_14px_40px_-10px_rgba(15,108,189,0.7)] disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
-                style={{ background: "var(--portal-gradient)" }}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#1FAEFF] to-[#48C7FF] text-white font-bold text-base shadow-[0_8px_25px_rgba(31,174,255,0.3)] hover:shadow-[0_8px_35px_rgba(31,174,255,0.55)] active:scale-[0.98] transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
               >
                 {otpLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -622,47 +647,62 @@ function AuthPage() {
                 type="button"
                 disabled={otpCooldown > 0 || otpLoading}
                 onClick={() => handleSendOtp()}
-                className="w-full text-xs text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)] disabled:opacity-60"
+                className="w-full text-xs text-white/40 hover:text-[#48C7FF] disabled:opacity-60 transition-colors"
               >
-                {otpCooldown > 0 ? `إعادة الإرسال خلال ${otpCooldown} ثانية` : "لم يصلك الرمز؟ إعادة الإرسال"}
+                {otpCooldown > 0
+                  ? `إعادة الإرسال خلال ${otpCooldown} ثانية`
+                  : "لم يصلك الرمز؟ إعادة الإرسال"}
               </button>
             </form>
           )}
 
-          <div className="mt-5 text-center text-sm text-[color:var(--portal-ink-3)]">
-            {mode === "signin" ? (
-              <>
-                ليس لديك حساب؟{" "}
-                <button
-                  className="text-[color:var(--portal-primary)] font-semibold hover:underline"
-                  onClick={() => setMode("signup")}
-                >
-                  أنشئ حسابًا
-                </button>
-              </>
-            ) : (
-              <>
-                لديك حساب؟{" "}
-                <button
-                  className="text-[color:var(--portal-primary)] font-semibold hover:underline"
-                  onClick={() => setMode("signin")}
-                >
-                  سجّل الدخول
-                </button>
-              </>
-            )}
+          {/* Switch mode */}
+          <div className="relative mt-8 text-center">
+            <p className="text-sm text-white/50">
+              {mode === "signin" ? (
+                <>
+                  ليس لديك حساب؟{" "}
+                  <button
+                    className="text-[#48C7FF] font-bold hover:underline underline-offset-4"
+                    onClick={() => setMode("signup")}
+                  >
+                    أنشئ حساباً جديداً
+                  </button>
+                </>
+              ) : (
+                <>
+                  لديك حساب؟{" "}
+                  <button
+                    className="text-[#48C7FF] font-bold hover:underline underline-offset-4"
+                    onClick={() => setMode("signin")}
+                  >
+                    سجّل الدخول
+                  </button>
+                </>
+              )}
+            </p>
           </div>
 
-          <div className="mt-4 text-center">
-            <Link
-              to="/"
-              className="text-xs text-[color:var(--portal-ink-3)] hover:text-[color:var(--portal-primary)]"
-            >
+          <div className="relative mt-4 text-center">
+            <Link to="/" className="text-xs text-white/40 hover:text-[#48C7FF] transition-colors">
               ← العودة للموقع الرئيسي
             </Link>
           </div>
         </div>
+
+        {/* Bottom-corner meta */}
+        <div className="absolute bottom-6 left-6 hidden md:flex items-center gap-3 text-[10px] text-white/30 uppercase tracking-[0.2em]">
+          <span>ISO Certified</span>
+          <span className="w-1 h-1 rounded-full bg-white/20" />
+          <span>Since 1984</span>
+        </div>
       </div>
+
+      <style>{`
+        @keyframes authPulseDash {
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -688,11 +728,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold text-[color:var(--portal-ink-2)]">
+      <label className="mb-1.5 block text-xs font-semibold text-[#48C7FF] px-1">
         {label}
       </label>
       <div className="relative">
-        <span className="absolute inset-y-0 start-3 grid place-items-center text-[color:var(--portal-ink-3)]">
+        <span className="absolute inset-y-0 start-3 grid place-items-center text-white/40">
           {icon}
         </span>
         <input
@@ -701,7 +741,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           dir={dir}
-          className="w-full h-11 rounded-2xl border border-[color:var(--portal-border)] bg-white ps-10 pe-3 text-sm outline-none focus:border-[color:var(--portal-primary)] focus:ring-2 focus:ring-[color:var(--portal-primary)]/20 transition"
+          className="w-full h-12 rounded-xl bg-white/5 border border-white/10 ps-10 pe-3 text-sm outline-none placeholder:text-white/20 focus:border-[#1FAEFF] focus:bg-white/10 transition-all"
         />
       </div>
     </div>
@@ -721,7 +761,7 @@ function GoogleIcon() {
 
 function AppleIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-white" aria-hidden>
       <path d="M17.05 20.28c-.98.95-2.05.86-3.08.38-1.09-.5-2.08-.52-3.24 0-1.44.62-2.2.44-3.06-.38C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
     </svg>
   );
