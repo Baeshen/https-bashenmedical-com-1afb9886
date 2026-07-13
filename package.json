@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && bun run perf:budget",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "perf:budget": "node scripts/perf-budget.mjs",
     "lint": "eslint .",
     "lint:book": "eslint src/routes/book.tsx 'src/routes/api/public/book/**/*.{ts,tsx}' --max-warnings=0",
     "lint:inserts": "eslint src/routes/book.tsx 'src/routes/api/public/book/**/*.{ts,tsx}' src/routes/pharmacy.tsx --max-warnings=0",
