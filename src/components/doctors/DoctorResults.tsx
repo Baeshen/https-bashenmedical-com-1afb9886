@@ -51,23 +51,19 @@ export function DoctorResults({
         aria-label={ar ? "جارٍ تحميل قائمة الأطباء" : "Loading doctors"}
       >
         {Array.from({ length: skeletonCount }).map((_, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border border-border bg-card p-5 animate-pulse"
-            aria-hidden
-          >
+          <div key={i} className="glass-fut p-5" aria-hidden>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-muted" />
+              <div className="skeleton-neon h-16 w-16 rounded-full" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-2/3 rounded bg-muted" />
-                <div className="h-3 w-1/2 rounded bg-muted" />
+                <div className="skeleton-neon h-4 w-2/3 rounded" />
+                <div className="skeleton-neon h-3 w-1/2 rounded" />
               </div>
             </div>
             <div className="mt-5 space-y-2">
-              <div className="h-3 w-full rounded bg-muted" />
-              <div className="h-3 w-5/6 rounded bg-muted" />
+              <div className="skeleton-neon h-3 w-full rounded" />
+              <div className="skeleton-neon h-3 w-5/6 rounded" />
             </div>
-            <div className="mt-6 h-10 w-full rounded-xl bg-muted" />
+            <div className="skeleton-neon mt-6 h-10 w-full rounded-xl" />
           </div>
         ))}
         <span className="sr-only">
