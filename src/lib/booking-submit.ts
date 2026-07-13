@@ -55,11 +55,21 @@ export async function submitBooking(payload: BookingSubmitPayload): Promise<Book
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+  // Idempotency-Key: stable per in-flight booking attempt. Persisted in
+  // sessionStorage so a retry after a network timeout — or after the user
+  // hits reload before the response arrived — sends the SAME key and the
+  // server returns the same reference instead of creating a duplicate row.
+  // Cleared by the caller (see /book handleSubmit success + handleReset).
+  const idempotencyKey = getOrCreateIdempotencyKey();
+
   let res: Response;
   try {
     res = await fetch("/api/public/book/create", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
