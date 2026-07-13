@@ -263,7 +263,12 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const ms = useTicker(visible && !prefersReducedMotion);
   useEffect(() => { msRef.current = ms; }, [ms]);
-  const stats = usePublicClinicStatistics(visible);
+  const settings = useIntroSettings(visible);
+  const services: IntroService[] = useMemo(
+    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope) })),
+    [settings],
+  );
+  const stats = usePublicClinicStatistics(visible, settings);
 
   // Sync aria-live announcements with scene changes
   const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(ms);
