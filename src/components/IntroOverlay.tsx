@@ -189,7 +189,23 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const shownFiredRef = useRef(false);
   const outcomeFiredRef = useRef(false);
   const msRef = useRef(0);
+  const skipBtnRef = useRef<HTMLButtonElement | null>(null);
+  const reducedCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
+
+  // Track current scene for aria-live announcements
+  const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(msRef.current);
+  const [announcedScene, setAnnouncedScene] = useState<string>("");
+  const sceneLabels: Record<string, string> = useMemo(() => ({
+    pulse: "المشهد الأول: نبض من قلب جازان",
+    brand: "المشهد الثاني: هوية مجمع باعشن الطبي",
+    services: "المشهد الثالث: خدماتنا الطبية",
+    stats: "المشهد الرابع: أرقامنا",
+    booking: "المشهد الخامس: خطوات الحجز",
+    final: "المشهد الأخير: احجز موعدك الآن",
+    reduced: "مقدمة مختصرة لمجمع باعشن الطبي",
+  }), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
