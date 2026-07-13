@@ -334,6 +334,29 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   useEffect(() => () => stopHeartbeat(), []);
 
+  // Focus management: capture previous focus on open, focus Skip button,
+  // restore focus on close. Also close on Escape.
+  useEffect(() => {
+    if (!visible) return;
+    previousFocusRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    const target = prefersReducedMotion ? reducedCloseBtnRef.current : skipBtnRef.current;
+    // Defer to next frame so the element is mounted and focusable
+    const raf = requestAnimationFrame(() => target?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); finish("skip", undefined); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", onKey);
+      const prev = previousFocusRef.current;
+      if (prev && typeof prev.focus === "function") {
+        try { prev.focus(); } catch { /* noop */ }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion]);
+
   const disableForever = () => {
     try { localStorage.setItem(DISABLE_KEY, "1"); } catch { /* noop */ }
     finish("disabled_forever");
