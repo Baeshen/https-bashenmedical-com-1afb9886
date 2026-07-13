@@ -89,6 +89,16 @@ export const Route = createFileRoute("/api/public/book/create")({
           return json(400, { ok: false, kind: "validation", message });
         }
 
+        // Optional Idempotency-Key: same key → same result. Guards against
+        // duplicate bookings from double-clicks, retries after a timeout,
+        // or navigation-triggered resends. Accept 8–128 chars, letters/
+        // digits/dash/underscore only; silently ignore anything else so a
+        // garbage header can't create keyless rows or break the request.
+        const rawKey = request.headers.get("idempotency-key")?.trim() ?? "";
+        const idempotencyKey =
+          /^[A-Za-z0-9_-]{8,128}$/.test(rawKey) ? rawKey : null;
+
+
         const url = process.env.SUPABASE_URL;
         const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
         if (!url || !anonKey) {
