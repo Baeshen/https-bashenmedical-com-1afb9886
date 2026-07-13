@@ -211,6 +211,34 @@ function NotificationsQueuePage() {
                   </td>
                   <td className="px-3 py-2 text-left">
                     <div className="inline-flex gap-1">
+                      {n.channel === "whatsapp" && n.send_status !== "sent" && (() => {
+                        const to = (n.recipient ?? "").replace(/\D/g, "");
+                        const meta = (n.metadata ?? {}) as Record<string, unknown>;
+                        const trackPath = typeof meta.tracking_path === "string" ? meta.tracking_path : "";
+                        const origin = typeof window !== "undefined" ? window.location.origin : "";
+                        const trackUrl = trackPath ? `${origin}${trackPath}` : "";
+                        const body = (n.body ?? "").replace(
+                          /\/track\?ref=[^\s]+|\/appointment-tracker\?ref=[^\s]+/,
+                          trackUrl || "$&",
+                        );
+                        const finalText = trackUrl && !body.includes(trackUrl)
+                          ? `${body}\n${trackUrl}`
+                          : body;
+                        const href = to
+                          ? `https://wa.me/${to}?text=${encodeURIComponent(finalText)}`
+                          : `https://wa.me/?text=${encodeURIComponent(finalText)}`;
+                        return (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="فتح واتساب للإرسال"
+                            className="rounded p-1 text-emerald-700 hover:bg-emerald-50"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </a>
+                        );
+                      })()}
                       {n.send_status !== "sent" && (
                         <button
                           onClick={() => update.mutate({ id: n.id, status: "sent" })}

@@ -31,6 +31,7 @@ export type OutboundNotification = {
   created_at: string;
   sent_at: string | null;
   last_error: string | null;
+  metadata: import("@/integrations/supabase/types").Json | null;
 };
 
 const ListInput = z
@@ -54,7 +55,7 @@ export const listOutboundNotifications = createServerFn({ method: "POST" })
     let q = context.supabase
       .from("notifications")
       .select(
-        "id, channel, send_status, recipient, title, body, kind, appointment_id, branch_id, created_at, sent_at, last_error",
+        "id, channel, send_status, recipient, title, body, kind, appointment_id, branch_id, created_at, sent_at, last_error, metadata",
       )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
