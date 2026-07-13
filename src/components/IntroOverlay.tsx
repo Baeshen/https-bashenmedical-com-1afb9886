@@ -137,14 +137,13 @@ function usePublicClinicStatistics(enabled: boolean, settings: IntroSettingsRow)
     (async () => {
       // For any `live` metric, look it up in the DB. Currently only "doctors" is wired.
       const needsDoctors = settings.stat_metrics.some((m) => m.live && m.id === "doctors");
-      const doctorsCount = needsDoctors
-        ? await supabase
-            .from("doctors")
-            .select("id", { count: "exact", head: true })
-            .eq("is_active", true)
-            .then((r) => (r.error ? null : r.count ?? null))
-            .catch(() => null)
-        : null;
+      let doctorsCount: number | null = null;
+      if (needsDoctors) {
+        try {
+          const r = await supabase.from("doctors").select("id", { count: "exact", head: true }).eq("is_active", true);
+          doctorsCount = r.error ? null : r.count ?? null;
+        } catch { doctorsCount = null; }
+      }
       if (cancelled) return;
       const now = Date.now();
       const out: Stat[] = [];
