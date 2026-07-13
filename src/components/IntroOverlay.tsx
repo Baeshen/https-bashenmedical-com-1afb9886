@@ -15,7 +15,7 @@ import {
   type IntroSettingsRow, type SceneKey,
 } from "@/lib/intro-config";
 import { LazyImage, LazyVideo } from "@/components/LazyMedia";
-import { prefetchMedia } from "@/lib/media-prefetch";
+import { prefetchMedia, prefetchCompletedBefore, getPrefetchStatus } from "@/lib/media-prefetch";
 
 const bmcLogo = bmcLogoAsset.url;
 
