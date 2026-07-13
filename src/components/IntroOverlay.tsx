@@ -185,6 +185,10 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
+  const shownAtRef = useRef<number>(0);
+  const shownFiredRef = useRef(false);
+  const outcomeFiredRef = useRef(false);
+  const msRef = useRef(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -195,13 +199,55 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   }, [disabled]);
 
   const ms = useTicker(visible && !prefersReducedMotion);
+  useEffect(() => { msRef.current = ms; }, [ms]);
   const stats = usePublicClinicStatistics(visible);
 
-  const finish = (target?: string) => {
+  // Fire `intro_shown` once per session when the overlay first appears
+  useEffect(() => {
+    if (!visible || shownFiredRef.current) return;
+    shownFiredRef.current = true;
+    shownAtRef.current = Date.now();
+    const variant: "full" | "reduced" = prefersReducedMotion ? "reduced" : "full";
+    writeAnalyticsState({ shown_at: shownAtRef.current, variant });
+    trackEvent("intro_shown", {
+      variant,
+      audio_muted_default: true,
+      total_duration_ms: prefersReducedMotion ? 2500 : TOTAL_MS,
+    });
+  }, [visible, prefersReducedMotion]);
+
+  const finish = (reason: IntroOutcome = "complete", target?: string) => {
     if (fading) return;
     setFading(true);
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* noop */ }
     stopHeartbeat();
+
+    if (!outcomeFiredRef.current) {
+      outcomeFiredRef.current = true;
+      const elapsed = shownAtRef.current ? Date.now() - shownAtRef.current : msRef.current;
+      const scene = prefersReducedMotion ? "reduced" : sceneFromMs(msRef.current);
+      const eventName = reason === "complete" ? "intro_completed" : "intro_skipped";
+      const props = {
+        reason,
+        scene,
+        elapsed_ms: elapsed,
+        variant: prefersReducedMotion ? "reduced" : "full",
+        audio_enabled: !muted,
+        target: target ?? null,
+      };
+      trackEvent(eventName, props);
+      // Persist the outcome so later code (or a debug panel) can see what happened this session
+      const prev = readAnalyticsState() ?? { shown_at: shownAtRef.current || Date.now() };
+      writeAnalyticsState({
+        ...prev,
+        outcome: reason,
+        outcome_at: Date.now(),
+        elapsed_ms: elapsed,
+        scene,
+        variant: prefersReducedMotion ? "reduced" : "full",
+      });
+    }
+
     setTimeout(() => {
       setVisible(false);
       if (target) navigate({ to: target }).catch(() => {});
@@ -212,7 +258,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   useEffect(() => {
     if (!visible) return;
     const dur = prefersReducedMotion ? 2500 : TOTAL_MS + 200;
-    const t = window.setTimeout(() => finish(), dur);
+    const t = window.setTimeout(() => finish("complete"), dur);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, prefersReducedMotion]);
