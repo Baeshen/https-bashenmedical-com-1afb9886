@@ -189,7 +189,21 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const shownFiredRef = useRef(false);
   const outcomeFiredRef = useRef(false);
   const msRef = useRef(0);
+  const skipBtnRef = useRef<HTMLButtonElement | null>(null);
+  const reducedCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
+
+  const [announcedScene, setAnnouncedScene] = useState<string>("");
+  const sceneLabels: Record<string, string> = useMemo(() => ({
+    pulse: "المشهد الأول: نبض من قلب جازان",
+    brand: "المشهد الثاني: هوية مجمع باعشن الطبي",
+    services: "المشهد الثالث: خدماتنا الطبية",
+    stats: "المشهد الرابع: أرقامنا",
+    booking: "المشهد الخامس: خطوات الحجز",
+    final: "المشهد الأخير: احجز موعدك الآن",
+    reduced: "مقدمة مختصرة لمجمع باعشن الطبي",
+  }), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -201,6 +215,25 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const ms = useTicker(visible && !prefersReducedMotion);
   useEffect(() => { msRef.current = ms; }, [ms]);
   const stats = usePublicClinicStatistics(visible);
+
+  // Sync aria-live announcements with scene changes
+  const currentScene = prefersReducedMotion ? "reduced" : sceneFromMs(ms);
+  useEffect(() => {
+    if (!visible) return;
+    setAnnouncedScene(sceneLabels[currentScene] ?? "");
+  }, [visible, currentScene, sceneLabels]);
+
+  // Announce when live statistics finish loading
+  const [statsAnnouncement, setStatsAnnouncement] = useState<string>("");
+  useEffect(() => {
+    if (!visible || currentScene !== "stats" || stats.length === 0) return;
+    const parts = stats
+      .filter((s) => s.value > 0)
+      .slice(0, 4)
+      .map((s) => `${s.prefix ?? ""}${s.value}${s.suffix ?? ""} ${s.labelAr}`);
+    if (parts.length) setStatsAnnouncement(`تحديث الإحصائيات: ${parts.join("، ")}`);
+  }, [visible, currentScene, stats]);
+
 
   // Fire `intro_shown` once per session when the overlay first appears
   useEffect(() => {
@@ -301,6 +334,29 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   useEffect(() => () => stopHeartbeat(), []);
 
+  // Focus management: capture previous focus on open, focus Skip button,
+  // restore focus on close. Also close on Escape.
+  useEffect(() => {
+    if (!visible) return;
+    previousFocusRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    const target = prefersReducedMotion ? reducedCloseBtnRef.current : skipBtnRef.current;
+    // Defer to next frame so the element is mounted and focusable
+    const raf = requestAnimationFrame(() => target?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); finish("skip", undefined); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", onKey);
+      const prev = previousFocusRef.current;
+      if (prev && typeof prev.focus === "function") {
+        try { prev.focus(); } catch { /* noop */ }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, prefersReducedMotion]);
+
   const disableForever = () => {
     try { localStorage.setItem(DISABLE_KEY, "1"); } catch { /* noop */ }
     finish("disabled_forever");
@@ -323,12 +379,26 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   // Reduced motion: 3-second logo reveal
   if (prefersReducedMotion) {
     return (
-      <div dir="rtl" className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 px-6" style={{ background: CHARCOAL }}>
+      <div
+        dir="rtl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="intro-reduced-title"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 px-6"
+        style={{ background: CHARCOAL }}
+      >
         {logoFailed ? <LogoTextFallback /> : (
           <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
         )}
-        <p className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
-        <button onClick={() => finish("reduced_motion_close")} className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm">الدخول للموقع</button>
+        <p id="intro-reduced-title" className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
+        <button
+          ref={reducedCloseBtnRef}
+          onClick={() => finish("reduced_motion_close")}
+          className="mt-2 rounded-full bg-white/10 hover:bg-white/20 text-white/90 px-6 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        >
+          الدخول للموقع
+        </button>
+        <span className="sr-only" aria-live="polite">{announcedScene}</span>
       </div>
     );
   }
@@ -339,13 +409,19 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
     <div
       dir="rtl"
       role="dialog"
-      aria-label="مقدمة مجمع باعشن الطبي"
+      aria-modal="true"
+      aria-labelledby="intro-dialog-title"
+      aria-describedby="intro-scene-live"
       className={`fixed inset-0 z-[9999] overflow-hidden transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
       style={{
         background: `radial-gradient(ellipse at 50% 40%, ${CHARCOAL_SOFT} 0%, ${CHARCOAL} 70%)`,
         fontFamily: "Cairo, sans-serif",
       }}
     >
+      <h2 id="intro-dialog-title" className="sr-only">مقدمة مجمع باعشن الطبي</h2>
+      {/* Live regions: scene changes and stat counters */}
+      <div id="intro-scene-live" className="sr-only" aria-live="polite" aria-atomic="true">{announcedScene}</div>
+      <div className="sr-only" aria-live="polite" aria-atomic="true">{statsAnnouncement}</div>
       {/* Ambient blue glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 55%, rgba(30,58,95,0.35), transparent 60%)` }} />
       {/* Subtle grid */}
@@ -374,12 +450,13 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         </div>
 
         <button
+          ref={skipBtnRef}
           onClick={() => finish("skip")}
-          className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition"
-          aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية"
+          className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md px-5 py-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+          aria-label="تخطي المقدمة والانتقال للصفحة الرئيسية (اضغط Escape)"
         >
           <span className="text-xs tracking-[0.3em] uppercase text-white/90">تخطي المقدمة</span>
-          <svg className="w-3.5 h-3.5 text-white/80 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <svg aria-hidden="true" className="w-3.5 h-3.5 text-white/80 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
           </svg>
         </button>
