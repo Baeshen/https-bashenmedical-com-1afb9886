@@ -16,15 +16,60 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
+/**
+ * Add `minutes` to a local wall-clock time (YYYY-MM-DD, HH:mm) without
+ * touching timezones. Returns { date, time } strings still in local form.
+ * This is device-independent: no Date object involved, no DST math (Saudi
+ * Arabia has no DST and Asia/Riyadh is a fixed UTC+3 offset).
+ */
+function addMinutesLocal(dateStr: string, timeStr: string, minutes: number) {
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  const [h, mi] = timeStr.split(":").map(Number);
+  // Use UTC math purely as arithmetic (no timezone semantics leak in because
+  // we read back with getUTC*).
+  const t = Date.UTC(y, mo - 1, d, h, mi) + minutes * 60000;
+  const dt = new Date(t);
+  return {
+    date: `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`,
+    time: `${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}`,
+  };
+}
+
+/** Format a local wall-clock time as an ICS floating datetime: YYYYMMDDTHHMMSS. */
+function fmtLocal(dateStr: string, timeStr: string) {
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  const [h, mi] = timeStr.split(":").map(Number);
+  return `${y}${pad(mo)}${pad(d)}T${pad(h)}${pad(mi)}00`;
+}
+
+/** UTC stamp for DTSTAMP (uses the device clock only for "when file was made"). */
+function fmtUtcStamp(dt: Date) {
+  return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}${pad(dt.getUTCSeconds())}Z`;
+}
+
+/**
+ * Minimal VTIMEZONE block for Asia/Riyadh (fixed UTC+3, no DST). Embedding
+ * this means every calendar app anchors the event to Riyadh time regardless
+ * of the device's own timezone or clock skew.
+ */
+const RIYADH_VTIMEZONE = [
+  "BEGIN:VTIMEZONE",
+  "TZID:Asia/Riyadh",
+  "X-LIC-LOCATION:Asia/Riyadh",
+  "BEGIN:STANDARD",
+  "DTSTART:19700101T000000",
+  "TZOFFSETFROM:+0300",
+  "TZOFFSETTO:+0300",
+  "TZNAME:AST",
+  "END:STANDARD",
+  "END:VTIMEZONE",
+].join("\r\n");
+
 /** Build an ICS file body for the given appointment (30-minute default). */
 export function buildIcs(b: ShareBooking, minutes = 30): string {
-  const [y, mo, d] = b.appointment_date.split("-").map(Number);
-  const [h, mi] = b.appointment_time.split(":").map(Number);
-  // Treat time as local Asia/Riyadh (UTC+3) → convert to UTC.
-  const startUTC = new Date(Date.UTC(y, mo - 1, d, h - 3, mi));
-  const endUTC = new Date(startUTC.getTime() + minutes * 60000);
-  const fmt = (dt: Date) =>
-    `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}00Z`;
+  const startLocal = fmtLocal(b.appointment_date, b.appointment_time);
+  const end = addMinutesLocal(b.appointment_date, b.appointment_time, minutes);
+  const endLocal = fmtLocal(end.date, end.time);
   const summary = `${SITE.nameAr} — موعد${b.doctor ? " مع " + b.doctor : ""}`;
   const desc = [
     `المريض: ${b.patient_name}`,
@@ -45,7 +90,6 @@ export function buildIcs(b: ShareBooking, minutes = 30): string {
       "END:VALARM",
     );
   };
-  // Default to true when the field isn't provided (matches booking defaults).
   if (b.reminder_24h !== false) pushAlarm("-PT24H", `تذكير قبل 24 ساعة — ${summary}`);
   if (b.reminder_2h !== false) pushAlarm("-PT2H", `تذكير قبل ساعتين — ${summary}`);
 
@@ -55,11 +99,12 @@ export function buildIcs(b: ShareBooking, minutes = 30): string {
     "PRODID:-//BaeshenMedical//Booking//AR",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    RIYADH_VTIMEZONE,
     "BEGIN:VEVENT",
     `UID:${b.ref}@baeshenmedical.sa`,
-    `DTSTAMP:${fmt(new Date())}`,
-    `DTSTART:${fmt(startUTC)}`,
-    `DTEND:${fmt(endUTC)}`,
+    `DTSTAMP:${fmtUtcStamp(new Date())}`,
+    `DTSTART;TZID=Asia/Riyadh:${startLocal}`,
+    `DTEND;TZID=Asia/Riyadh:${endLocal}`,
     `SUMMARY:${summary}`,
     `DESCRIPTION:${desc}`,
     `LOCATION:${SITE.addressAr}`,
@@ -81,15 +126,16 @@ export function downloadIcs(b: ShareBooking) {
   URL.revokeObjectURL(url);
 }
 
-/** Build a Google Calendar "add event" URL for the given appointment. */
+/**
+ * Build a Google Calendar "add event" URL for the given appointment.
+ * Uses local wall-clock time + `ctz=Asia/Riyadh` so Google interprets the
+ * time in Riyadh regardless of the viewer's timezone. No Z suffix — a
+ * trailing Z would force UTC and ignore `ctz`.
+ */
 export function googleCalendarUrl(b: ShareBooking, minutes = 30): string {
-  const [y, mo, d] = b.appointment_date.split("-").map(Number);
-  const [h, mi] = b.appointment_time.split(":").map(Number);
-  // Local Asia/Riyadh (UTC+3) → UTC.
-  const startUTC = new Date(Date.UTC(y, mo - 1, d, h - 3, mi));
-  const endUTC = new Date(startUTC.getTime() + minutes * 60000);
-  const fmt = (dt: Date) =>
-    `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}00Z`;
+  const startLocal = fmtLocal(b.appointment_date, b.appointment_time);
+  const end = addMinutesLocal(b.appointment_date, b.appointment_time, minutes);
+  const endLocal = fmtLocal(end.date, end.time);
   const summary = `${SITE.nameAr} — موعد${b.doctor ? " مع " + b.doctor : ""}`;
   const details = [
     `المريض: ${b.patient_name}`,
@@ -103,13 +149,14 @@ export function googleCalendarUrl(b: ShareBooking, minutes = 30): string {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: summary,
-    dates: `${fmt(startUTC)}/${fmt(endUTC)}`,
+    dates: `${startLocal}/${endLocal}`,
     details,
     location: SITE.addressAr,
     ctz: "Asia/Riyadh",
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
+
 
 /**
  * Build a wa.me deep-link that opens WhatsApp with a bilingual (AR + EN)
