@@ -9,7 +9,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
-import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+import bmcLogoAsset from "@/assets/baeshen-logo-transparent.png.asset.json";
+import introNarrationAsset from "@/assets/intro-narration-ar.mp3.asset.json";
 import {
   DEFAULT_INTRO_SETTINGS, resolveIcon,
   type IntroSettingsRow, type SceneKey,
@@ -18,6 +19,7 @@ import { LazyImage, LazyVideo } from "@/components/LazyMedia";
 import { prefetchMedia, prefetchCompletedBefore, getPrefetchStatus } from "@/lib/media-prefetch";
 
 const bmcLogo = bmcLogoAsset.url;
+const introNarrationUrl = introNarrationAsset.url;
 
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
@@ -240,6 +242,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const narrationRef = useRef<HTMLAudioElement | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const shownAtRef = useRef<number>(0);
   const shownFiredRef = useRef(false);
@@ -252,7 +255,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const [announcedScene, setAnnouncedScene] = useState<string>("");
   const sceneLabels: Record<string, string> = useMemo(() => ({
-    pulse: "المشهد الأول: نبض من قلب جازان",
+    pulse: "المشهد الأول: نبض من قلب صبيا",
     brand: "المشهد الثاني: هوية مجمع باعشن الطبي",
     services: "المشهد الثالث: خدماتنا الطبية",
     stats: "المشهد الرابع: أرقامنا",
@@ -391,9 +394,25 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
     setAudioReady(false);
   };
 
-  const toggleMute = () => { if (muted) { startHeartbeat(); setMuted(false); } else { stopHeartbeat(); setMuted(true); } };
+  const playNarration = () => {
+    try {
+      const el = narrationRef.current;
+      if (!el) return;
+      el.currentTime = 0;
+      el.volume = 0.9;
+      void el.play().catch(() => {});
+    } catch { /* noop */ }
+  };
+  const stopNarration = () => {
+    try { narrationRef.current?.pause(); } catch { /* noop */ }
+  };
 
-  useEffect(() => () => stopHeartbeat(), []);
+  const toggleMute = () => {
+    if (muted) { startHeartbeat(); playNarration(); setMuted(false); }
+    else { stopHeartbeat(); stopNarration(); setMuted(true); }
+  };
+
+  useEffect(() => () => { stopHeartbeat(); stopNarration(); }, []);
 
   // Focus management: capture previous focus on open, focus Skip button,
   // restore focus on close. Also close on Escape.
@@ -599,6 +618,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
       <div className="absolute inset-0 pointer-events-none opacity-[0.06]"
         style={{ backgroundImage: `linear-gradient(${SILVER}22 1px, transparent 1px), linear-gradient(90deg, ${SILVER}22 1px, transparent 1px)`, backgroundSize: "48px 48px" }} />
 
+      <audio ref={narrationRef} src={introNarrationUrl} preload="auto" playsInline aria-hidden="true" />
       {/* Top controls: skip always visible from second 1 */}
       <div className="absolute top-5 md:top-8 inset-x-5 md:inset-x-10 flex justify-between items-center z-30">
         <div className="flex items-center gap-2">
@@ -694,8 +714,8 @@ function ScenePulse() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2, duration: 0.7 }}
       >
-        <p className="text-white text-2xl md:text-4xl font-semibold">من قلب جازان… تبدأ رعايتنا</p>
-        <p className="text-white/60 text-sm md:text-base tracking-wide">From the Heart of Jazan, Our Care Begins</p>
+        <p className="text-white text-2xl md:text-4xl font-semibold">من قلب صبيا… تبدأ رعايتنا</p>
+        <p className="text-white/60 text-sm md:text-base tracking-wide">From the Heart of Sabya, Our Care Begins</p>
       </motion.div>
     </motion.div>
   );
@@ -706,6 +726,21 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
     <motion.div data-scene="brand" className="absolute inset-0 flex flex-col items-center justify-center gap-6" {...fadeSwap}>
       <div className="relative">
         <div className="absolute -inset-10 rounded-full" style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}66` }} />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-6 rounded-full pointer-events-none"
+          style={{ border: `1px solid ${GOLD}66`, boxShadow: `inset 0 0 30px ${GOLD}22, 0 0 40px ${GOLD}33` }}
+          initial={{ opacity: 0, scale: 0.9, rotate: 0 }}
+          animate={{ opacity: 1, scale: 1, rotate: 360 }}
+          transition={{ opacity: { duration: 1.2 }, scale: { duration: 1.2 }, rotate: { duration: 40, repeat: Infinity, ease: "linear" } }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-16 rounded-full pointer-events-none"
+          style={{ border: `1px dashed ${GOLD}33` }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        />
         {logoFailed ? <LogoTextFallback size="w-48 h-48 md:w-56 md:h-56" /> : (
           <motion.img
             src={bmcLogo}
@@ -911,6 +946,14 @@ function SceneFinal({
           style={{ background: `radial-gradient(circle, ${CRESCENT_RED}44, transparent 60%)` }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="absolute -inset-6 rounded-full pointer-events-none"
+          style={{ border: `1px solid ${GOLD}66`, boxShadow: `inset 0 0 30px ${GOLD}22, 0 0 40px ${GOLD}33` }}
+          initial={{ opacity: 0, rotate: 0 }}
+          animate={{ opacity: 1, rotate: 360 }}
+          transition={{ opacity: { duration: 1.2 }, rotate: { duration: 30, repeat: Infinity, ease: "linear" } }}
         />
         {logoFailed ? <LogoTextFallback size="w-44 h-44 md:w-56 md:h-56" /> : (
           <img
