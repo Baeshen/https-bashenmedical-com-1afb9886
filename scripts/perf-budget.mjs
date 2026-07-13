@@ -77,13 +77,13 @@ async function findClientDir() {
 
 async function findIntroChunks(clientDir) {
   const files = (await walk(clientDir)).filter((f) => f.endsWith(".js"));
-  const marker = "IntroOverlay";
+  // Use a marker only present inside the IntroOverlay source body — not
+  // the module specifier string ("@/components/IntroOverlay") that leaks
+  // into the main bundle via the dynamic import in __root.tsx.
   const hits = [];
   for (const f of files) {
     const text = await readFile(f, "utf8").catch(() => "");
-    // Match either the component name or the storage key it uses,
-    // both survive minification of surrounding code.
-    if (text.includes(marker) || text.includes("baeshen_intro_seen_v2")) {
+    if (text.includes("[IntroOverlay] audio unavailable")) {
       const raw = Buffer.byteLength(text, "utf8");
       const gz = gzipSync(text).length;
       hits.push({ file: relative(ROOT, f), raw, gz });
