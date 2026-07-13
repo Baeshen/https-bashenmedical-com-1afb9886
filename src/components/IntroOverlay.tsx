@@ -242,6 +242,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const narrationRef = useRef<HTMLAudioElement | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const shownAtRef = useRef<number>(0);
   const shownFiredRef = useRef(false);
