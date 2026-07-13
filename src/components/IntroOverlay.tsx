@@ -2,17 +2,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Stethoscope, Baby, HeartPulse, Bluetooth as Tooth, Eye, FlaskConical, Pill,
-  Home, Video, CalendarCheck, ShieldCheck, Users, Activity, Award, Building2,
-  Clock, Star, ClipboardList, Info,
+  ShieldCheck, Users, Activity, Award, Building2,
+  Clock, Star, ClipboardList, Info, Stethoscope, CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
+import {
+  DEFAULT_INTRO_SETTINGS, resolveIcon,
+  type IntroSettingsRow, type SceneKey,
+} from "@/lib/intro-config";
 
 const bmcLogo = bmcLogoAsset.url;
+
 
 const SESSION_KEY = "baeshen_intro_seen_v3";
 const DISABLE_KEY = "baeshen_intro_disabled";
