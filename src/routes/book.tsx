@@ -476,7 +476,40 @@ function BookPage() {
             {state.step === 3 && <StepSpecialty lang={lang} specialties={specialties} value={state.specialtyId} onPick={(v) => { dispatch({ t: "set", p: { specialtyId: v, doctorId: null } }); goto(4); }}/>}
             {state.step === 4 && <StepDoctor lang={lang} doctors={doctors} value={state.doctorId} onPick={(v) => { dispatch({ t: "set", p: { doctorId: v, date: null, time: null } }); goto(5); }}/>}
             {state.step === 5 && <StepDate lang={lang} value={state.date} onPick={(v) => { dispatch({ t: "set", p: { date: v, time: null } }); goto(6); }} doctorId={state.doctorId} specialtyId={state.specialtyId} branchId={state.branchId} onChangeDoctor={() => goto(4)} onChangeBranch={() => goto(2)}/>}
-            {state.step === 6 && <StepTime lang={lang} value={state.time} avail={avail} onPick={(v) => { dispatch({ t: "set", p: { time: v } }); goto(7); }}/>}
+            {state.step === 6 && (
+              <>
+                {(findingAlt || suggestion) && (
+                  <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-3 md:p-4 text-sm">
+                    {findingAlt && !suggestion && (
+                      <span className="text-muted-foreground">
+                        {lang === "ar" ? "جارٍ البحث عن طبيب بديل بأقرب موعد…" : "Looking for an alternative doctor…"}
+                      </span>
+                    )}
+                    {suggestion && (
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                        <div>
+                          <div className="font-medium">
+                            {lang === "ar" ? "طبيب بديل متاح:" : "Alternative doctor available:"} {suggestion.doctorName}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {lang === "ar" ? "أقرب موعد" : "Earliest slot"}: {suggestion.time}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={acceptSuggestion}>
+                            {lang === "ar" ? "احجز مع البديل" : "Book alternative"}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setSuggestion(null)}>
+                            {lang === "ar" ? "تجاهل" : "Dismiss"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <StepTime lang={lang} value={state.time} avail={avail} onPick={(v) => { dispatch({ t: "set", p: { time: v } }); goto(7); }}/>
+              </>
+            )}
             {state.step === 7 && <StepPatient lang={lang} value={state.patient} errors={patientValidation.errors} onChange={(p) => dispatch({ t: "setPatient", p })}/>}
             {state.step === 8 && <StepReview lang={lang} state={state} branches={branches} specialties={specialties} doctors={doctors} errorMsg={errorMsg} submitting={submitting} onSubmit={handleSubmit} patientValid={patientValidation.ok} onEditPatient={() => goto(7)}/>}
             {state.step === 9 && result && <StepSuccess lang={lang} state={state} branches={branches} specialties={specialties} doctors={doctors} reference={result.reference} phone={result.phone} onNewBooking={handleReset}/>}
