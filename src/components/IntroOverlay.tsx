@@ -476,14 +476,20 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
               className="absolute -inset-8 rounded-full"
               style={{ boxShadow: `0 0 90px 10px ${BAESHEN_BLUE}55` }}
             />
-            <img
-              src={bmcLogo}
-              alt="مجمع باعشن الطبي"
-              loading="eager"
-              decoding="async"
-              onError={(e) => ((e.currentTarget.style.display = "none"))}
-              className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-            />
+            {logoFailed ? (
+              <div className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center">
+                <LogoFallback size="w-52 h-52 md:w-64 md:h-64" />
+              </div>
+            ) : (
+              <img
+                src={bmcLogo}
+                alt="مجمع باعشن الطبي"
+                loading="eager"
+                decoding="async"
+                onError={() => setLogoFailed(true)}
+                className="relative w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+              />
+            )}
             {/* light sweep */}
             <motion.div
               className="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
