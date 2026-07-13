@@ -31,7 +31,7 @@ export type OutboundNotification = {
   created_at: string;
   sent_at: string | null;
   last_error: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: import("@/integrations/supabase/types").Json | null;
 };
 
 const ListInput = z
