@@ -654,7 +654,13 @@ function SceneServices({ services }: { services: IntroService[] }) {
           >
             {wave.map((s) => (
               <div key={s.id} className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-5 md:px-6 md:py-6">
-                <s.Icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: BAESHEN_BLUE_SOFT }} />
+                {s.video ? (
+                  <LazyVideo src={s.video} className="w-20 h-14 md:w-24 md:h-16 object-cover rounded-lg" width={96} height={64} />
+                ) : s.image ? (
+                  <LazyImage src={s.image} alt={s.titleAr} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg" width={80} height={80} />
+                ) : (
+                  <s.Icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: BAESHEN_BLUE_SOFT }} />
+                )}
                 <span className="text-white text-sm md:text-base font-medium text-center">{s.titleAr}</span>
                 <span className="text-white/40 text-[10px] md:text-xs tracking-wide">{s.titleEn}</span>
               </div>
