@@ -364,8 +364,15 @@ function BookPage() {
           : "This slot is no longer available. Please pick another time.");
         // Refresh the availability query so StepTime shows the updated state.
         queryClient.setQueryData(["avail", state.date, state.doctorId, state.specialtyId, state.branchId], fresh);
+        const prevTime = state.time;
         dispatch({ t: "set", p: { time: null } });
         goto(6);
+        // Fire-and-forget: look up an alternative doctor with the earliest slot.
+        setFindingAlt(true);
+        findAlternativeDoctor(state.date!, prevTime)
+          .then((alt) => { if (alt) setSuggestion(alt); })
+          .catch(() => {})
+          .finally(() => setFindingAlt(false));
         return;
       }
     } catch {/* network hiccup — let the real submit surface the error */}
