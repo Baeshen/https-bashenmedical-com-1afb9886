@@ -14,6 +14,7 @@ import {
   DEFAULT_INTRO_SETTINGS, resolveIcon,
   type IntroSettingsRow, type SceneKey,
 } from "@/lib/intro-config";
+import { LazyImage, LazyVideo } from "@/components/LazyMedia";
 
 const bmcLogo = bmcLogoAsset.url;
 
@@ -78,7 +79,10 @@ const TOTAL_MS = 30_000;
 // ---------------------------------------------------------------------------
 // Resolved service / stat shapes used by the scene components
 // ---------------------------------------------------------------------------
-type IntroService = { id: string; titleAr: string; titleEn: string; Icon: LucideIcon };
+type IntroService = {
+  id: string; titleAr: string; titleEn: string; Icon: LucideIcon;
+  image?: string; video?: string;
+};
 type Stat = {
   id: string;
   labelAr: string;
@@ -89,6 +93,7 @@ type Stat = {
   source: string;
   updatedAt: number;
   live?: boolean;
+  image?: string;
 };
 
 function useIntroPreferences() {
@@ -159,6 +164,7 @@ function usePublicClinicStatistics(enabled: boolean, settings: IntroSettingsRow)
           prefix: m.prefix,
           suffix: m.suffix,
           Icon: resolveIcon(m.icon, Award),
+          image: m.image,
           source: m.source,
           updatedAt: updated,
           live: !!m.live,
@@ -265,7 +271,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   useEffect(() => { msRef.current = ms; }, [ms]);
   const settings = useIntroSettings(visible);
   const services: IntroService[] = useMemo(
-    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope) })),
+    () => settings.services.map((s) => ({ id: s.id, titleAr: s.titleAr, titleEn: s.titleEn, Icon: resolveIcon(s.icon, Stethoscope), image: s.image, video: s.video })),
     [settings],
   );
   const stats = usePublicClinicStatistics(visible, settings);
@@ -442,7 +448,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
         style={{ background: CHARCOAL }}
       >
         {logoFailed ? <LogoTextFallback /> : (
-          <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" />
+          <img src={bmcLogo} alt="مجمع باعشن الطبي" onError={() => setLogoFailed(true)} className="w-44 h-44 object-contain" width={176} height={176} loading="eager" decoding="async" fetchPriority="high" />
         )}
         <p id="intro-reduced-title" className="text-white/85 text-lg" style={{ fontFamily: "Cairo, sans-serif" }}>مجمع باعشن الطبي — صحتك أولويتنا</p>
         <button
@@ -594,6 +600,10 @@ function SceneBrand({ logoFailed, onError }: { logoFailed: boolean; onError: () 
             src={bmcLogo}
             alt="مجمع باعشن الطبي"
             onError={onError}
+            width={224}
+            height={224}
+            loading="lazy"
+            decoding="async"
             className="relative w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -644,7 +654,13 @@ function SceneServices({ services }: { services: IntroService[] }) {
           >
             {wave.map((s) => (
               <div key={s.id} className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-5 md:px-6 md:py-6">
-                <s.Icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: BAESHEN_BLUE_SOFT }} />
+                {s.video ? (
+                  <LazyVideo src={s.video} className="w-20 h-14 md:w-24 md:h-16 object-cover rounded-lg" width={96} height={64} />
+                ) : s.image ? (
+                  <LazyImage src={s.image} alt={s.titleAr} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg" width={80} height={80} />
+                ) : (
+                  <s.Icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: BAESHEN_BLUE_SOFT }} />
+                )}
                 <span className="text-white text-sm md:text-base font-medium text-center">{s.titleAr}</span>
                 <span className="text-white/40 text-[10px] md:text-xs tracking-wide">{s.titleEn}</span>
               </div>
@@ -696,7 +712,11 @@ function SceneStats({ stats }: { stats: Stat[] }) {
                   </p>
                 </TooltipContent>
               </Tooltip>
-              <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+              {s.image ? (
+                <LazyImage src={s.image} alt={s.labelAr} className="w-12 h-12 object-cover rounded-full" width={48} height={48} />
+              ) : (
+                <s.Icon className="w-6 h-6" style={{ color: GOLD }} />
+              )}
               <div className="text-white text-2xl md:text-4xl font-bold">
                 <Counter value={s.value} prefix={s.prefix} suffix={s.suffix} />
               </div>
@@ -786,6 +806,10 @@ function SceneFinal({
             src={bmcLogo}
             alt="مجمع باعشن الطبي"
             onError={onError}
+            width={224}
+            height={224}
+            loading="lazy"
+            decoding="async"
             className="relative w-44 h-44 md:w-56 md:h-56 object-contain drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
           />
         )}
