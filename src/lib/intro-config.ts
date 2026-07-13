@@ -96,6 +96,8 @@ export const DEFAULT_INTRO_SETTINGS: IntroSettingsRow = {
   headline_en: "Baeshen Medical Complex",
   tagline_ar: "صحتك… أولويتنا",
   tagline_en: "Your Health, Our Priority",
+  prefetch_enabled: true,
+  prefetch_lead_ms: 1500,
   updated_at: new Date(0).toISOString(),
 };
 
