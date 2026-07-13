@@ -435,6 +435,30 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
 
   const inWindow = (w: number[]) => ms >= w[0] && ms < w[1];
 
+  // Prefetch upcoming scene media ~1.5s before it appears, during idle time.
+  const LEAD_MS = 1500;
+  const servicesPrefetched = useRef(false);
+  const statsPrefetched = useRef(false);
+  useEffect(() => {
+    if (!visible || prefersReducedMotion) return;
+    if (!servicesPrefetched.current && ms >= T.services[0] - LEAD_MS && ms < T.services[0]) {
+      servicesPrefetched.current = true;
+      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
+      for (const s of services) {
+        if (s.video) urls.push({ url: s.video, kind: "video" });
+        else if (s.image) urls.push({ url: s.image, kind: "image" });
+      }
+      prefetchMedia(urls);
+    }
+    if (!statsPrefetched.current && ms >= T.stats[0] - LEAD_MS && ms < T.stats[0]) {
+      statsPrefetched.current = true;
+      const urls: Array<{ url: string; kind: "image" | "video" }> = [];
+      for (const s of stats) if (s.image) urls.push({ url: s.image, kind: "image" });
+      prefetchMedia(urls);
+    }
+  }, [visible, prefersReducedMotion, ms, T, services, stats]);
+
+
   if (!visible) return null;
 
   // Reduced motion: 3-second logo reveal
