@@ -139,6 +139,79 @@ export type Database = {
           },
         ]
       }
+      appointment_waitlist: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          doctor_id: string | null
+          id: string
+          notes: string | null
+          notified_at: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_from: string
+          preferred_to: string
+          reference: string
+          specialty_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          patient_name: string
+          patient_phone: string
+          preferred_from: string
+          preferred_to: string
+          reference: string
+          specialty_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          patient_name?: string
+          patient_phone?: string
+          preferred_from?: string
+          preferred_to?: string
+          reference?: string
+          specialty_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_waitlist_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_waitlist_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_waitlist_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string

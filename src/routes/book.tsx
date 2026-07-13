@@ -42,6 +42,7 @@ import { StepPatient } from "@/components/booking/StepPatient";
 import { StepReview } from "@/components/booking/StepReview";
 import { StepSuccess } from "@/components/booking/StepSuccess";
 import { SummarySidebar } from "@/components/booking/SummarySidebar";
+import { WaitlistCTA } from "@/components/booking/WaitlistCTA";
 
 const search = z.object({
   specialty: z.string().optional(),
@@ -244,6 +245,35 @@ function BookPage() {
     enabled: !!state.date && state.step >= 6,
     staleTime: 20_000,
   });
+
+  // Week-scan for the current doctor — used to decide whether to emphasize
+  // the waitlist CTA. Uses the month-availability endpoint so it's one call.
+  const { data: weekDates } = useQuery({
+    queryKey: ["week-avail", state.doctorId, state.branchId],
+    queryFn: async () => {
+      const today = new Date();
+      const y = today.getFullYear(); const m = today.getMonth() + 1;
+      const p = new URLSearchParams({ year: String(y), month: String(m) });
+      if (state.doctorId) p.set("doctor_id", state.doctorId);
+      if (state.branchId) p.set("branch_id", state.branchId);
+      const res = await fetch(`/api/public/book/month-availability?${p.toString()}`);
+      if (!res.ok) return [] as string[];
+      const j = await res.json();
+      return (j?.dates ?? []) as string[];
+    },
+    enabled: !!state.doctorId && state.step >= 6,
+    staleTime: 60_000,
+  });
+
+  const noWeekAvailability = useMemo(() => {
+    if (!weekDates) return false;
+    const today = new Date();
+    const in7 = new Date(today.getTime() + 7 * 86400_000);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const from = iso(today), to = iso(in7);
+    return !weekDates.some((d) => d >= from && d <= to);
+  }, [weekDates]);
+
 
   const patientValidation = useMemo(() => validatePatient(state.patient), [state.patient]);
 
@@ -508,6 +538,17 @@ function BookPage() {
                   </div>
                 )}
                 <StepTime lang={lang} value={state.time} avail={avail} onPick={(v) => { dispatch({ t: "set", p: { time: v } }); goto(7); }}/>
+                <div className="mt-4">
+                  <WaitlistCTA
+                    lang={lang}
+                    doctorId={state.doctorId}
+                    specialtyId={state.specialtyId}
+                    branchId={state.branchId}
+                    defaultName={state.patient.name}
+                    defaultPhone={state.patient.phone}
+                    emphasized={noWeekAvailability}
+                  />
+                </div>
               </>
             )}
             {state.step === 7 && <StepPatient lang={lang} value={state.patient} errors={patientValidation.errors} onChange={(p) => dispatch({ t: "setPatient", p })}/>}
