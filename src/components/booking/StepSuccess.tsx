@@ -163,12 +163,12 @@ export function StepSuccess({
         <CheckCircle2 className="h-12 w-12 text-emerald-600 dark:text-emerald-400"/>
       </div>
       <h2 className="text-2xl md:text-3xl font-bold">
-        {lang === "ar" ? "تم تأكيد حجزك" : "Your booking is confirmed"}
+        {lang === "ar" ? "شكرًا لك، تم استلام طلب الحجز بنجاح" : "Thank you — your booking request was received"}
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">
         {lang === "ar"
-          ? "سنتواصل معك لتأكيد الموعد. احتفظ برقم الحجز لأي استفسار."
-          : "We'll contact you to confirm. Keep your reference for any inquiry."}
+          ? "سيتواصل معك فريق الاستقبال خلال دقائق لتأكيد الموعد، وسيصلك تذكير عبر واتساب قبل الموعد بيوم. احتفظ برقم الحجز أدناه لأي استفسار أو تعديل."
+          : "Our reception team will contact you within minutes to confirm. You'll also receive a WhatsApp reminder one day before your appointment. Keep the reference below for any inquiry or change."}
       </p>
 
       {reference && (
