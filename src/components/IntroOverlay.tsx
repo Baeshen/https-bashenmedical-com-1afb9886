@@ -241,6 +241,7 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   const [audioReady, setAudioReady] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
+  const [caption, setCaption] = useState<string>("");
   const audioCtxRef = useRef<AudioContext | null>(null);
   const narrationRef = useRef<HTMLAudioElement | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
@@ -405,7 +406,39 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
   };
   const stopNarration = () => {
     try { narrationRef.current?.pause(); } catch { /* noop */ }
+    setCaption("");
   };
+
+  // Time-synced Arabic captions for the narration audio (total ≈ 21.4s).
+  const NARRATION_CUES: Array<{ t: number; text: string }> = useMemo(() => ([
+    { t: 0.0,  text: "من قلب صبيا… تبدأ رعايتنا" },
+    { t: 3.6,  text: "مجمع باعشن الطبي" },
+    { t: 6.2,  text: "صحتك… أولويتنا" },
+    { t: 8.8,  text: "رعاية متكاملة، فريق من الاستشاريين" },
+    { t: 13.4, text: "وخدمات تخصصية على مدار الأسبوع" },
+    { t: 17.6, text: "احجز موعدك الآن" },
+    { t: 21.4, text: "" },
+  ]), []);
+
+  useEffect(() => {
+    const el = narrationRef.current;
+    if (!el) return;
+    const onTime = () => {
+      const now = el.currentTime;
+      let active = "";
+      for (const cue of NARRATION_CUES) {
+        if (now >= cue.t) active = cue.text; else break;
+      }
+      setCaption((prev) => (prev === active ? prev : active));
+    };
+    const onEnd = () => setCaption("");
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("ended", onEnd);
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("ended", onEnd);
+    };
+  }, [NARRATION_CUES]);
 
   const toggleMute = () => {
     if (muted) { startHeartbeat(); playNarration(); setMuted(false); }
@@ -662,6 +695,27 @@ export function IntroOverlay({ theme = "dark" as "dark" | "light" }) {
           {inWindow(T.stats)     && <SceneStats    key="stats" stats={stats} />}
           {inWindow(T.booking)   && <SceneBooking  key="booking" />}
           {inWindow(T.final)     && <SceneFinal    key="final" logoFailed={logoFailed} onError={() => setLogoFailed(true)} onBook={() => finish("cta_book", "/book")} onServices={() => finish("cta_services", "/services")} />}
+        </AnimatePresence>
+      </div>
+
+      {/* Caption bar (Arabic narration subtitles) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-14 md:bottom-16 z-20 flex justify-center px-4">
+        <AnimatePresence mode="wait">
+          {caption && !muted ? (
+            <motion.div
+              key={caption}
+              role="status"
+              aria-live="polite"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              className="max-w-[92%] md:max-w-2xl rounded-2xl bg-black/55 backdrop-blur-md border border-white/10 px-5 py-2.5 text-center text-white text-base md:text-xl font-medium shadow-[0_10px_40px_rgba(0,0,0,0.55)]"
+              style={{ fontFamily: "Cairo, sans-serif" }}
+            >
+              {caption}
+            </motion.div>
+          ) : null}
         </AnimatePresence>
       </div>
 
