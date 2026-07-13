@@ -5,6 +5,7 @@ import {
   Stethoscope, Baby, HeartPulse, Bluetooth as Tooth, Eye, FlaskConical, Pill,
   Home, Video, CalendarCheck, ShieldCheck, Users, Activity, Award, Building2,
   Clock, Star, ClipboardList,
+  type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
