@@ -4,9 +4,10 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Stethoscope, Baby, HeartPulse, Bluetooth as Tooth, Eye, FlaskConical, Pill,
   Home, Video, CalendarCheck, ShieldCheck, Users, Activity, Award, Building2,
-  Clock, Star, ClipboardList,
+  Clock, Star, ClipboardList, Info,
   type LucideIcon,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import bmcLogoAsset from "@/assets/baeshen-logo.asset.json";
